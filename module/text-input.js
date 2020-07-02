@@ -5,7 +5,7 @@
 export class TextInputDialog extends Dialog {
     constructor(actor, dialogData={}, options={}) {
         super(dialogData, options);
-        this.options.classes = ["starfinder", "dialog"];
+        this.options.classes = ["sfrpg", "dialog"];
 
         /**
          * Store a reference to the Actor entity which is resting
@@ -28,7 +28,7 @@ export class TextInputDialog extends Dialog {
 
     static async textInputDialog({actor, title, originalText=""}={}) {
         TextInputDialog.enteredText = originalText;
-        const html = await renderTemplate("systems/starfinder/templates/apps/text-input.html", {
+        const html = await renderTemplate("modules/sfrpg-statblock-parser/templates/text-input.html", {
           originalText: originalText
         });
         return new Promise(resolve => {

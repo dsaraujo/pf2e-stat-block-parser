@@ -1,6 +1,6 @@
 import { TextInputDialog } from "./text-input.js";
 import { SFStatblockParser } from "./statblockparser.js";
-import { ActorSheetStarfinderNPC } from "../../../systems/starfinder/module/actor/sheet/npc.js";
+import { ActorSheetSFRPGNPC } from "../../../systems/sfrpg/module/actor/sheet/npc.js";
 
 class SFSBPProgram {
     static ensureParseStatblockVisible() {
@@ -57,7 +57,7 @@ class SFSBPProgram {
               return;
           }
           
-          let sheet = new ActorSheetStarfinderNPC(actor);
+          let sheet = new ActorSheetSFRPGNPC(actor);
           sheet.render(true);
         }
     }
