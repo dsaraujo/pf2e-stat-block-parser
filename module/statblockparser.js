@@ -28,7 +28,48 @@ SFSBP.weaponDamageTypes = {
 };
 
 export class SFStatblockParser {
-    parseAttack(attack, bIsMeleeAttack) {
+    async fuzzyFindItem(statBlockItemName) {
+        console.log("SFSBP | Fuzzy search for item named: " + statBlockItemName);
+        let equipment = game.packs.find(element => element.title.includes("Equipment"));
+        if (equipment == undefined) {
+            console.log("SFSBP | Could not find equipment compendium.");
+            return null;
+        }
+        
+        await equipment.getIndex();
+        
+        let terms = statBlockItemName.toLowerCase().split(' ');
+        let itemWeWant = null;
+        for (let item of equipment.index) {
+            let itemName = item.name.toLowerCase();
+            
+            let bAllTermsPresent = true;
+            for (let term of terms) {
+                if (!itemName.includes(term)) {
+                    bAllTermsPresent = false;
+                    break;
+                }
+            }
+
+            if (!bAllTermsPresent) {
+                //console.log("SFSBP | Item " + itemName + " did not match " + statBlockItemName);
+                continue;
+            }
+
+            itemWeWant = item;
+            break;
+        }
+
+        if (itemWeWant != undefined) {
+            delete itemWeWant["_id"];
+            console.log("SFSBP | Item " + JSON.stringify(itemWeWant));
+        } else {
+            console.log("SFSBP | Item not found.");
+        }
+        return itemWeWant;
+    }
+  
+    async parseAttack(attack, bIsMeleeAttack) {
         let attackInfo = attack.split(/([a-zA-Z\s]*)\s([\+|-]\d*)\s\((.*)\)/);
                     
         let attackName = this.camelize(attackInfo[1]);
@@ -50,7 +91,10 @@ export class SFStatblockParser {
             attackDamageType = "slashing";
         }
         
-        let itemData = {"name": attackName, "type": "weapon"};
+        let matchingItem = await this.fuzzyFindItem(attackName);
+
+        let itemData = matchingItem != null ? matchingItem : {"name": attackName};
+        itemData["type"] = "weapon";
         itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
         itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
         itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
@@ -225,25 +269,25 @@ export class SFStatblockParser {
             }
             else if (key == "Melee") {
                 let allAttacks = value.split(/\sor\s|,/);
-                allAttacks.forEach(attack => {
+                for (let attack of allAttacks) {
                     attack = attack.trim();
                     
-                    let itemData = this.parseAttack(attack, true);
+                    let itemData = await this.parseAttack(attack, true);
                     items.push(itemData);
                     
                     //console.log('SFSBP | Melee attack: ' + attackName + ' (' + attackModifier + '), with damage: ' + attackDamageRoll + ' of ' + attackDamageType + '.');
-                });
+                }
             }
             else if (key == "Ranged") {
                 let allAttacks = value.split(/\sor\s|,/);
-                allAttacks.forEach(attack => {
+                for (let attack of allAttacks) {
                     attack = attack.trim();
                     
-                    let itemData = this.parseAttack(attack, false);
+                    let itemData = await this.parseAttack(attack, false);
                     items.push(itemData);
                     
                     //console.log('SFSBP | Ranged Attack: ' + attackName + ' (' + attackModifier + '), with damage: ' + attackDamageRoll + ' of ' + attackDamageType + '.');
-                });
+                }
             }
         }
 
