@@ -24,7 +24,7 @@ class SFSBPProgram {
     }
 
     static async openSFSBP() {
-        console.log("SFSBP | Opening Statblock Parser.");
+        //console.log("SFSBP | Opening Statblock Parser.");
 
         let textResult = await TextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
@@ -35,9 +35,10 @@ class SFSBPProgram {
           // Create actor
           console.log("SFSBP | Preparing new actor.");
           let actorData = {name: "Generated Actor", type: "npc"};
+          let items = [];
           
           // Start parsing
-          console.log("SFSBP | Start parsing: " + textResult.text);
+          //console.log("SFSBP | Start parsing: " + textResult.text);
           try {
               let parseResult = await this.statblockParser.parseStatblock(actorData, textResult.text);
               if (!parseResult.success) {
@@ -46,6 +47,7 @@ class SFSBPProgram {
               }
               
               actorData = parseResult.actorData;
+              items = parseResult.items;
           } catch (error) {
               console.log("SFSBP | Parsing had an error: " + error + ".");
               return;
@@ -55,6 +57,13 @@ class SFSBPProgram {
           if (actor == null) {
               console.log("SFSBP | Failed to create new actor.");
               return;
+          }
+          
+          if (items.length > 0)
+          {
+              items.forEach(itemData => {
+                  actor.createOwnedItem(itemData);
+              });
           }
           
           let sheet = new ActorSheetSFRPGNPC(actor);
