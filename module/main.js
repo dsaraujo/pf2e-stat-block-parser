@@ -69,4 +69,4 @@ Hooks.on("renderSidebarTab", async (app, html) => {
         SFSBPProgram.ensureParseStatblockVisible();
     }
 });
-console.log("SFSBP | Starfinder Statblock Parser initialized.");
+console.log("SFSBP | SFRPG Statblock Parser initialized.");

@@ -20,7 +20,7 @@ export class SFStatblockParser {
         updateData["data.attributes.sp.max"] = 0;
         updateData["data.attributes.rp.max"] = 0;
         
-        for (var skill in CONFIG.STARFINDER.skills) {
+        for (var skill in CONFIG.SFRPG.skills) {
             updateData["data.skills." + skill + ".enabled"] = false;
             updateData["data.skills." + skill + ".mod"] = 0;
         }
