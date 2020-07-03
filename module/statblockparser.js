@@ -93,25 +93,17 @@ export class SBStatblockParser {
             let parser = SBParserMapping.parsers[key];
             if (parser != undefined)
             {
-                let parsedData = parser.parse(key, value);
+                let parsedData = await parser.parse(key, value);
                 //SBUtils.log("Parsed: " + JSON.stringify(parsedData));
 
-                actorData = {...actorData, ...parsedData};
+                if (parsedData.actorData != undefined) {
+                    actorData = {...actorData, ...parsedData.actorData};
+                }
+
+                if (parsedData.items != undefined) {
+                    items = items.concat(parsedData.items);
+                }
                 //SBUtils.log("Merged: " + JSON.stringify(actorData));
-            }
-            else if (key == "melee") {
-                let allAttacks = value.split(/\sor\s|,/);
-                for (let attack of allAttacks) {
-                    let itemData = await this.parseAttack(attack.trim(), true);
-                    items.push(itemData);
-                }
-            }
-            else if (key == "ranged") {
-                let allAttacks = value.split(/\sor\s|,/);
-                for (let attack of allAttacks) {
-                    let itemData = await this.parseAttack(attack.trim(), false);
-                    items.push(itemData);
-                }
             }
         }
 
@@ -119,84 +111,5 @@ export class SBStatblockParser {
         //SBUtils.log('JSON: ' + JSON.stringify(actorData));
         
         return {success: true, actorData: actorData, items: items};
-    }
-  
-    /** Will parse an attack using the attack format: attack name +attackRoll (damageRoll damageType ; critical effect) */
-    async parseAttack(attack, bIsMeleeAttack) {
-        let attackInfo = attack.split(/([a-zA-Z\s]*)\s([\+|-]\d*)\s\((.*)\)/);
-                    
-        let attackName = SBUtils.camelize(attackInfo[1]);
-        let attackModifier = attackInfo[2];
-        
-        let damageString = attackInfo[3].split(";");
-        let normalDamage = damageString[0].split("plus")[0].trim();
-        let criticalDamage = "";
-        if (damageString.length > 1) {
-            criticalDamage = damageString[1];
-        }
-        
-        let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
-        let attackDamageRoll = attackDamageData[1];
-        let attackDamageType = attackDamageData[2].toLowerCase();
-        if (SBConfig.weaponDamageTypes[attackDamageType] != undefined) {
-            attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
-        } else {
-            attackDamageType = "slashing";
-        }
-        
-        let matchingItem = await this.fuzzyFindItem(attackName);
-
-        let itemData = matchingItem != null ? matchingItem : {"name": attackName};
-        itemData["type"] = "weapon";
-        itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
-        itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
-        itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
-        itemData["data.attackBonus"] = attackModifier;
-        itemData["data.damage"] = {parts: [[attackDamageRoll, attackDamageType]]};
-        itemData["data.critical"] = {"effect": "", "parts": [["1d4", "burn"]]};
-        itemData["data.chatFlavor"] = criticalDamage;
-        
-        return itemData;
-    }
-
-    /** Will try to find an item that matches all the terms, will return the first item it finds that does. */
-    async fuzzyFindItem(statBlockItemName) {
-        //SBUtils.log("Fuzzy search for item named: " + statBlockItemName);
-        let equipment = game.packs.find(element => element.title.includes("Equipment"));
-        if (equipment == undefined) {
-            SBUtils.log("Could not find equipment compendium.");
-            return null;
-        }
-        
-        await equipment.getIndex();
-        
-        let terms = statBlockItemName.toLowerCase().split(' ');
-        let itemWeWant = null;
-        for (let item of equipment.index) {
-            let itemName = item.name.toLowerCase();
-            
-            let bAllTermsPresent = true;
-            for (let term of terms) {
-                if (!itemName.includes(term)) {
-                    bAllTermsPresent = false;
-                    break;
-                }
-            }
-
-            if (!bAllTermsPresent) {
-                continue;
-            }
-
-            itemWeWant = item;
-            break;
-        }
-
-        if (itemWeWant != undefined) {
-            delete itemWeWant["_id"];
-            //SBUtils.log("Item " + JSON.stringify(itemWeWant));
-        } else {
-            //SBUtils.log("Item not found.");
-        }
-        return itemWeWant;
     }
 }

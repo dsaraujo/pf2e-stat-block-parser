@@ -54,4 +54,45 @@ export class SBUtils {
     static log(message) {
         console.log("SFSBP | " + message);
     }
+
+    /** Will try to find an item that matches all the terms, will return the first item it finds that does. */
+    static async fuzzyFindItem(statBlockItemName) {
+        //SBUtils.log("Fuzzy search for item named: " + statBlockItemName);
+        let equipment = game.packs.find(element => element.title.includes("Equipment"));
+        if (equipment == undefined) {
+            SBUtils.log("Could not find equipment compendium.");
+            return null;
+        }
+        
+        await equipment.getIndex();
+        
+        let terms = statBlockItemName.toLowerCase().split(' ');
+        let itemWeWant = null;
+        for (let item of equipment.index) {
+            let itemName = item.name.toLowerCase();
+            
+            let bAllTermsPresent = true;
+            for (let term of terms) {
+                if (!itemName.includes(term)) {
+                    bAllTermsPresent = false;
+                    break;
+                }
+            }
+
+            if (!bAllTermsPresent) {
+                continue;
+            }
+
+            itemWeWant = item;
+            break;
+        }
+
+        if (itemWeWant != undefined) {
+            delete itemWeWant["_id"];
+            //SBUtils.log("Item " + JSON.stringify(itemWeWant));
+        } else {
+            //SBUtils.log("Item not found.");
+        }
+        return itemWeWant;
+    }
 }
