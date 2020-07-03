@@ -1,3 +1,5 @@
+import { SFSBPUtils } from "./utils.js";
+
 export const SFSBP = {};
 SFSBP.weaponDamageTypes = {
     "a": "acid",
@@ -27,12 +29,30 @@ SFSBP.weaponDamageTypes = {
     "s & so": "slashing+sonic"
 };
 
+SFSBP.statMapping = {
+    "hp": ["data.attributes.hp.value", "data.attributes.hp.max"],
+    "init": ["data.attributes.init.total"],
+    "eac": ["data.attributes.eac.value"],
+    "kac": ["data.attributes.kac.value"],
+    "fort": ["data.attributes.fort.bonus"],
+    "ref": ["data.attributes.reflex.bonus"],
+    "will": ["data.attributes.will.bonus"],
+    "speed": ["data.attributes.speed.value"],
+    "str": ["data.abilities.str.mod"],
+    "dex": ["data.abilities.dex.mod"],
+    "con": ["data.abilities.con.mod"],
+    "int": ["data.abilities.int.mod"],
+    "wis": ["data.abilities.wis.mod"],
+    "cha": ["data.abilities.cha.mod"]
+};
+
 export class SFStatblockParser {
+    /* Will try to find an item that matches all the terms, will return the first item it finds that does. */
     async fuzzyFindItem(statBlockItemName) {
-        console.log("SFSBP | Fuzzy search for item named: " + statBlockItemName);
+        //SFSBPUtils.log("Fuzzy search for item named: " + statBlockItemName);
         let equipment = game.packs.find(element => element.title.includes("Equipment"));
         if (equipment == undefined) {
-            console.log("SFSBP | Could not find equipment compendium.");
+            SFSBPUtils.log("Could not find equipment compendium.");
             return null;
         }
         
@@ -52,7 +72,6 @@ export class SFStatblockParser {
             }
 
             if (!bAllTermsPresent) {
-                //console.log("SFSBP | Item " + itemName + " did not match " + statBlockItemName);
                 continue;
             }
 
@@ -62,9 +81,9 @@ export class SFStatblockParser {
 
         if (itemWeWant != undefined) {
             delete itemWeWant["_id"];
-            console.log("SFSBP | Item " + JSON.stringify(itemWeWant));
+            //SFSBPUtils.log("Item " + JSON.stringify(itemWeWant));
         } else {
-            console.log("SFSBP | Item not found.");
+            //SFSBPUtils.log("Item not found.");
         }
         return itemWeWant;
     }
@@ -72,7 +91,7 @@ export class SFStatblockParser {
     async parseAttack(attack, bIsMeleeAttack) {
         let attackInfo = attack.split(/([a-zA-Z\s]*)\s([\+|-]\d*)\s\((.*)\)/);
                     
-        let attackName = this.camelize(attackInfo[1]);
+        let attackName = SFSBPUtils.camelize(attackInfo[1]);
         let attackModifier = attackInfo[2];
         
         let damageString = attackInfo[3].split(";");
@@ -111,27 +130,24 @@ export class SFStatblockParser {
             return {success: false};
         }
         
+        actorData["data.attributes.sp.max"] = 0;
+        actorData["data.attributes.rp.max"] = 0;
+
+        let tokens = [];
+        let items = [];
+        
         // Start parsing text
         let splitNewlines = statBlockText.split(/[\r\n]+/);
         
         let recognizedKeywords = ["HP", "Init", "Perception", "EAC", "KAC", "Fort", "Ref", "Will", "Speed",
-          "Str", "Dex", "Con", "Int", "Wis", "Cha", "Skills", "Senses", "SR", "DR", "Languages", "Melee", "Ranged"];
+            "Str", "Dex", "Con", "Int", "Wis", "Cha", "Skills", "Senses", "SR", "DR", "Languages", "Melee", "Ranged"];
+        recognizedKeywords = recognizedKeywords.map(x => x.toLowerCase());
         
-        let tokens = [];
-        actorData["data.attributes.sp.max"] = 0;
-        actorData["data.attributes.rp.max"] = 0;
-        
-        let items = [];
-        
-        for (var skill in CONFIG.SFRPG.skills) {
-            actorData["data.skills." + skill + ".enabled"] = false;
-            actorData["data.skills." + skill + ".mod"] = 0;
-        }
-        
+        // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
         splitNewlines.forEach(element => {
-            if (element.includes('CR')) {
-                let nameBlock = element.split(/(.*)\s(CR|cr|Cr|cR)\s(\d*\/?\d*)/);
-                //console.log('SFSBP | Name: ' + nameBlock[1] + ', CR: ' + nameBlock[3] + '.');
+            let nameBlock = element.split(/(.*)\sCR\s(\d*\/?\d*)/i);
+            if (nameBlock[0].length == 0) {
+                //SFSBPUtils.log('Name: ' + nameBlock[1] + ', CR: ' + nameBlock[3] + '.');
                 
                 let CR = 1;
                 let crs = { "1/8" : 0.125, "1/6" : 1/6, "1/4": 0.25, "1/3": 1/3, "1/2": 0.5 };
@@ -141,24 +157,25 @@ export class SFStatblockParser {
                 else
                   CR = parseFloat(nameBlock[3]);
                 
-                actorData['name'] = this.camelize(nameBlock[1].toLowerCase());
+                actorData['name'] = SFSBPUtils.camelize(nameBlock[1].toLowerCase());
                 actorData['data.details.cr'] = CR;
                 return;
             }
-            else if (element.toLowerCase().includes('melee') || element.toLowerCase().includes('ranged')) {
+            
+            if (SFSBPUtils.stringContains(element, "melee", false) || SFSBPUtils.stringContains(element, "ranged", false)) {
                 tokens.push(element);
                 return;
             }
-            else if (element.split(/(.*)\s(Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s(.*)/)[0].length == 0) {
-                let groups = element.split(/(.*)\s(Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s(.*)/);
-                let alignment = groups[1];
-                let size = groups[2];
-                let type = groups[3];
+            
+            let sizeBlock = element.split(/(.*)\s(Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s(.*)/i);
+            if (sizeBlock[0].length == 0) {
+                let alignment = sizeBlock[1];
+                let size = sizeBlock[2];
+                let type = sizeBlock[3];
 
                 size = size.toLowerCase();
-                //console.log("New size: " + size);
                 
-                actorData['data.details.type'] = type;
+                actorData['data.details.type'] = SFSBPUtils.camelize(type);
                 actorData['data.details.alignment'] = alignment;
                 actorData['data.traits.size'] = size;
                 return;
@@ -170,136 +187,81 @@ export class SFStatblockParser {
             });
         });
         
+        // Process all tokens into key-values, such as "hp 13" and "str +4"
         let keyValuePairs = {};
-        tokens.forEach(token => {
+        for(let token of tokens) {
             let items = token.split(' ');
             items.forEach(function(element, index, array) {
-                if (recognizedKeywords.includes(element) && index < array.length - 1) {
+                let lowerCaseElement = element.toLowerCase();
+                if (recognizedKeywords.includes(lowerCaseElement) && index < array.length - 1) {
                     let value = array.slice(index + 1).join(' ');
-                    keyValuePairs[element] = value;
-                    recognizedKeywords = recognizedKeywords.filter(item => item !== element);
+                    keyValuePairs[lowerCaseElement] = value;
+                    recognizedKeywords = recognizedKeywords.filter(item => item !== lowerCaseElement);
                 }
             });
-        });
+        }
         
+        // Process all key-values
         for (var key in keyValuePairs) {
             let value = keyValuePairs[key];
             value = value.trim().replace('–','-');
-            //console.log('SFSBP | Processing key: ' + key + ', with value: ' + value + '.');
+            //SFSBPUtils.log('Processing key: ' + key + ', with value: ' + value + '.');
             
-            if (key == "HP") {
+            if (SFSBP.statMapping[key] != undefined) {
                 let values = value.split(' ');
-                actorData["data.attributes.hp.value"] = values[0];
-                actorData["data.attributes.hp.max"] = values[0];
+                for (let mappedKey of SFSBP.statMapping[key]) {
+                    actorData[mappedKey] = values[0];
+                }
             }
-            else if (key == "Init") {
-                let values = value.split(' ');
-                actorData["data.attributes.init.total"] = values[0];
-            }
-            else if (key == "EAC") {
-                let values = value.split(' ');
-                actorData["data.attributes.eac.value"] = values[0];
-            }
-            else if (key == "KAC") {
-                let values = value.split(' ');
-                actorData["data.attributes.kac.value"] = values[0];
-            }
-            else if (key == "Fort") {
-                let values = value.split(' ');
-                actorData["data.attributes.fort.bonus"] = values[0];
-            }
-            else if (key == "Ref") {
-                let values = value.split(' ');
-                actorData["data.attributes.reflex.bonus"] = values[0];
-            }
-            else if (key == "Will") {
-                let values = value.split(' ');
-                actorData["data.attributes.will.bonus"] = values[0];
-            }
-            else if (key == "Perception") {
+            else if (key == "perception") {
                 let values = value.split(' ');
                 actorData["data.skills.per.enabled"] = true;
                 actorData["data.skills.per.mod"] = values[0];
             }
-            else if (key == "Speed") {
-                actorData["data.attributes.speed.value"] = value;
-            }
-            else if (key == "Str") {
-                actorData["data.abilities.str.mod"] = parseInt(value);
-            }
-            else if (key == "Dex") {
-                actorData["data.abilities.dex.mod"] = parseInt(value);
-            }
-            else if (key == "Con") {
-                actorData["data.abilities.con.mod"] = parseInt(value);
-            }
-            else if (key == "Int") {
-                actorData["data.abilities.int.mod"] = parseInt(value);
-            }
-            else if (key == "Wis") {
-                actorData["data.abilities.wis.mod"] = parseInt(value);
-            }
-            else if (key == "Cha") {
-                actorData["data.abilities.cha.mod"] = parseInt(value);
-            }
-            else if (key == "Skills") {
+            else if (key == "skills") {
                 let skillPairs = value.split(',');
                 skillPairs.forEach(pair => {
                     let skillPair = pair.trim().split(' ');
-                    //console.log('SFSBP | Splitting: ' + pair + ', into: ' + skillPair + '.');
+                    //SFSBPUtils.log('Splitting: ' + pair + ', into: ' + skillPair + '.');
                     
                     let skillName = skillPair[0].substring(0,3).toLowerCase();
                     let skillModifier = skillPair[1];
-                    //console.log('SFSBP | Processing skill: ' + skillName + ', with modifier: ' + skillModifier + '.');
+                    //SFSBPUtils.log('Processing skill: ' + skillName + ', with modifier: ' + skillModifier + '.');
 
                     actorData["data.skills." + skillName + ".enabled"] = true;
                     actorData["data.skills." + skillName + ".mod"] = skillModifier;
                 });
             }
-            else if (key == "Senses") {
+            else if (key == "senses") {
                 actorData["data.traits.senses"] = value;
             }
-            else if (key == "SR") {
+            else if (key == "sr") {
                 actorData["data.traits.sr"] = value;
             }
-            else if (key == "DR") {
+            else if (key == "dr") {
                 let damageReduction = value.split('/');
                 actorData["data.traits.damageReduction.value"] = damageReduction[0].trim();
                 actorData["data.traits.damageReduction.negatedBy"] = damageReduction[1].trim();
             }
-            else if (key == "Melee") {
+            else if (key == "melee") {
                 let allAttacks = value.split(/\sor\s|,/);
                 for (let attack of allAttacks) {
-                    attack = attack.trim();
-                    
-                    let itemData = await this.parseAttack(attack, true);
+                    let itemData = await this.parseAttack(attack.trim(), true);
                     items.push(itemData);
-                    
-                    //console.log('SFSBP | Melee attack: ' + attackName + ' (' + attackModifier + '), with damage: ' + attackDamageRoll + ' of ' + attackDamageType + '.');
                 }
             }
-            else if (key == "Ranged") {
+            else if (key == "ranged") {
                 let allAttacks = value.split(/\sor\s|,/);
                 for (let attack of allAttacks) {
-                    attack = attack.trim();
-                    
-                    let itemData = await this.parseAttack(attack, false);
+                    let itemData = await this.parseAttack(attack.trim(), false);
                     items.push(itemData);
-                    
-                    //console.log('SFSBP | Ranged Attack: ' + attackName + ' (' + attackModifier + '), with damage: ' + attackDamageRoll + ' of ' + attackDamageType + '.');
                 }
             }
         }
 
-        //console.log('SFSBP | Parsed ' + tokens.length + ' tokens.');
-        //console.log('SFSBP | JSON: ' + JSON.stringify(actorData));
+        //SFSBPUtils.log('Parsed ' + tokens.length + ' tokens.');
+        //SFSBPUtils.log('JSON: ' + JSON.stringify(actorData));
         
         return {success: true, actorData: actorData, items: items};
-    }
-    
-    camelize(str) {
-        return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {
-            return word.toUpperCase();
-        }).replace(/\s+/g, ' ');
     }
 }
