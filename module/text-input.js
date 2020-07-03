@@ -2,7 +2,7 @@
  * A helper Dialog subclass for taking user input
  * @type {Dialog}
  */
-export class TextInputDialog extends Dialog {
+export class SBTextInputDialog extends Dialog {
     constructor(actor, dialogData={}, options={}) {
         super(dialogData, options);
         this.options.classes = ["sfrpg", "dialog"];
@@ -23,11 +23,11 @@ export class TextInputDialog extends Dialog {
 
     async _onTextChanged(event) {
         const textEntryBox = event.currentTarget;
-        TextInputDialog.enteredText = textEntryBox.value;
+        SBTextInputDialog.enteredText = textEntryBox.value;
     }
 
     static async textInputDialog({actor, title, originalText=""}={}) {
-        TextInputDialog.enteredText = originalText;
+        SBTextInputDialog.enteredText = originalText;
         const html = await renderTemplate("modules/sfrpg-statblock-parser/templates/text-input.html", {
           originalText: originalText
         });
@@ -39,12 +39,12 @@ export class TextInputDialog extends Dialog {
                     ok: {
                         icon: '<i class="fas fa-check"></i>',
                         label: "Ok",
-                        callback: () => resolve({result: true, text: TextInputDialog.enteredText})
+                        callback: () => resolve({result: true, text: SBTextInputDialog.enteredText})
                     },
                     cancel: {
                         icon: '<i class="fas fa-times"></i>',
                         label: "Cancel",
-                        callback: () => resolve({result: false, text: TextInputDialog.enteredText})
+                        callback: () => resolve({result: false, text: SBTextInputDialog.enteredText})
                     }
                 }
             });

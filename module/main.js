@@ -1,9 +1,10 @@
-import { TextInputDialog } from "./text-input.js";
-import { SBStatblockParser } from "./statblockparser.js";
 import { ActorSheetSFRPGNPC } from "../../../systems/sfrpg/module/actor/sheet/npc.js";
+
+import { SBStatblockParser } from "./statblockparser.js";
+import { SBTextInputDialog } from "./text-input.js";
 import { SBUtils } from "./utils.js";
 
-class SFSBPProgram {
+class SBProgram {
     static ensureParseStatblockVisible() {
         let statblockParseButton = document.getElementById("SFSBP-button");
         if (statblockParseButton != null) {
@@ -17,7 +18,7 @@ class SFSBPProgram {
 
             statblockParseButton = document.createElement("button");
             statblockParseButton.innerHTML = `<i id="SFSBP-button" class="fas fa-list"></i>Parse Statblock`;
-            statblockParseButton.onclick = SFSBPProgram.openSFSBP;
+            statblockParseButton.onclick = SBProgram.openSFSBP;
 
             const createEntityButton = actorFooter.getElementsByClassName("create-entity")[0];
             actorFooter.insertBefore(statblockParseButton, createEntityButton);
@@ -27,19 +28,18 @@ class SFSBPProgram {
     static async openSFSBP() {
         SBUtils.log("Opening Statblock Parser.");
 
-        let textResult = await TextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
+        let textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
           if (this.statblockParser === undefined) {
               this.statblockParser = new SBStatblockParser();
           }
           
           // Create actor
-          SBUtils.log("Preparing new actor.");
           let actorData = {name: "Generated Actor", type: "npc"};
           let items = [];
           
           // Start parsing
-          SBUtils.log("Starting parsing...");
+          SBUtils.log("Starting parsing input.");
           try {
               let parseResult = await this.statblockParser.parseStatblock(actorData, textResult.text);
               if (!parseResult.success) {
@@ -55,12 +55,14 @@ class SFSBPProgram {
               return;
           }
 
+          SBUtils.log("> Creating actor.");
           let actor = await Actor.create(actorData);
           if (actor == null) {
               SBUtils.log("Failed to create new actor.");
               return;
           }
           
+          SBUtils.log("> Adding items.");
           if (items.length > 0)
           {
               items.forEach(itemData => {
@@ -68,6 +70,7 @@ class SFSBPProgram {
               });
           }
           
+          SBUtils.log("Actor created, opening sheet.");
           let sheet = new ActorSheetSFRPGNPC(actor);
           sheet.render(true);
         }
@@ -77,7 +80,7 @@ class SFSBPProgram {
 /** Ensure the "Parse Statblock" button is visible. */
 Hooks.on("renderSidebarTab", async (app, html) => {
     if (app.options.id == "actors") {
-        SFSBPProgram.ensureParseStatblockVisible();
+        SBProgram.ensureParseStatblockVisible();
     }
 });
 SBUtils.log("SFRPG Statblock Parser initialized.");

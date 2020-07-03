@@ -1,5 +1,5 @@
-import { SBUtils, SBConfig } from "./utils.js";
 import { SBParserMapping } from "./parsers.js";
+import { SBUtils, SBConfig } from "./utils.js";
 
 export class SBStatblockParser {
     /** Parses the passed along statblock into the passed along actor data block. */
