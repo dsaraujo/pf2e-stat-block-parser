@@ -7,21 +7,18 @@ export class SBStatblockParser {
         if (actorData == null || statBlockText == null || statBlockText.length == 0) {
             return {success: false};
         }
-        
-        actorData["data.attributes.sp.max"] = 0;
-        actorData["data.attributes.rp.max"] = 0;
 
+        let recognizedKeywords = Object.keys(SBParserMapping.parsers);
         let tokens = [];
         let items = [];
         
+        // NPCs by default have no SP or RP
+        actorData["data.attributes.sp.max"] = 0;
+        actorData["data.attributes.rp.max"] = 0;
+
         // Start parsing text
-        let splitNewlines = statBlockText.split(/[\r\n]+/);
-        
-        let recognizedKeywords = ["HP", "Init", "Perception", "EAC", "KAC", "Fort", "Ref", "Will", "Speed",
-            "Str", "Dex", "Con", "Int", "Wis", "Cha", "Skills", "Senses", "SR", "DR", "Languages", "Melee", "Ranged"];
-        recognizedKeywords = recognizedKeywords.map(x => x.toLowerCase());
-        
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
+        let splitNewlines = statBlockText.split(/[\r\n]+/);
         splitNewlines.forEach(line => {
             let nameBlock = line.split(/(.*)\sCR\s(\d*\/?\d*)/i);
             if (nameBlock[0].length == 0) {
@@ -94,7 +91,6 @@ export class SBStatblockParser {
             if (parser != undefined)
             {
                 let parsedData = await parser.parse(key, value);
-                //SBUtils.log("Parsed: " + JSON.stringify(parsedData));
 
                 if (parsedData.actorData != undefined) {
                     actorData = {...actorData, ...parsedData.actorData};
@@ -103,7 +99,6 @@ export class SBStatblockParser {
                 if (parsedData.items != undefined) {
                     items = items.concat(parsedData.items);
                 }
-                //SBUtils.log("Merged: " + JSON.stringify(actorData));
             }
         }
 

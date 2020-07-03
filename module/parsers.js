@@ -67,11 +67,11 @@ class SBSkillsParser {
         let skillPairs = value.split(',');
         for (let pair of skillPairs) {
             let skillPair = pair.trim().split(' ');
-            let skillName = skillPair[0].substring(0,3).toLowerCase();
+            let skillName = skillPair[0];
             let skillModifier = skillPair[1];
 
             let skillData = await skillParser.parse(skillName, skillModifier);
-            parsedData = { ...parsedData, ...skillData };
+            parsedData = { ...parsedData, ...skillData.actorData };
         }
 
         return {actorData: parsedData};
@@ -138,6 +138,8 @@ let parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;
 
 SBParserMapping.parsers = {
     "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
+    "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
+    "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
     "init": new SBSingleValueParser(["data.attributes.init.total"]),
     "eac": new SBSingleValueParser(["data.attributes.eac.value"]),
     "kac": new SBSingleValueParser(["data.attributes.kac.value"]),
