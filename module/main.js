@@ -3,6 +3,7 @@ import { ActorSheetSFRPGNPC } from "../../../systems/sfrpg/module/actor/sheet/np
 import { SBStatblockParser } from "./statblockparser.js";
 import { SBTextInputDialog } from "./text-input.js";
 import { SBUtils } from "./utils.js";
+import { SBVTTESParser } from "./vttesparser.js";
 
 class SBProgram {
     static ensureParseStatblockVisible() {
@@ -30,18 +31,22 @@ class SBProgram {
 
         let textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
-          if (this.statblockParser === undefined) {
-              this.statblockParser = new SBStatblockParser();
-          }
-          
           // Create actor
+          let dataFormat = textResult.dataFormat;
           let actorData = {name: "Generated Actor", type: "npc"};
           let items = [];
+
+          let selectedParser = null;
+          if (dataFormat === "vttes") {
+              selectedParser = new SBVTTESParser();
+          } else {
+              selectedParser = new SBStatblockParser();
+          }
           
           // Start parsing
-          SBUtils.log("Starting parsing input.");
+          SBUtils.log("Starting parsing input for format: " + dataFormat);
           try {
-              let parseResult = await this.statblockParser.parseStatblock(actorData, textResult.text);
+              let parseResult = await selectedParser.parseInput(actorData, textResult.text.trim());
               if (!parseResult.success) {
                   SBUtils.log("Parsing failed.");
                   return;

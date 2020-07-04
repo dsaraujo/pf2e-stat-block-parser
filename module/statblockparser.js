@@ -3,8 +3,8 @@ import { SBUtils, SBConfig } from "./utils.js";
 
 export class SBStatblockParser {
     /** Parses the passed along statblock into the passed along actor data block. */
-    async parseStatblock(actorData, statBlockText) {
-        if (actorData == null || statBlockText == null || statBlockText.length == 0) {
+    async parseInput(actorData, inputText) {
+        if (actorData == null || !inputText) {
             return {success: false};
         }
 
@@ -18,7 +18,7 @@ export class SBStatblockParser {
 
         // Start parsing text
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
-        let splitNewlines = statBlockText.split(/[\r\n]+/);
+        let splitNewlines = inputText.split(/[\r\n]+/);
         splitNewlines.forEach(line => {
             let nameBlock = line.split(/(.*)\sCR\s(\d*\/?\d*)/i);
             if (nameBlock[0].length == 0) {

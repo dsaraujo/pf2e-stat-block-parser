@@ -1,3 +1,5 @@
+import { SBUtils } from "./utils.js";
+
 /**
  * A helper Dialog subclass for taking user input
  * @type {Dialog}
@@ -17,8 +19,16 @@ export class SBTextInputDialog extends Dialog {
     activateListeners(html) {
         super.activateListeners(html);
 
+        let textFormatSelector = html.find('#text-format');
+        textFormatSelector.change(this._onDataFormatChanged.bind(this));
+
         let textEntryBox = html.find('#text-entry');
         textEntryBox.change(this._onTextChanged.bind(this));
+    }
+
+    async _onDataFormatChanged(event) {
+        const textFormatSelector = event.currentTarget;
+        SBTextInputDialog.dataFormat = textFormatSelector.value;
     }
 
     async _onTextChanged(event) {
@@ -27,6 +37,7 @@ export class SBTextInputDialog extends Dialog {
     }
 
     static async textInputDialog({actor, title, originalText=""}={}) {
+        SBTextInputDialog.dataFormat = "statblock";
         SBTextInputDialog.enteredText = originalText;
         const html = await renderTemplate("modules/sfrpg-statblock-parser/templates/text-input.html", {
           originalText: originalText
@@ -39,12 +50,12 @@ export class SBTextInputDialog extends Dialog {
                     ok: {
                         icon: '<i class="fas fa-check"></i>',
                         label: "Ok",
-                        callback: () => resolve({result: true, text: SBTextInputDialog.enteredText})
+                        callback: () => resolve({result: true, text: SBTextInputDialog.enteredText, dataFormat: SBTextInputDialog.dataFormat})
                     },
                     cancel: {
                         icon: '<i class="fas fa-times"></i>',
                         label: "Cancel",
-                        callback: () => resolve({result: false, text: SBTextInputDialog.enteredText})
+                        callback: () => resolve({result: false, text: SBTextInputDialog.enteredText, dataFormat: SBTextInputDialog.dataFormat})
                     }
                 }
             });
