@@ -1,3 +1,5 @@
+import { SFRPG } from "../../../systems/sfrpg/module/config.js";
+
 import { SBUtils, SBConfig } from "./utils.js";
 
 export class SBParserMapping {}
@@ -134,6 +136,28 @@ class SBAttackParser {
     }
 }
 
+class SBLanguageParser {
+    async parse(key, value) {
+        let supportedLanguages = Object.keys(SFRPG.languages).map(x => x.toLowerCase());
+        let parsedLanguages = {"value": [], "custom": ""};
+
+        let knownLanguages = value.split(',');
+        for (let language of knownLanguages) {
+            let lowerCaseLanguage = language.trim().toLowerCase();
+            if (supportedLanguages.includes(lowerCaseLanguage)) {
+                parsedLanguages.value.push(lowerCaseLanguage);
+            } else {
+                if (parsedLanguages.custom.length > 0) {
+                    parsedLanguages.custom += ", ";
+                }
+                parsedLanguages.custom += lowerCaseLanguage;
+            }
+        }
+
+        return {actorData: {"data.traits.languages": parsedLanguages}};
+    }
+}
+
 let parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
 
 SBParserMapping.parsers = {
@@ -159,5 +183,6 @@ SBParserMapping.parsers = {
     "skills": new SBSkillsParser(),
     "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/"),
     "melee": new SBAttackParser(true),
-    "ranged": new SBAttackParser(false)
+    "ranged": new SBAttackParser(false), 
+    "languages": new SBLanguageParser()
 };
