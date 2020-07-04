@@ -16,29 +16,35 @@ export class SBStatblockParser {
         actorData["data.attributes.sp.max"] = 0;
         actorData["data.attributes.rp.max"] = 0;
 
+        let bNameHandled = false;
+        let bSizeHandled = false;
+
         // Start parsing text
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
         let splitNewlines = inputText.split(/[\r\n]+/);
         splitNewlines.forEach(line => {
-            let nameBlock = line.split(/(.*)\sCR\s(\d*\/?\d*)/i);
-            if (nameBlock[0].length == 0) {
-                let npcName = SBUtils.camelize(nameBlock[1].toLowerCase());
-                let npcCR = nameBlock[2];
-                
-                let crs = { "1/8" : 0.125, "1/6" : 1/6, "1/4": 0.25, "1/3": 1/3, "1/2": 0.5 };
+            if (!bNameHandled) {
+                let nameBlock = line.split(/(.*)\sCR\s(\d*\/?\d*)/i);
+                if (nameBlock[0].length == 0) {
+                    let npcName = SBUtils.camelize(nameBlock[1].toLowerCase());
+                    let npcCR = nameBlock[2];
+                    
+                    let crs = { "1/8" : 0.125, "1/6" : 1/6, "1/4": 0.25, "1/3": 1/3, "1/2": 0.5 };
 
-                if (crs[npcCR] != null) {
-                    npcCR = crs[npcCR];
-                } else {
-                    let parsedCR = parseFloat(npcCR);
-                    if (!isNaN(parsedCR)) {
-                        npcCR = parsedCR;
+                    if (crs[npcCR] != null) {
+                        npcCR = crs[npcCR];
+                    } else {
+                        let parsedCR = parseFloat(npcCR);
+                        if (!isNaN(parsedCR)) {
+                            npcCR = parsedCR;
+                        }
                     }
+                    
+                    bNameHandled = true;
+                    actorData['name'] = npcName;
+                    actorData['data.details.cr'] = npcCR;
+                    return;
                 }
-                
-                actorData['name'] = npcName;
-                actorData['data.details.cr'] = npcCR;
-                return;
             }
             
             if (SBUtils.stringStartsWith(line, "melee", false) || SBUtils.stringStartsWith(line, "ranged", false)) {
@@ -46,18 +52,21 @@ export class SBStatblockParser {
                 return;
             }
             
-            let sizeBlock = line.split(/(.*)\s(Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s(.*)/i);
-            if (sizeBlock[0].length == 0) {
-                let alignment = sizeBlock[1];
-                let size = sizeBlock[2];
-                let type = sizeBlock[3];
+            if (!bSizeHandled) {
+                let sizeBlock = line.split(/(.*)\s(Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s(.*)/i);
+                if (sizeBlock[0].length == 0) {
+                    let alignment = sizeBlock[1];
+                    let size = sizeBlock[2];
+                    let type = sizeBlock[3];
 
-                size = size.toLowerCase();
-                
-                actorData['data.details.type'] = SBUtils.camelize(type);
-                actorData['data.details.alignment'] = alignment;
-                actorData['data.traits.size'] = size;
-                return;
+                    size = size.toLowerCase();
+                    
+                    bSizeHandled = true;
+                    actorData['data.details.type'] = SBUtils.camelize(type);
+                    actorData['data.details.alignment'] = alignment;
+                    actorData['data.traits.size'] = size;
+                    return;
+                }
             }
           
             let splitTokens = line.split(';');
