@@ -63,8 +63,7 @@ class SBProgram {
           }
           
           SBUtils.log("> Adding items.");
-          if (items.length > 0)
-          {
+          if (items.length > 0) {
               items.forEach(itemData => {
                   actor.createOwnedItem(itemData);
               });

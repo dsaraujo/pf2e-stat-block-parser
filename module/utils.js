@@ -44,8 +44,7 @@ export class SBUtils {
     static stringStartsWith(string, searchString, bCaseSensitive = true) {
         if (bCaseSensitive) {
             return startPart.startsWith(searchString);
-        }
-        else {
+        } else {
             let startPart = string.substring(0, searchString.length);
             return startPart.toLowerCase() === searchString.toLowerCase();
         }

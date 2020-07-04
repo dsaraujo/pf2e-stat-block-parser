@@ -29,8 +29,7 @@ export class SBStatblockParser {
 
                 if (crs[npcCR] != null) {
                     npcCR = crs[npcCR];
-                }
-                else {
+                } else {
                     let parsedCR = parseFloat(npcCR);
                     if (!isNaN(parsedCR)) {
                         npcCR = parsedCR;
@@ -88,8 +87,7 @@ export class SBStatblockParser {
             //SBUtils.log('Processing key: ' + key + ', with value: ' + value + '.');
             
             let parser = SBParserMapping.parsers[key];
-            if (parser != undefined)
-            {
+            if (parser != undefined) {
                 let parsedData = await parser.parse(key, value);
 
                 if (parsedData.actorData != undefined) {
