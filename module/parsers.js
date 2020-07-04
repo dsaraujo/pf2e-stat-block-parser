@@ -4,6 +4,7 @@ import { SBUtils, SBConfig } from "./utils.js";
 
 export class SBParserMapping {}
 
+/** Convenience helper, tries to parse the number to integer, if it is NaN, will return 0 instead. */
 let parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
 
 class SBSingleValueParser {
@@ -149,25 +150,44 @@ class SBAttackParser {
     }
 }
 
-class SBLanguageParser {
-    async parse(key, value) {
-        let supportedLanguages = Object.keys(SFRPG.languages).map(x => x.toLowerCase());
-        let parsedLanguages = {"value": [], "custom": ""};
+class SBTraitParser {
+    constructor(traitField, supportedValues) {
+        this.traitField = traitField;
+        this.supportedValues = supportedValues;
+    }
 
-        let knownLanguages = value.split(',');
-        for (let language of knownLanguages) {
-            let lowerCaseLanguage = language.trim().toLowerCase();
-            if (supportedLanguages.includes(lowerCaseLanguage)) {
-                parsedLanguages.value.push(lowerCaseLanguage);
-            } else {
-                if (parsedLanguages.custom.length > 0) {
-                    parsedLanguages.custom += ", ";
+    async parse(key, value) {
+        let parsedValues = {"value": [], "custom": ""};
+
+        SBUtils.log("Parsing trait: " + key + ", supported: " + this.supportedValues);
+
+        let values = value.split(',');
+        for (let traitValue of values) {
+            let splitTrait = traitValue.trim().toLowerCase().split(' ');
+            
+            let traitName = splitTrait[0]
+            let traitModifier = splitTrait.length > 1 ? splitTrait[1] : null;
+
+            SBUtils.log("Trait: " + traitName + ", supported: " + this.supportedValues.includes(traitName));
+            if (this.supportedValues.includes(traitName)) {
+                if (traitModifier != null) {
+                    let trait = {};
+                    trait[traitName] = traitModifier;
+                    parsedValues.value.push(trait);
+                } else {
+                    parsedValues.value.push(traitName);
                 }
-                parsedLanguages.custom += SBUtils.camelize(language);
+            } else {
+                if (parsedValues.custom.length > 0) {
+                    parsedValues.custom += ", ";
+                }
+                parsedValues.custom += SBUtils.camelize(traitName);
             }
         }
 
-        return {actorData: {"data.traits.languages": parsedLanguages}};
+        let actorData = {};
+        actorData[this.traitField] = parsedValues;
+        return {actorData: actorData};
     }
 }
 
@@ -195,5 +215,6 @@ SBParserMapping.parsers = {
     "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/"),
     "melee": new SBAttackParser(true),
     "ranged": new SBAttackParser(false), 
-    "languages": new SBLanguageParser()
+    "languages": new SBTraitParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
+    "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase()))
 };
