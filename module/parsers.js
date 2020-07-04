@@ -150,7 +150,7 @@ class SBLanguageParser {
                 if (parsedLanguages.custom.length > 0) {
                     parsedLanguages.custom += ", ";
                 }
-                parsedLanguages.custom += lowerCaseLanguage;
+                parsedLanguages.custom += SBUtils.camelize(language);
             }
         }
 
