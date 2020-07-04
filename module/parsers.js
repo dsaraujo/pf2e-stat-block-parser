@@ -7,8 +7,29 @@ export class SBParserMapping {}
 /** Convenience helper, tries to parse the number to integer, if it is NaN, will return 0 instead. */
 let parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
 
-class SBSingleValueParser {
+export class SBParserBase {
+    constructor() {
+
+    }
+
+    async parse(key, value) {
+        return {};
+    }
+}
+
+export class SBCategoryParserBase extends SBParserBase {
+    constructor() {
+        super();
+    }
+
+    async parse(key, value) {
+        return {};
+    }
+}
+
+class SBSingleValueParser extends SBParserBase {
     constructor(targetFields, bFirstValue = true, valueConverter = (value) => value) {
+        super();
         this.targetFields = targetFields;
         this.bFirstValue = bFirstValue;
         this.valueConverter = valueConverter;
@@ -29,8 +50,9 @@ class SBSingleValueParser {
     }
 }
 
-class SBSplitValueParser {
+class SBSplitValueParser extends SBParserBase {
     constructor(targetFields, delimiter) {
+        super();
         this.targetFields = targetFields;
         this.delimiter = delimiter;
     }
@@ -52,7 +74,7 @@ class SBSplitValueParser {
     }
 }
 
-class SBSkillParser {
+class SBSkillParser extends SBParserBase {
     async parse(key, value) {
         let skillName = SBConfig.skillMapping[key.toLowerCase()];
         if (!skillName) {
@@ -68,7 +90,7 @@ class SBSkillParser {
     }
 }
 
-class SBSkillsParser {
+class SBSkillsParser extends SBParserBase {
     async parse(key, value) {
         let parsedData = {};
         let skillParser = new SBSkillParser();
@@ -93,8 +115,9 @@ class SBSkillsParser {
     }
 }
 
-class SBAttackParser {
+class SBAttackParser extends SBParserBase {
     constructor(bIsMelee) {
+        super();
         this.bIsMelee = bIsMelee;
     }
 
@@ -160,8 +183,9 @@ class SBAttackParser {
     }
 }
 
-class SBTraitParser {
+class SBTraitParser extends SBParserBase {
     constructor(traitField, supportedValues) {
+        super();
         this.traitField = traitField;
         this.supportedValues = supportedValues;
     }
@@ -201,7 +225,7 @@ class SBTraitParser {
     }
 }
 
-class SBWeaknessesParser {
+class SBWeaknessesParser extends SBParserBase {
     async parse(key, value) {
         let recognizedWeaknesses = Object.keys(SFRPG.damageTypes).map(x => x.toLowerCase());
 
@@ -227,7 +251,7 @@ class SBWeaknessesParser {
     }
 }
 
-class SBImmunitiesParser {
+class SBImmunitiesParser extends SBParserBase {
     async parse(key, value) {
         let recognizedConditionImmunities = Object.keys(SFRPG.conditionTypes).map(x => x.toLowerCase());
         let recognizedDamageImmunities = Object.keys(SFRPG.damageTypes).map(x => x.toLowerCase());
@@ -264,31 +288,51 @@ class SBImmunitiesParser {
 }
 
 SBParserMapping.parsers = {
-    "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
-    "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
-    "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
-    "init": new SBSingleValueParser(["data.attributes.init.total"]),
-    "eac": new SBSingleValueParser(["data.attributes.eac.value"]),
-    "kac": new SBSingleValueParser(["data.attributes.kac.value"]),
-    "fort": new SBSingleValueParser(["data.attributes.fort.bonus"]),
-    "ref": new SBSingleValueParser(["data.attributes.reflex.bonus"]),
-    "will": new SBSingleValueParser(["data.attributes.will.bonus"]),
-    "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
-    "str": new SBSingleValueParser(["data.abilities.str.mod"], false, parseInteger),
-    "dex": new SBSingleValueParser(["data.abilities.dex.mod"], false, parseInteger),
-    "con": new SBSingleValueParser(["data.abilities.con.mod"], false, parseInteger),
-    "int": new SBSingleValueParser(["data.abilities.int.mod"], false, parseInteger),
-    "wis": new SBSingleValueParser(["data.abilities.wis.mod"], false, parseInteger),
-    "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, parseInteger),
-    "senses": new SBSingleValueParser(["data.traits.senses"], false),
-    "sr": new SBSingleValueParser(["data.traits.sr"], false),
-    "perception": new SBSkillParser(),
-    "skills": new SBSkillsParser(),
-    "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/"),
-    "melee": new SBAttackParser(true),
-    "ranged": new SBAttackParser(false), 
-    "languages": new SBTraitParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
-    "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())),
-    "weaknesses": new SBWeaknessesParser(),
-    "immunities": new SBImmunitiesParser()
+    "base": {
+        "init": new SBSingleValueParser(["data.attributes.init.total"]),
+        "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
+        "senses": new SBSingleValueParser(["data.traits.senses"], false),
+        "perception": new SBSkillParser()
+    },
+    "defense": {
+        "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
+        "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
+        "eac": new SBSingleValueParser(["data.attributes.eac.value"]),
+        "kac": new SBSingleValueParser(["data.attributes.kac.value"]),
+        "fort": new SBSingleValueParser(["data.attributes.fort.bonus"]),
+        "ref": new SBSingleValueParser(["data.attributes.reflex.bonus"]),
+        "will": new SBSingleValueParser(["data.attributes.will.bonus"]),
+        "sr": new SBSingleValueParser(["data.traits.sr"], false),
+        "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/"),
+        "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())),
+        "weaknesses": new SBWeaknessesParser(),
+        "immunities": new SBImmunitiesParser(),
+        "defensive abilities": null
+    },
+    "offense": {
+        "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
+        "melee": new SBAttackParser(true),
+        "ranged": new SBAttackParser(false),
+        "offensive abilities": null,
+        "* spell-like abilities": null,
+        "* spells known": null
+    },
+    "statistics": {
+        "str": new SBSingleValueParser(["data.abilities.str.mod"], false, parseInteger),
+        "dex": new SBSingleValueParser(["data.abilities.dex.mod"], false, parseInteger),
+        "con": new SBSingleValueParser(["data.abilities.con.mod"], false, parseInteger),
+        "int": new SBSingleValueParser(["data.abilities.int.mod"], false, parseInteger),
+        "wis": new SBSingleValueParser(["data.abilities.wis.mod"], false, parseInteger),
+        "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, parseInteger),
+        "skills": new SBSkillsParser(),
+        "languages": new SBTraitParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
+        "other abilities": null,
+        "gear": null,
+        "* telepathy": null
+    },
+    "tactics": {
+        "combat": null,
+        "morale": null
+    },
+    "special abilities": null
 };
