@@ -4,6 +4,8 @@ import { SBUtils, SBConfig } from "./utils.js";
 
 export class SBParserMapping {}
 
+let parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
+
 class SBSingleValueParser {
     constructor(targetFields, bFirstValue = true, valueConverter = (value) => value) {
         this.targetFields = targetFields;
@@ -127,10 +129,21 @@ class SBAttackParser {
         itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
         itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
         itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
-        itemData["data.attackBonus"] = attackModifier;
+        itemData["data.attackBonus"] = parseInteger(attackModifier);
         itemData["data.damage"] = {parts: [[attackDamageRoll, attackDamageType]]};
-        itemData["data.critical"] = {"effect": "", "parts": [["1d4", "burn"]]};
-        itemData["data.chatFlavor"] = criticalDamage;
+
+        if (criticalDamage != "") {
+            let criticalDamageRegex = criticalDamage.split(/critical\s(.*)\s(.*)/i);
+            let criticalDamageEffect = criticalDamageRegex[1];
+            let criticalDamageRoll = criticalDamageRegex[2];
+            
+            if (criticalDamageEffect != "") {
+                itemData["data.critical.effect"] = SBUtils.camelize(criticalDamageEffect);
+            }
+            if (criticalDamageRoll != "") {
+                itemData["data.critical.parts"] = [[criticalDamageRoll, attackDamageType]];
+            }
+        }
         
         return itemData;
     }
@@ -157,8 +170,6 @@ class SBLanguageParser {
         return {actorData: {"data.traits.languages": parsedLanguages}};
     }
 }
-
-let parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
 
 SBParserMapping.parsers = {
     "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
