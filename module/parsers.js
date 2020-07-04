@@ -159,7 +159,7 @@ class SBTraitParser {
     async parse(key, value) {
         let parsedValues = {"value": [], "custom": ""};
 
-        SBUtils.log("Parsing trait: " + key + ", supported: " + this.supportedValues);
+        //SBUtils.log("Parsing trait: " + key + ", supported: " + this.supportedValues);
 
         let values = value.split(',');
         for (let traitValue of values) {
@@ -168,7 +168,7 @@ class SBTraitParser {
             let traitName = splitTrait[0]
             let traitModifier = splitTrait.length > 1 ? splitTrait[1] : null;
 
-            SBUtils.log("Trait: " + traitName + ", supported: " + this.supportedValues.includes(traitName));
+            //SBUtils.log("Trait: " + traitName + ", supported: " + this.supportedValues.includes(traitName));
             if (this.supportedValues.includes(traitName)) {
                 if (traitModifier != null) {
                     let trait = {};
