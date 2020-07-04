@@ -27,6 +27,30 @@ SBConfig.weaponDamageTypes = {
     "s & so": "slashing+sonic"
 };
 
+SBConfig.skillMapping = {
+    "acrobatics": "acr",
+    "athletics": "ath",
+    "bluff": "blu",
+    "computers": "com",
+    "culture": "cul",
+    "diplomacy": "dip",
+    "disguise": "dis",
+    "disguise self": "dis",
+    "engineering": "eng",
+    "intimidate": "int",
+    "life science": "lsc",
+    "medicine": "med",
+    "mysticism": "mys",
+    "perception": "per",
+    "physical science": "phs",
+    "piloting": "pil",
+    "profession": "pro",
+    "sense motive": "sen",
+    "sleight of hand": "sle",
+    "stealth": "ste",
+    "survival": "sur"
+};
+
 export class SBUtils {
     static camelize(str) {
         return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {

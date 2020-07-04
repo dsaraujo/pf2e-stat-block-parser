@@ -54,7 +54,11 @@ class SBSplitValueParser {
 
 class SBSkillParser {
     async parse(key, value) {
-        let skillName = key.toLowerCase().substring(0, 3);
+        let skillName = SBConfig.skillMapping[key.toLowerCase()];
+        if (!skillName) {
+            skillName = key.toLowerCase().substring(0, 3);
+        }
+
         let values = value.split(' ');
 
         let parsedData = {};
@@ -71,9 +75,10 @@ class SBSkillsParser {
 
         let skillPairs = value.split(',');
         for (let pair of skillPairs) {
-            let skillPair = pair.trim().split(' ');
-            let skillName = skillPair[0];
-            let skillModifier = skillPair[1];
+            let skillPair = pair.trim().split(/(.*)\s([\+|-]\d*)/i);
+
+            let skillName = skillPair[1].trim();
+            let skillModifier = skillPair[2].trim();
 
             let skillData = await skillParser.parse(skillName, skillModifier);
             parsedData = { ...parsedData, ...skillData.actorData };
