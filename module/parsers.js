@@ -198,7 +198,7 @@ class SBTraitParser {
 
 class SBWeaknessesParser {
     async parse(key, value) {
-        let recognizedWeaknesses = Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase());
+        let recognizedWeaknesses = Object.keys(SFRPG.damageTypes).map(x => x.toLowerCase());
 
         let knownWeaknesses = [];
         let customWeaknesses = "";
@@ -218,6 +218,42 @@ class SBWeaknessesParser {
 
         let parsedData = {};
         parsedData["data.traits.dv"] = {"value": knownWeaknesses, "custom": customWeaknesses};
+        return {actorData: parsedData};
+    }
+}
+
+class SBImmunitiesParser {
+    async parse(key, value) {
+        let recognizedConditionImmunities = Object.keys(SFRPG.conditionTypes).map(x => x.toLowerCase());
+        let recognizedDamageImmunities = Object.keys(SFRPG.damageTypes).map(x => x.toLowerCase());
+
+        let knownConditionImmunities = [];
+        let knownDamageImmunities = [];
+        let customImmunities = "";
+
+        // Replace known cases
+        value = value.toLowerCase()
+            .replace("stunning", "stunned")
+            .replace("sleep", "asleep");
+
+        let rawImmunities = value.split(',');
+        for (let rawImmunity of rawImmunities) {
+            let parsedImmunity = rawImmunity.trim();
+            if (recognizedConditionImmunities.includes(parsedImmunity)) {
+                knownConditionImmunities.push(parsedImmunity);
+            } else if (recognizedDamageImmunities.includes(parsedImmunity)) {
+                knownDamageImmunities.push(parsedImmunity);
+            } else {
+                if (customImmunities) {
+                    customImmunities += ", ";
+                }
+                customImmunities += SBUtils.camelize(parsedImmunity);
+            }
+        }
+
+        let parsedData = {};
+        parsedData["data.traits.ci"] = {"value": knownConditionImmunities, "custom": customImmunities};
+        parsedData["data.traits.di"] = {"value": knownDamageImmunities, "custom": customImmunities};
         return {actorData: parsedData};
     }
 }
@@ -248,5 +284,6 @@ SBParserMapping.parsers = {
     "ranged": new SBAttackParser(false), 
     "languages": new SBTraitParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
     "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())),
-    "weaknesses": new SBWeaknessesParser()
+    "weaknesses": new SBWeaknessesParser(),
+    "immunities": new SBImmunitiesParser()
 };
