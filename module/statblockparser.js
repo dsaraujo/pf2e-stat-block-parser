@@ -17,6 +17,7 @@ export class SBStatblockParser {
 
         let bNameHandled = false;
         let bSizeHandled = false;
+        let bRaceHandled = false;
 
         let availableCategories = Object.keys(SBParserMapping.parsers);
         
@@ -64,18 +65,44 @@ export class SBStatblockParser {
                         return;
                     }
                 }
+
+                if (!bRaceHandled) {
+                    let genderRaceClassBlock = line.split(/(male|female|host)\s(.*)\s(\S*)/i);
+                    if (genderRaceClassBlock[0].length == 0) {
+                        let gender = genderRaceClassBlock[1];
+                        let race = genderRaceClassBlock[2];
+                        let npcClass = genderRaceClassBlock[3];
+
+                        bRaceHandled = true;
+                        actorData['data.details.gender'] = SBUtils.camelize(gender);
+                        actorData['data.details.race'] = SBUtils.camelize(race);
+                        actorData['data.details.class'] = SBUtils.camelize(npcClass);
+                        return;
+                    }
+                }
                 
                 if (!bSizeHandled) {
                     let sizeBlock = line.split(/(.*)\s(Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s(.*)/i);
                     if (sizeBlock[0].length == 0) {
                         let alignment = sizeBlock[1];
                         let size = sizeBlock[2];
-                        let type = sizeBlock[3];
+                        let typeRace = sizeBlock[3];
+
+                        let typeSeparation = typeRace.split(/(\S*)( \((.*)\))?/i);
+                        SBUtils.log(JSON.stringify(typeSeparation));
+                        let type = typeSeparation[1];
+                        let subType = "";
+                        if (typeSeparation.length > 3) {
+                            subType = typeSeparation[3];
+                        }
 
                         size = size.toLowerCase();
                         
                         bSizeHandled = true;
                         actorData['data.details.type'] = SBUtils.camelize(type);
+                        if (subType) {
+                            actorData['data.details.subtype'] = SBUtils.camelize(subType);
+                        }
                         actorData['data.details.alignment'] = alignment;
                         actorData['data.traits.size'] = size;
                         return;
