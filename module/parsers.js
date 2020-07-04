@@ -191,6 +191,32 @@ class SBTraitParser {
     }
 }
 
+class SBWeaknessesParser {
+    async parse(key, value) {
+        let recognizedWeaknesses = Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase());
+
+        let knownWeaknesses = [];
+        let customWeaknesses = "";
+
+        let weaknesses = value.split(',');
+        for (let rawWeakness of weaknesses) {
+            let parsedWeakness = rawWeakness.split(/vulnerab.*\sto\s(.*)/i);
+            if (parsedWeakness[0].length == 0 && recognizedWeaknesses.includes(parsedWeakness[1].toLowerCase())) {
+                knownWeaknesses.push(parsedWeakness[1].toLowerCase());
+            } else {
+                if (customWeaknesses) {
+                    customWeaknesses += ", ";
+                }
+                customWeaknesses += SBUtils.camelize(rawWeakness);
+            }
+        }
+
+        let parsedData = {};
+        parsedData["data.traits.dv"] = {"value": knownWeaknesses, "custom": customWeaknesses};
+        return {actorData: parsedData};
+    }
+}
+
 SBParserMapping.parsers = {
     "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
     "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
@@ -216,5 +242,6 @@ SBParserMapping.parsers = {
     "melee": new SBAttackParser(true),
     "ranged": new SBAttackParser(false), 
     "languages": new SBTraitParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
-    "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase()))
+    "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())),
+    "weaknesses": new SBWeaknessesParser()
 };
