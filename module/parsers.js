@@ -77,6 +77,11 @@ class SBSkillsParser {
         for (let pair of skillPairs) {
             let skillPair = pair.trim().split(/(.*)\s([\+|-]\d*)/i);
 
+            if (skillPair[0].length != 0 || !skillPair[1] || !skillPair[2]) {
+                //SBUtils.log("Failed to parse skill: " + pair);
+                continue;
+            }
+
             let skillName = skillPair[1].trim();
             let skillModifier = skillPair[2].trim();
 
