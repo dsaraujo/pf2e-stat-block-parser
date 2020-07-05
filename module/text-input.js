@@ -1,21 +1,10 @@
-import { SBUtils } from "./utils.js";
-
-/**
- * A helper Dialog subclass for taking user input
- * @type {Dialog}
- */
 export class SBTextInputDialog extends Dialog {
     constructor(actor, dialogData={}, options={}) {
         super(dialogData, options);
         this.options.classes = ["sfrpg", "dialog"];
-
-        /**
-         * Store a reference to the Actor entity which is resting
-         * @type {Actor}
-         */
         this.actor = actor;
     }
-    
+
     activateListeners(html) {
         super.activateListeners(html);
 
