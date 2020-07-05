@@ -298,6 +298,75 @@ class SBImmunitiesParser extends SBParserBase {
     }
 }
 
+class SBAbilityParser extends SBParserBase {
+    async parse(key, value) {
+        let items = [];
+
+        let parsedAbilities = {};
+        
+        let hierarchy = [];
+        let currentToken = "";
+        for (var i = 0; i<value.length; i++)
+        {
+            let character = value[i];
+            if (character === '(') {
+                hierarchy.push(currentToken.trim());
+                parsedAbilities[currentToken.trim()] = [];
+                currentToken = "";
+            } else if (character === ')') {
+                let top = hierarchy.length > 0 ? hierarchy[hierarchy.length - 1] : "";
+                if (top) {
+                    parsedAbilities[top].push(currentToken.trim());
+                } else {
+                    parsedAbilities[currentToken] = "";
+                }
+                currentToken = "";
+                hierarchy.pop();
+            } else if (character === ',') {
+                let top = hierarchy.length > 0 ? hierarchy[hierarchy.length - 1] : "";
+                if (top) {
+                    parsedAbilities[top].push(currentToken.trim());
+                } else {
+                    parsedAbilities[currentToken.trim()] = "";
+                }
+                currentToken = "";
+            } else {
+                currentToken += character;
+            }
+        }
+        if (currentToken != "") {
+            parsedAbilities[currentToken] = "";
+            currentToken = "";
+        }
+
+        //SBUtils.log("Abilities: " + JSON.stringify(parsedAbilities));
+        let abilityKeys = Object.keys(parsedAbilities);
+        for (let ability of abilityKeys) {
+            if (!ability) {
+                continue;
+            }
+
+            let abilityValue = parsedAbilities[ability];
+            ability = SBUtils.camelize(ability);
+            if (Array.isArray(abilityValue)) {
+                for (let subAbility of abilityValue) {
+                    let itemData = {};
+                    itemData["name"] = ability + " - " + SBUtils.camelize(subAbility);
+                    itemData["type"] = "feat";
+                    items.push(itemData);
+                    }
+            } else {
+                let itemData = {};
+                itemData["name"] = ability;
+                itemData["type"] = "feat";
+                items.push(itemData);
+            }
+        }
+
+        return {items: items};
+    }
+}
+
 SBParserMapping.parsers = {
     "base": {
         "init": new SBSingleValueParser(["data.attributes.init.total"]),
@@ -318,13 +387,13 @@ SBParserMapping.parsers = {
         "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())),
         "weaknesses": new SBWeaknessesParser(),
         "immunities": new SBImmunitiesParser(),
-        "defensive abilities": null
+        "defensive abilities": new SBAbilityParser()
     },
     "offense": {
         "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
         "melee": new SBAttackParser(true),
         "ranged": new SBAttackParser(false),
-        "offensive abilities": null,
+        "offensive abilities": new SBAbilityParser(),
         "* spell-like abilities": null,
         "* spells known": null
     },
@@ -337,7 +406,7 @@ SBParserMapping.parsers = {
         "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, parseInteger),
         "skills": new SBSkillsParser(),
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
-        "other abilities": null,
+        "other abilities": new SBAbilityParser(),
         "gear": null,
         "* telepathy": null
     },
