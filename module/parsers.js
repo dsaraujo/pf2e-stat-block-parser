@@ -370,13 +370,13 @@ class SBAbilityParser extends SBParserBase {
 SBParserMapping.parsers = {
     "base": {
         "init": new SBSingleValueParser(["data.attributes.init.total"]),
-        "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
         "senses": new SBSingleValueParser(["data.traits.senses"], false),
         "perception": new SBSkillParser()
     },
     "defense": {
         "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
         "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
+        "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
         "eac": new SBSingleValueParser(["data.attributes.eac.value"]),
         "kac": new SBSingleValueParser(["data.attributes.kac.value"]),
         "fort": new SBSingleValueParser(["data.attributes.fort.bonus"]),
