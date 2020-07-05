@@ -89,7 +89,6 @@ export class SBStatblockParser {
                         let typeRace = sizeBlock[3];
 
                         let typeSeparation = typeRace.split(/(\S*)( \((.*)\))?/i);
-                        SBUtils.log(JSON.stringify(typeSeparation));
                         let type = typeSeparation[1];
                         let subType = "";
                         if (typeSeparation.length > 3) {
@@ -178,6 +177,11 @@ export class SBStatblockParser {
                 }
 
                 if (parsedData.items != undefined) {
+                    for (let item of parsedData.items) {
+                        if (!item["name"]) {
+                            SBUtils.log("Parser for " + category + " produced an invalid item.");
+                        }
+                    }
                     items = items.concat(parsedData.items);
                 }
                 continue;
@@ -255,6 +259,11 @@ export class SBStatblockParser {
                     }
     
                     if (parsedData.items != undefined) {
+                        for (let item of parsedData.items) {
+                            if (!item["name"]) {
+                                SBUtils.log("Parser for " + category + "." + firstWord + " produced an invalid item.");
+                            }
+                        }
                         items = items.concat(parsedData.items);
                     }
                 } else {

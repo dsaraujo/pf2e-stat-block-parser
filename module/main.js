@@ -60,7 +60,7 @@ class SBProgram {
               return;
           }
 
-          SBUtils.log("> Creating actor.");
+          SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
           let actor = await Actor.create(actorData);
           if (actor == null) {
               SBUtils.log("Failed to create new actor.");
@@ -69,9 +69,10 @@ class SBProgram {
           
           SBUtils.log("> Adding items.");
           if (items.length > 0) {
-              items.forEach(itemData => {
-                  actor.createOwnedItem(itemData);
-              });
+              for (let itemData of items) {
+                  //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
+                  await actor.createOwnedItem(itemData);
+              }
           }
           
           SBUtils.log("Actor created, opening sheet.");
