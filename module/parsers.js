@@ -225,6 +225,17 @@ class SBTraitParser extends SBParserBase {
     }
 }
 
+class SBLanguagesParser extends SBTraitParser {
+    constructor(traitField, supportedValues) {
+        super(traitField, supportedValues);
+    }
+
+    async parse(key, value) {
+        value = value.toLowerCase().replace("lashunta", "castrovelian");
+        return super.parse(key, value);
+    }
+}
+
 class SBWeaknessesParser extends SBParserBase {
     async parse(key, value) {
         let recognizedWeaknesses = Object.keys(SFRPG.damageTypes).map(x => x.toLowerCase());
@@ -325,7 +336,7 @@ SBParserMapping.parsers = {
         "wis": new SBSingleValueParser(["data.abilities.wis.mod"], false, parseInteger),
         "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, parseInteger),
         "skills": new SBSkillsParser(),
-        "languages": new SBTraitParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
+        "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": null,
         "gear": null,
         "* telepathy": null
