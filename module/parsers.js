@@ -167,9 +167,9 @@ class SBAttackParser extends SBParserBase {
         itemData["data.damage"] = {parts: [[attackDamageRoll, attackDamageType]]};
 
         if (criticalDamage != "") {
-            let criticalDamageRegex = criticalDamage.split(/critical\s(.*)\s(.*)/i);
-            let criticalDamageEffect = criticalDamageRegex[1];
-            let criticalDamageRoll = criticalDamageRegex[2];
+            let criticalDamageRegex = criticalDamage.split(/(critical|crit)\s(.*)\s(.*)/i);
+            let criticalDamageEffect = criticalDamageRegex[2];
+            let criticalDamageRoll = criticalDamageRegex[3];
             
             if (criticalDamageEffect != "") {
                 itemData["data.critical.effect"] = SBUtils.camelize(criticalDamageEffect);
