@@ -412,6 +412,7 @@ SBParserMapping.parsers = {
     },
     "tactics": {
         "combat": null,
+        "during combat": null,
         "morale": null
     },
     "special abilities": null
