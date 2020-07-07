@@ -123,21 +123,27 @@ class SBAttackParser extends SBParserBase {
 
     async parse(key, value) {
         let items = [];
+        let errors = [];
         
         let allAttacks = value.split(/\sor\s|,/);
         for (let attack of allAttacks) {
-            let itemData = await this.parseAttack(attack.trim(), this.bIsMelee);
-            items.push(itemData);
+            try {
+                let itemData = await this.parseAttack(attack.trim(), this.bIsMelee);
+                items.push(itemData);
+            } catch (err) {
+                errors.push([key + " -> " + attack.trim(), err]);
+            }
         }
 
-        return {items: items};
+        return {items: items, errors: errors};
     }
   
     /** Will parse an attack using the attack format: attack name +attackRoll (damageRoll damageType ; critical effect) */
     async parseAttack(attack, bIsMeleeAttack) {
-        let attackInfo = attack.split(/([a-zA-Z\s]*)\s([\+|-]\d*)\s\((.*)\)/);
+        let attackInfo = attack.split(/([a-zA-Z\s]*)\s([\+|-][\s]*\d*)\s\((.*)\)/);
                     
         let attackName = SBUtils.camelize(attackInfo[1]);
+        //SBUtils.log("Parsed attack: " + JSON.stringify(attackInfo));
         let attackModifier = attackInfo[2];
         
         let damageString = attackInfo[3].split(";");
@@ -146,7 +152,7 @@ class SBAttackParser extends SBParserBase {
         if (damageString.length > 1) {
             criticalDamage = damageString[1];
         }
-        
+
         let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
         let attackDamageRoll = attackDamageData[1];
         let attackDamageType = attackDamageData[2].toLowerCase();
@@ -159,10 +165,18 @@ class SBAttackParser extends SBParserBase {
         let matchingItem = await SBUtils.fuzzyFindItem(attackName);
 
         let itemData = matchingItem != null ? matchingItem : {"name": attackName};
-        itemData["type"] = "weapon";
-        itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
-        itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
-        itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
+        if (!itemData["type"]) {
+            itemData["type"] = "weapon";
+        }
+        if (!itemData["data.actionType"]) {
+            itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
+        }
+        if (!itemData["data.weaponType"]) {
+            itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
+        }
+        if (!itemData["data.ability"]) {
+            itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
+        }
         itemData["data.attackBonus"] = parseInteger(attackModifier);
         itemData["data.damage"] = {parts: [[attackDamageRoll, attackDamageType]]};
 

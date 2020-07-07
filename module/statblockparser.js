@@ -191,6 +191,10 @@ export class SBStatblockParser {
                     }
                     items = items.concat(parsedData.items);
                 }
+
+                if (parsedData.errors != undefined) {
+                    errors = errors.concat(parsedData.errors);
+                }
                 continue;
             }
 
@@ -278,6 +282,10 @@ export class SBStatblockParser {
                             }
                         }
                         items = items.concat(parsedData.items);
+                    }
+
+                    if (parsedData.errors != undefined) {
+                        errors = errors.concat(parsedData.errors);
                     }
                 } else {
                     SBUtils.log("No parser for " + category + "." + firstWord + " (Can be ignored safely)");
