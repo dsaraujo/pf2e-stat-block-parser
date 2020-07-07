@@ -55,6 +55,7 @@ export class SBVTTESParser {
         }
 
         let items = [];
+        let errors = [];
 
         let parsedJson = JSON.parse(inputText);
 
@@ -70,10 +71,14 @@ export class SBVTTESParser {
             let parsedValue = parsedJson.attribs.filter(x => x.name == key);
             if (parsedValue != null) {
                 SBUtils.log("> " + JSON.stringify(parsedValue[0]));
-                target(actorData, parsedValue[0]);
+                try {
+                    target(actorData, parsedValue[0]);
+                } catch {
+                    errors.push([firstWord, err]);
+                }
             }
         }
 
-        return {success: true, actorData: actorData, items: items};
+        return {success: true, actorData: actorData, items: items, errors: errors};
     }
 }

@@ -27,6 +27,7 @@ export class SBStatblockParser {
         let recognizedKeywords = Object.keys(SBParserMapping.parsers[category]);
 
         let categoryLines = {};
+        let errors = [];
 
         // Start parsing text
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
@@ -170,7 +171,13 @@ export class SBStatblockParser {
             }
             
             if (categoryParsing.type == typeof(SBCategoryParserBase)) {
-                let parsedData = await parser.parse(category, value);
+                let parsedData = null;
+                try {
+                    parsedData = await parser.parse(category, value);
+                } catch (err) {
+                    errors.push([firstWord, err]);
+                    continue;
+                }
 
                 if (parsedData.actorData != undefined) {
                     actorData = {...actorData, ...parsedData.actorData};
@@ -252,7 +259,13 @@ export class SBStatblockParser {
                 //SBUtils.log(">> Evaluating " + firstWord + ", with value: " + parsableValue);
                 var parser = SBParserMapping.parsers[category][firstWord];
                 if (parser != null) {
-                    let parsedData = await parser.parse(firstWord, parsableValue);
+                    let parsedData = null;
+                    try {
+                        parsedData = await parser.parse(firstWord, parsableValue);
+                    } catch (err) {
+                        errors.push([firstWord, err]);
+                        continue;
+                    }
 
                     if (parsedData.actorData != undefined) {
                         actorData = {...actorData, ...parsedData.actorData};
@@ -274,6 +287,6 @@ export class SBStatblockParser {
             }
         }
 
-        return {success: true, actorData: actorData, items: items};
+        return {success: true, actorData: actorData, items: items, errors: errors};
     }
 }

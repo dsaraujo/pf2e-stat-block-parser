@@ -35,6 +35,7 @@ class SBProgram {
           let dataFormat = textResult.dataFormat;
           let actorData = {name: "Generated Actor", type: "npc"};
           let items = [];
+          let errors = [];
 
           let selectedParser = null;
           if (dataFormat === "vttes") {
@@ -54,10 +55,27 @@ class SBProgram {
               
               actorData = parseResult.actorData;
               items = parseResult.items;
+              errors = parseResult.errors;
           } catch (error) {
               SBUtils.log("Parsing had an error: " + error + ".");
               throw error;
               return;
+          }
+
+          if (errors.length > 0) {
+              let errorMessage = "";
+              SBUtils.log("> There were " + errors.length + " issue(s) parsing the provided statblock:");
+              for(let error of errors) {
+                  let errorText = "Failed to parse '" + error[0] + "' (" + error[1] + ")";
+
+                  SBUtils.log(">> " + errorText);
+                  if (errorMessage.length > 0) {
+                      errorMessage += "<br/>";
+                  }
+                  errorMessage += errorText;
+              }
+
+              ui.notifications.error("There were " + errors.length + " issue(s) parsing the provided statblock:<br/>" + errorMessage + "<br/><br/>Click to dismiss.", {permanent: true});
           }
 
           SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
