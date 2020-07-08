@@ -153,7 +153,8 @@ class SBAttackParser extends SBParserBase {
   
     /** Will parse an attack using the attack format: attack name +attackRoll (damageRoll damageType ; critical effect) */
     async parseAttack(attack, bIsMeleeAttack) {
-        let attackInfo = attack.split(/([a-zA-Z\s]*)\s([\+|-][\s]*\d*)\s\((.*)\)/);
+        //SBUtils.log("Parsing attack: " + attack);
+        let attackInfo = attack.split(/(.*)\s([\+|-][\s]*\d*)\s\((.*)\)/i);
                     
         let attackName = SBUtils.camelize(attackInfo[1]);
         //SBUtils.log("Parsed attack: " + JSON.stringify(attackInfo));
@@ -176,6 +177,7 @@ class SBAttackParser extends SBParserBase {
         }
         
         let matchingItem = await SBUtils.fuzzyFindItem(attackName);
+        //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
         let itemData = matchingItem != null ? matchingItem : {"name": attackName};
         if (itemData["_id"]) {
@@ -467,6 +469,7 @@ class SBGearParser extends SBParserBase {
         for (let itemToAdd of itemsToAdd) {
             try {
                 let itemData = await SBUtils.fuzzyFindItem(itemToAdd.item);
+                //SBUtils.log("> " + itemToAdd.item + " found: " + JSON.stringify(itemData));
                 if (itemData == null) {
                     itemData = {};
                 } else {
