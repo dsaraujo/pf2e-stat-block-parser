@@ -108,7 +108,7 @@ class SBSkillsParser extends SBParserBase {
         let parsedData = {};
         let skillParser = new SBSkillParser();
 
-        let skillPairs = value.split(',');
+        let skillPairs = await SBUtils.splitEntries(value);
         for (let pair of skillPairs) {
             let skillPair = pair.trim().split(/(.*)\s([\+|-]\d*)/i);
 
@@ -138,7 +138,7 @@ class SBAttackParser extends SBParserBase {
         let items = [];
         let errors = [];
         
-        let allAttacks = value.split(/\sor\s|,/);
+        let allAttacks = await SBUtils.splitEntries(value);
         for (let attack of allAttacks) {
             try {
                 let itemData = await this.parseAttack(attack.trim(), this.bIsMelee);
@@ -228,7 +228,7 @@ class SBTraitParser extends SBParserBase {
 
         //SBUtils.log("Parsing trait: " + key + ", supported: " + this.supportedValues);
 
-        let values = value.split(',');
+        let values = await SBUtils.splitEntries(value);
         for (let traitValue of values) {
             let splitTrait = traitValue.trim().toLowerCase().split(' ');
             
@@ -276,7 +276,7 @@ class SBWeaknessesParser extends SBParserBase {
         let knownWeaknesses = [];
         let customWeaknesses = "";
 
-        let weaknesses = value.split(',');
+        let weaknesses = await SBUtils.splitEntries(value);
         for (let rawWeakness of weaknesses) {
             let parsedWeakness = rawWeakness.split(/vulnerab.*\sto\s(.*)/i);
             if (parsedWeakness[0].length == 0 && recognizedWeaknesses.includes(parsedWeakness[1].toLowerCase())) {
@@ -309,7 +309,7 @@ class SBImmunitiesParser extends SBParserBase {
             .replace("stunning", "stunned")
             .replace("sleep", "asleep");
 
-        let rawImmunities = value.split(',');
+        let rawImmunities = await SBUtils.splitEntries(value);
         for (let rawImmunity of rawImmunities) {
             let parsedImmunity = rawImmunity.trim();
             if (recognizedConditionImmunities.includes(parsedImmunity)) {
@@ -407,7 +407,7 @@ class SBGearParser extends SBParserBase {
 
         let itemsToAdd = [];
 
-        let splitValues = value.split(',');
+        let splitValues = await SBUtils.splitEntries(value);
         for (let rawItem of splitValues) {
             // Common substitutions
             //rawItem = rawItem.toLowerCase().replace("batteries", "battery standard");
