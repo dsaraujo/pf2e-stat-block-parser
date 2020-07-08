@@ -31,71 +31,81 @@ class SBProgram {
 
         let textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
-          // Create actor
-          let dataFormat = textResult.dataFormat;
-          let actorData = {name: "Generated Actor", type: "npc"};
-          let items = [];
-          let errors = [];
+            // Create actor
+            let dataFormat = textResult.dataFormat;
+            let actorData = {name: "Generated Actor", type: "npc"};
+            let items = [];
+            let errors = [];
 
-          let selectedParser = null;
-          if (dataFormat === "vttes") {
-              selectedParser = new SBVTTESParser();
-          } else {
-              selectedParser = new SBStatblockParser();
-          }
+            let selectedParser = null;
+            if (dataFormat === "vttes") {
+                selectedParser = new SBVTTESParser();
+            } else {
+                selectedParser = new SBStatblockParser();
+            }
           
-          // Start parsing
-          SBUtils.log("Starting parsing input for format: " + dataFormat);
-          try {
-              let parseResult = await selectedParser.parseInput(actorData, textResult.text.trim());
-              if (!parseResult.success) {
-                  SBUtils.log("Parsing failed.");
-                  return;
-              }
+            // Start parsing
+            SBUtils.log("Starting parsing input for format: " + dataFormat);
+            try {
+                let parseResult = await selectedParser.parseInput(actorData, textResult.text.trim());
+                if (!parseResult.success) {
+                    SBUtils.log("Parsing failed.");
+                    return;
+                }
               
-              actorData = parseResult.actorData;
-              items = parseResult.items;
-              errors = parseResult.errors;
-          } catch (error) {
-              SBUtils.log("Parsing had an error: " + error + ".");
-              throw error;
-              return;
-          }
+                actorData = parseResult.actorData;
+                items = parseResult.items;
+                errors = parseResult.errors;
+            } catch (error) {
+                SBUtils.log("Parsing had an error: " + error + ".");
+                throw error;
+                return;
+            }
 
-          if (errors.length > 0) {
-              let errorMessage = "";
-              SBUtils.log("> There were " + errors.length + " issue(s) parsing the provided statblock:");
-              for(let error of errors) {
-                  let errorText = "Failed to parse '" + error[0] + "' (" + error[1] + ")";
+            if (errors.length > 0) {
+                let errorMessage = "";
+                SBUtils.log("> There were " + errors.length + " issue(s) parsing the provided statblock:");
+                for(let error of errors) {
+                    let errorText = "Failed to parse '" + error[0] + "' (" + error[1] + ")";
 
-                  SBUtils.log(">> " + errorText);
-                  if (errorMessage.length > 0) {
-                      errorMessage += "<br/>";
-                  }
-                  errorMessage += errorText;
-              }
+                    SBUtils.log(">> " + errorText);
+                    if (errorMessage.length > 0) {
+                        errorMessage += "<br/>";
+                    }
+                    errorMessage += errorText;
+                }
 
-              ui.notifications.error("There were " + errors.length + " issue(s) parsing the provided statblock:<br/>" + errorMessage + "<br/><br/>Click to dismiss.", {permanent: true});
-          }
+                ui.notifications.error("There were " + errors.length + " issue(s) parsing the provided statblock:<br/>" + errorMessage + "<br/><br/>Click to dismiss.", {permanent: true});
+            }
 
-          SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
-          let actor = await Actor.create(actorData);
-          if (actor == null) {
-              SBUtils.log("Failed to create new actor.");
-              return;
-          }
-          
-          SBUtils.log("> Adding items.");
-          if (items.length > 0) {
-              for (let itemData of items) {
-                  //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
-                  await actor.createOwnedItem(itemData);
-              }
-          }
-          
-          SBUtils.log("Actor created, opening sheet.");
-          let sheet = new ActorSheetSFRPGNPC(actor);
-          sheet.render(true);
+            SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
+            let actor = await Actor.create(actorData);
+            if (actor == null) {
+                SBUtils.log("Failed to create new actor.");
+                return;
+            }
+            
+            SBUtils.log("> Adding items.");
+            if (items.length > 0) {
+                let addedItemIds = [];
+                for (let itemData of items) {
+                    SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
+                    if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {
+                        await actor.createOwnedItem(itemData);
+                        if (itemData["sourceId"]) {
+                            addedItemIds.push(itemData["sourceId"]);
+                        }
+                    }
+                }
+            }
+            
+            SBUtils.log("Actor created, opening sheet.");
+            let sheet = new ActorSheetSFRPGNPC(actor);
+            sheet.render(true);
+
+            if (errors.length > 0) {
+                throw errors[0][1];
+            }
         }
     }
 }

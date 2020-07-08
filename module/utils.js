@@ -109,15 +109,14 @@ export class SBUtils {
                 continue;
             }
 
-            itemWeWant = item;
+            itemWeWant = equipment.getEntry(item._id);
             break;
         }
 
         if (itemWeWant != undefined) {
-            delete itemWeWant["_id"];
             //SBUtils.log("Item " + JSON.stringify(itemWeWant));
         } else {
-            //SBUtils.log("Item not found.");
+            //SBUtils.log("Item " + statBlockItemName + " not found.");
         }
         return itemWeWant;
     }

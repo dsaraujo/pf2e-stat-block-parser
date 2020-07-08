@@ -7,6 +7,19 @@ export class SBParserMapping {}
 /** Convenience helper, tries to parse the number to integer, if it is NaN, will return 0 instead. */
 let parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
 
+/** Convenience helper, returns an array with the base text and the sub text if found. Format: base text (sub text) */
+let parseSubtext = (value) => {
+    let startSubtextIndex = value.indexOf('(');
+    let endSubtextIndex = value.indexOf(')');
+    if (startSubtextIndex > -1 && endSubtextIndex > startSubtextIndex) {
+        let baseValue = value.substring(0, startSubtextIndex).trim();
+        let subValue = value.substring(startSubtextIndex+1, endSubtextIndex).trim();
+        return [baseValue, subValue];
+    } else {
+        return [value];
+    }
+}
+
 export class SBParserBase {
     constructor() {
 
@@ -165,6 +178,10 @@ class SBAttackParser extends SBParserBase {
         let matchingItem = await SBUtils.fuzzyFindItem(attackName);
 
         let itemData = matchingItem != null ? matchingItem : {"name": attackName};
+        if (itemData["_id"]) {
+            itemData["sourceId"] = itemData["_id"];
+            delete itemData["_id"];
+        }
         if (!itemData["type"]) {
             itemData["type"] = "weapon";
         }
@@ -368,7 +385,7 @@ class SBAbilityParser extends SBParserBase {
                     itemData["name"] = ability + " - " + SBUtils.camelize(subAbility);
                     itemData["type"] = "feat";
                     items.push(itemData);
-                    }
+                }
             } else {
                 let itemData = {};
                 itemData["name"] = ability;
@@ -379,6 +396,98 @@ class SBAbilityParser extends SBParserBase {
 
         return {items: items};
     }
+}
+
+class SBGearParser extends SBParserBase {
+    async parse(key, value) {
+        let items = [];
+        let errors = [];
+
+        let itemsToAdd = [];
+
+        let splitValues = value.split(',');
+        for (let rawItem of splitValues) {
+            // Common substitutions
+            //rawItem = rawItem.toLowerCase().replace("batteries", "battery standard");
+
+            try {
+                let withItems = rawItem.trim().split("with");
+                let baseItem = withItems[0].trim();
+
+                let baseItemElements = parseSubtext(baseItem);
+                let baseItemAmountName = baseItemElements[0].split(/(\d*)?[\s]?(.*)/i);
+                let baseItemAmount = baseItemAmountName[1] ? baseItemAmountName[1] : 1;
+                let baseItemName = baseItemAmountName[2];
+
+                // More common substitutions
+                if (baseItemName.endsWith("grenade i")) {
+                    baseItemName = baseItemName.replace("grenade i", "grenade 1");
+                } else if (baseItemName.endsWith("grenade ii")) {
+                    baseItemName = baseItemName.replace("grenade ii", "grenade 2");
+                } else if (baseItemName.endsWith("grenade iii")) {
+                    baseItemName = baseItemName.replace("grenade iii", "grenade 3");
+                } else if (baseItemName.endsWith("grenade iv")) {
+                    baseItemName = baseItemName.replace(" iv", "grenade 4");
+                } else if (baseItemName.endsWith("grenade v")) {
+                    baseItemName = baseItemName.replace("grenade v", "grenade 5");
+                }
+                
+                //SBUtils.log("Parsed gear item: " + baseItemAmount + "x " + baseItemName);
+                itemsToAdd.push({item: baseItemName, amount: baseItemAmount, subText: baseItemElements[1], source: baseItem});
+                
+                if (withItems.length > 1) {
+                    let withItem = withItems[1].trim();
+
+                    let withItemElements = parseSubtext(withItem);
+                    let withItemAmountName = withItemElements[0].split(/(\d*)?[\s]?(.*)/i);
+                    let withItemAmount = withItemAmountName[1] ? withItemAmountName[1] : 1;
+                    let withItemName = withItemAmountName[2];
+
+                    // More common substitutions
+                if (withItemName.endsWith("grenade i")) {
+                    withItemName = withItemName.replace("grenade i", "grenade 1");
+                } else if (withItemName.endsWith("grenade ii")) {
+                    withItemName = withItemName.replace("grenade ii", "grenade 2");
+                } else if (withItemName.endsWith("grenade iii")) {
+                    withItemName = withItemName.replace("grenade iii", "grenade 3");
+                } else if (withItemName.endsWith("grenade iv")) {
+                    withItemName = withItemName.replace(" iv", "grenade 4");
+                } else if (withItemName.endsWith("grenade v")) {
+                    withItemName = withItemName.replace("grenade v", "grenade 5");
+                }
+
+                    //SBUtils.log("Parsed gear item: " + withItemAmount + "x " + withItemName);
+                    itemsToAdd.push({item: withItemName, amount: withItemAmount, subText: withItemElements[1], source: withItem});
+                }
+            } catch (err) {
+                errors.push([`${key} -> ${rawItem}`, err]);
+            }
+        }
+
+        for (let itemToAdd of itemsToAdd) {
+            try {
+                let itemData = await SBUtils.fuzzyFindItem(itemToAdd.item);
+                if (itemData == null) {
+                    itemData = {};
+                } else {
+                    itemData["sourceId"] = itemData["_id"];
+                    delete itemData["_id"];
+                }
+                itemData["name"] = SBUtils.camelize(itemToAdd.source ? itemToAdd.source : itemToAdd.item);
+                itemData["data.quantity"] = itemToAdd.amount;
+                if (!itemData["type"]) {
+                    itemData["type"] = "goods";
+                }
+                items.push(itemData);
+            } catch (err) {
+                errors.push([`${key} -> ${itemToAdd.item}`, err]);
+            }
+        }
+
+
+        return {items: items, errors: errors};
+    }
+
 }
 
 SBParserMapping.parsers = {
@@ -421,7 +530,7 @@ SBParserMapping.parsers = {
         "skills": new SBSkillsParser(),
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": new SBAbilityParser(),
-        "gear": null,
+        "gear": new SBGearParser(),
         "* telepathy": null
     },
     "tactics": {
