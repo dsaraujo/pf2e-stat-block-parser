@@ -89,7 +89,7 @@ class SBProgram {
             if (items.length > 0) {
                 let addedItemIds = [];
                 for (let itemData of items) {
-                    SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
+                    //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
                     if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {
                         await actor.createOwnedItem(itemData);
                         if (itemData["sourceId"]) {
