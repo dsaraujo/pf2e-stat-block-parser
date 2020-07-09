@@ -10,6 +10,7 @@ export class SBStatblockParser {
 
         let tokens = [];
         let items = [];
+        let spells = [];
         
         // NPCs by default have no SP or RP
         actorData["data.attributes.sp.max"] = 0;
@@ -30,6 +31,7 @@ export class SBStatblockParser {
         let errors = [];
 
         // Start parsing text
+        inputText = inputText.replace(/—/gi, '-');
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
         let splitNewlines = inputText.split(/[\r\n]+/);
         splitNewlines.forEach(line => {
@@ -117,6 +119,24 @@ export class SBStatblockParser {
             }
         });
 
+        function getRawMatchingKeyword(input, keywords) {
+            for (let keyword of keywords) {
+                if (keyword.includes("*")) {
+                    let regex = new RegExp(keyword.replace("*", "(\\S*)"), "i");
+                    let matched = input.match(regex);
+                    if (matched != null) {
+                        //SBUtils.log("SWK: Keyword " + keyword + " is now " + JSON.stringify(matched));
+                        //keyword = matched[0];
+                        return keyword;
+                    }
+                }
+                
+                if (SBUtils.stringStartsWith(input, keyword + " ", false)) {
+                    return keyword;
+                }
+            }
+            return input;
+        }
 
         function startsWithKeyword(line, keywords) {
             for (let keyword of keywords) {
@@ -192,6 +212,15 @@ export class SBStatblockParser {
                     items = items.concat(parsedData.items);
                 }
 
+                if (parsedData.spells != undefined) {
+                    for (let spell of parsedData.spells) {
+                        if (!spell["name"]) {
+                            SBUtils.log("Parser for " + category + " produced an invalid item.");
+                        }
+                    }
+                    spells = spells.concat(parsedData.spells);
+                }
+
                 if (parsedData.errors != undefined) {
                     errors = errors.concat(parsedData.errors);
                 }
@@ -261,11 +290,12 @@ export class SBStatblockParser {
                 }
 
                 //SBUtils.log(">> Evaluating " + firstWord + ", with value: " + parsableValue);
-                var parser = SBParserMapping.parsers[category][firstWord];
+                let rawKeyword = getRawMatchingKeyword(firstWord, availableKeywords);
+                var parser = SBParserMapping.parsers[category][rawKeyword];
                 if (parser != null) {
                     let parsedData = null;
                     try {
-                        parsedData = await parser.parse(firstWord, parsableValue);
+                        parsedData = await parser.parse(rawKeyword, parsableValue);
                     } catch (err) {
                         errors.push([firstWord, err]);
                         continue;
@@ -284,6 +314,15 @@ export class SBStatblockParser {
                         items = items.concat(parsedData.items);
                     }
 
+                    if (parsedData.spells != undefined) {
+                        for (let spell of parsedData.spells) {
+                            if (!spell["name"]) {
+                                SBUtils.log("Parser for " + category + " produced an invalid item.");
+                            }
+                        }
+                        spells = spells.concat(parsedData.spells);
+                    }
+
                     if (parsedData.errors != undefined) {
                         errors = errors.concat(parsedData.errors);
                     }
@@ -295,6 +334,6 @@ export class SBStatblockParser {
             }
         }
 
-        return {success: true, actorData: actorData, items: items, errors: errors};
+        return {success: true, actorData: actorData, items: items, spells: spells, errors: errors};
     }
 }

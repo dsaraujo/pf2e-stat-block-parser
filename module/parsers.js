@@ -1,6 +1,7 @@
 import { SFRPG } from "../../../systems/sfrpg/module/config.js";
 
 import { SBUtils, SBConfig } from "./utils.js";
+import { SBUniversalMonsterGrafts } from "./umg.js";
 
 export class SBParserMapping {}
 
@@ -108,7 +109,7 @@ class SBSkillsParser extends SBParserBase {
         let parsedData = {};
         let skillParser = new SBSkillParser();
 
-        let skillPairs = await SBUtils.splitEntries(value);
+        let skillPairs = SBUtils.splitEntries(value);
         for (let pair of skillPairs) {
             let skillPair = pair.trim().split(/(.*)\s([\+|-]\d*)/i);
 
@@ -138,7 +139,7 @@ class SBAttackParser extends SBParserBase {
         let items = [];
         let errors = [];
         
-        let allAttacks = await SBUtils.splitEntries(value);
+        let allAttacks = SBUtils.splitEntries(value);
         for (let attack of allAttacks) {
             try {
                 let itemData = await this.parseAttack(attack.trim(), this.bIsMelee);
@@ -176,7 +177,7 @@ class SBAttackParser extends SBParserBase {
             attackDamageType = "slashing";
         }
         
-        let matchingItem = await SBUtils.fuzzyFindItem(attackName);
+        let matchingItem = await SBUtils.fuzzyFindItemAsync(attackName);
         //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
         let itemData = matchingItem != null ? matchingItem : {"name": attackName};
@@ -228,7 +229,7 @@ class SBTraitParser extends SBParserBase {
 
         //SBUtils.log("Parsing trait: " + key + ", supported: " + this.supportedValues);
 
-        let values = await SBUtils.splitEntries(value);
+        let values = SBUtils.splitEntries(value);
         for (let traitValue of values) {
             let splitTrait = traitValue.trim().toLowerCase().split(' ');
             
@@ -276,7 +277,7 @@ class SBWeaknessesParser extends SBParserBase {
         let knownWeaknesses = [];
         let customWeaknesses = "";
 
-        let weaknesses = await SBUtils.splitEntries(value);
+        let weaknesses = SBUtils.splitEntries(value);
         for (let rawWeakness of weaknesses) {
             let parsedWeakness = rawWeakness.split(/vulnerab.*\sto\s(.*)/i);
             if (parsedWeakness[0].length == 0 && recognizedWeaknesses.includes(parsedWeakness[1].toLowerCase())) {
@@ -309,7 +310,7 @@ class SBImmunitiesParser extends SBParserBase {
             .replace("stunning", "stunned")
             .replace("sleep", "asleep");
 
-        let rawImmunities = await SBUtils.splitEntries(value);
+        let rawImmunities = SBUtils.splitEntries(value);
         for (let rawImmunity of rawImmunities) {
             let parsedImmunity = rawImmunity.trim();
             if (recognizedConditionImmunities.includes(parsedImmunity)) {
@@ -381,17 +382,43 @@ class SBAbilityParser extends SBParserBase {
 
             let abilityValue = parsedAbilities[ability];
             ability = SBUtils.camelize(ability);
+
+            let matchingGraft = SBUniversalMonsterGrafts.grafts.filter((x) => x.name == ability);
+            if (matchingGraft.length > 0) {
+                matchingGraft = matchingGraft[0];
+            } else {
+                matchingGraft = null;
+            }
+
             if (Array.isArray(abilityValue)) {
                 for (let subAbility of abilityValue) {
                     let itemData = {};
                     itemData["name"] = ability + " - " + SBUtils.camelize(subAbility);
                     itemData["type"] = "feat";
+
+                    if (matchingGraft) {
+                        itemData["data.source"] = matchingGraft.source;
+                        itemData["data.description.value"] = matchingGraft.description;
+                        if (matchingGraft.guidelines) {
+                            itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
+                        }
+                    }
+
                     items.push(itemData);
                 }
             } else {
                 let itemData = {};
                 itemData["name"] = ability;
                 itemData["type"] = "feat";
+
+                if (matchingGraft) {
+                    itemData["data.source"] = matchingGraft.source;
+                    itemData["data.description.value"] = matchingGraft.description;
+                    if (matchingGraft.guidelines) {
+                        itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
+                    }
+                }
+
                 items.push(itemData);
             }
         }
@@ -407,7 +434,7 @@ class SBGearParser extends SBParserBase {
 
         let itemsToAdd = [];
 
-        let splitValues = await SBUtils.splitEntries(value);
+        let splitValues = SBUtils.splitEntries(value);
         for (let rawItem of splitValues) {
             // Common substitutions
             //rawItem = rawItem.toLowerCase().replace("batteries", "battery standard");
@@ -415,6 +442,9 @@ class SBGearParser extends SBParserBase {
             try {
                 let withItems = rawItem.trim().split("with");
                 let baseItem = withItems[0].trim();
+                if (baseItem.endsWith("(")) {
+                    baseItem = baseItem.substring(0, baseItem.length - 1).trim();
+                }
 
                 let baseItemElements = parseSubtext(baseItem);
                 let baseItemAmountName = baseItemElements[0].split(/(\d*)?[\s]?(.*)/i);
@@ -439,6 +469,9 @@ class SBGearParser extends SBParserBase {
                 
                 if (withItems.length > 1) {
                     let withItem = withItems[1].trim();
+                    if (withItem.endsWith(")")) {
+                        withItem = withItem.substring(0, withItem.length - 1).trim();
+                    }
 
                     let withItemElements = parseSubtext(withItem);
                     let withItemAmountName = withItemElements[0].split(/(\d*)?[\s]?(.*)/i);
@@ -468,7 +501,7 @@ class SBGearParser extends SBParserBase {
 
         for (let itemToAdd of itemsToAdd) {
             try {
-                let itemData = await SBUtils.fuzzyFindItem(itemToAdd.item);
+                let itemData = await SBUtils.fuzzyFindItemAsync(itemToAdd.item);
                 //SBUtils.log("> " + itemToAdd.item + " found: " + JSON.stringify(itemData));
                 if (itemData == null) {
                     itemData = {};
@@ -490,7 +523,70 @@ class SBGearParser extends SBParserBase {
 
         return {items: items, errors: errors};
     }
+}
 
+class SBSpellsParser extends SBParserBase {
+    async parse(key, value) {
+        let spells = [];
+        let errors = [];
+
+        let clSection = value.substring(1, value.indexOf(')')).trim();
+
+        // First, split up the spell blocks by level
+        let splitSpellblocks = [];
+        let spellsSection = value.substring(value.indexOf(')') + 1).trim();
+        let regex = /([0|1st|2nd|3rd|4th|5th|6th|1|2|3|4|5|6]*\s\((\S*|at will)*\))\s*-\s*(.*)/gim;
+        let block = spellsSection.split(regex);
+        let spellHeader = block[1];
+        let currentText = block[3];
+        while(currentText) {
+            let nextSet = currentText.split(regex);
+            if (nextSet.length > 1) {
+                let spellData = nextSet[0].trim();
+                if (spellHeader && spellData) {
+                    let spellObject = {level: spellHeader, spells: spellData};
+                    splitSpellblocks.push(spellObject);
+                }
+    
+                spellHeader = nextSet[1].trim();
+                currentText = nextSet[3];
+            } else {
+                if (spellHeader) {
+                    let spellObject = {level: spellHeader, spells: currentText.trim()};
+                    splitSpellblocks.push(spellObject);
+                }
+                currentText = null;
+            }
+        }
+
+        //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));        
+
+        // Next up, for each spell level, split up into spells, which we can pull from the compendium using fuzzy search.
+        for (let spellBlock of splitSpellblocks) {
+            let splitSpells = SBUtils.splitEntries(spellBlock.spells);
+            for (let rawSpell of splitSpells) {
+                let parsedSpellData = parseSubtext(rawSpell);
+                let foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
+                if (foundSpell) {
+                    //SBUtils.log(">> Known spell: " + rawSpell);
+                    foundSpell["sourceId"] = foundSpell["_id"];
+                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+
+                    spells.push(foundSpell);
+                } else {
+                    //SBUtils.log(">> Unknown spell: " + rawSpell);
+                    foundSpell = {};
+                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+                    foundSpell["type"] = "spell";
+                    foundSpell["data.level"] = parseInteger(spellBlock.level[0]);
+
+                    spells.push(foundSpell);
+                }
+            }
+        }
+
+        return {spells: spells, errors: errors};
+    }
 }
 
 SBParserMapping.parsers = {
@@ -521,7 +617,8 @@ SBParserMapping.parsers = {
         "ranged": new SBAttackParser(false),
         "offensive abilities": new SBAbilityParser(),
         "* spell-like abilities": null,
-        "* spells known": null
+        "* spells known": new SBSpellsParser(),
+        "connection": null
     },
     "statistics": {
         "str": new SBSingleValueParser(["data.abilities.str.mod"], false, parseInteger),
@@ -534,12 +631,16 @@ SBParserMapping.parsers = {
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": new SBAbilityParser(),
         "gear": new SBGearParser(),
-        "* telepathy": null
+        "* telepathy": null,
     },
     "tactics": {
         "combat": null,
         "during combat": null,
         "morale": null
     },
-    "special abilities": null
+    "special abilities": null,
+    "ecology": {
+        "environment": null,
+        "organization": null
+    }
 };

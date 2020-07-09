@@ -81,25 +81,25 @@ export class SBUtils {
         console.log("SFSBP | " + message);
     }
 
-    /** Will try to find an item that matches all the terms, will return the first item it finds that does. */
-    static async fuzzyFindItem(statBlockItemName) {
-        //SBUtils.log("Fuzzy search for item named: " + statBlockItemName);
-        let equipment = game.packs.find(element => element.title.includes("Equipment"));
-        if (equipment == undefined) {
-            SBUtils.log("Could not find equipment compendium.");
+    /** Will try to find an entry in the specified compendium that matches all the terms, will return the first entry that does. */
+    static async fuzzyFindCompendiumAsync(compendiumName, entryName) {
+        let compendium = game.packs.find(element => element.title.includes(compendiumName));
+        if (compendium == undefined) {
+            SBUtils.log("Could not find compendium named " + compendium + ".");
             return null;
         }
         
-        await equipment.getIndex();
+        // Let the compendium load
+        await compendium.getIndex();
         
-        let terms = statBlockItemName.toLowerCase().split(' ');
-        let itemWeWant = null;
-        for (let item of equipment.index) {
-            let itemName = item.name.toLowerCase();
+        let terms = entryName.toLowerCase().split(' ');
+        let entryWeWant = null;
+        for (let entry of compendium.index) {
+            let entryName = entry.name.toLowerCase();
             
             let bAllTermsPresent = true;
             for (let term of terms) {
-                if (!itemName.includes(term)) {
+                if (!entryName.includes(term)) {
                     bAllTermsPresent = false;
                     break;
                 }
@@ -109,19 +109,27 @@ export class SBUtils {
                 continue;
             }
 
-            itemWeWant = equipment.getEntry(item._id);
+            entryWeWant = compendium.getEntry(entry._id);
             break;
         }
 
-        if (itemWeWant != undefined) {
-            //SBUtils.log("Item " + JSON.stringify(itemWeWant));
+        if (entryWeWant != undefined) {
+            //SBUtils.log("Item " + JSON.stringify(entryWeWant));
         } else {
-            //SBUtils.log("Item " + statBlockItemName + " not found.");
+            //SBUtils.log("Item " + entryName + " not found.");
         }
-        return itemWeWant;
+        return entryWeWant;
     }
 
-    static async splitEntries(baseString) {
+    static async fuzzyFindItemAsync(statBlockItemName) {
+        return this.fuzzyFindCompendiumAsync("Equipment", statBlockItemName);
+    }
+
+    static async fuzzyFindSpellAsync(statBlockSpellName) {
+        return this.fuzzyFindCompendiumAsync("Spells", statBlockSpellName);
+    }
+
+    static splitEntries(baseString) {
         let results = null;
         let stack = [];
         let entry = "";
@@ -146,14 +154,12 @@ export class SBUtils {
                     } else {
                         results.push(entry.trim());
                     }
-                    //SBUtils.log("Comma hit, pushing " + entry)
                     entry = "";
                 }
             } else {
                 entry += character;
-                if (entry.toLowerCase().endsWith("or") && stack.length == 0 && baseString[i+1] == ' ') {
+                if (entry.toLowerCase().endsWith(" or") && stack.length == 0 && baseString[i+1] == ' ') {
                     entry = entry.substring(0, entry.length - 2);
-                    //SBUtils.log("Or hit, pushing " + entry)
                     if (!results) {
                         results = [entry.trim()];
                     } else {
@@ -166,7 +172,6 @@ export class SBUtils {
 
         entry = entry.trim();
         if (entry) {
-            //SBUtils.log("Wrapping up, pushing " + entry);
             if (!results) {
                 results = [entry];
             } else {
@@ -174,7 +179,6 @@ export class SBUtils {
             }
         }
 
-        SBUtils.log("Finished array: " + JSON.stringify(results));
         return results;
     }
 }
