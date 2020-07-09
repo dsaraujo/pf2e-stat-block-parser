@@ -35,6 +35,7 @@ class SBProgram {
             let dataFormat = textResult.dataFormat;
             let actorData = {name: "Generated Actor", type: "npc"};
             let items = [];
+            let spells = [];
             let errors = [];
 
             let selectedParser = null;
@@ -55,6 +56,7 @@ class SBProgram {
               
                 actorData = parseResult.actorData;
                 items = parseResult.items;
+                spells = parseResult.spells;
                 errors = parseResult.errors;
             } catch (error) {
                 SBUtils.log("Parsing had an error: " + error + ".");
@@ -94,6 +96,20 @@ class SBProgram {
                         await actor.createOwnedItem(itemData);
                         if (itemData["sourceId"]) {
                             addedItemIds.push(itemData["sourceId"]);
+                        }
+                    }
+                }
+            }
+            
+            SBUtils.log("> Adding spells.");
+            if (spells.length > 0) {
+                let addedSpellIds = [];
+                for (let spellData of spells) {
+                    //SBUtils.log(">> Creating spell: " + JSON.stringify(itemData));
+                    if (!spellData["sourceId"] || !addedSpellIds.includes(spellData["sourceId"])) {
+                        await actor.createOwnedItem(spellData);
+                        if (spellData["sourceId"]) {
+                            addedSpellIds.push(spellData["sourceId"]);
                         }
                     }
                 }
