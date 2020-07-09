@@ -373,15 +373,16 @@ class SBAbilityParser extends SBParserBase {
             currentToken = "";
         }
 
+        parsedAbilities = SBUtils.splitEntries(value);
+
         //SBUtils.log("Abilities: " + JSON.stringify(parsedAbilities));
-        let abilityKeys = Object.keys(parsedAbilities);
-        for (let ability of abilityKeys) {
+        for (let ability of parsedAbilities) {
             if (!ability) {
                 continue;
             }
 
-            let abilityValue = parsedAbilities[ability];
-            ability = SBUtils.camelize(ability);
+            let abilityValue = parseSubtext(ability);
+            ability = SBUtils.camelize(abilityValue[0]);
 
             let matchingGraft = SBUniversalMonsterGrafts.grafts.filter((x) => x.name == ability);
             if (matchingGraft.length > 0) {
@@ -390,22 +391,20 @@ class SBAbilityParser extends SBParserBase {
                 matchingGraft = null;
             }
 
-            if (Array.isArray(abilityValue)) {
-                for (let subAbility of abilityValue) {
-                    let itemData = {};
-                    itemData["name"] = ability + " - " + SBUtils.camelize(subAbility);
-                    itemData["type"] = "feat";
+            if (abilityValue.length > 1) {
+                let itemData = {};
+                itemData["name"] = ability + " - " + SBUtils.camelize(abilityValue[1]);
+                itemData["type"] = "feat";
 
-                    if (matchingGraft) {
-                        itemData["data.source"] = matchingGraft.source;
-                        itemData["data.description.value"] = matchingGraft.description;
-                        if (matchingGraft.guidelines) {
-                            itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
-                        }
+                if (matchingGraft) {
+                    itemData["data.source"] = matchingGraft.source;
+                    itemData["data.description.value"] = matchingGraft.description;
+                    if (matchingGraft.guidelines) {
+                        itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
                     }
-
-                    items.push(itemData);
                 }
+
+                items.push(itemData);
             } else {
                 let itemData = {};
                 itemData["name"] = ability;
