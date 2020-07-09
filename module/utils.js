@@ -158,7 +158,7 @@ export class SBUtils {
                 }
             } else {
                 entry += character;
-                if (entry.toLowerCase().endsWith("or") && stack.length == 0 && baseString[i+1] == ' ') {
+                if (entry.toLowerCase().endsWith(" or") && stack.length == 0 && baseString[i+1] == ' ') {
                     entry = entry.substring(0, entry.length - 2);
                     if (!results) {
                         results = [entry.trim()];
