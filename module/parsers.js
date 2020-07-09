@@ -559,7 +559,7 @@ class SBSpellsParser extends SBParserBase {
             }
         }
 
-        SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));        
+        //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));        
 
         // Next up, for each spell level, split up into spells, which we can pull from the compendium using fuzzy search.
         for (let spellBlock of splitSpellblocks) {
