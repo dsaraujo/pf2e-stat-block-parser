@@ -7,6 +7,10 @@ import { SBVTTESParser } from "./vttesparser.js";
 
 class SBProgram {
     static ensureParseStatblockVisible() {
+        if (!game.user.isGM && !Actor.can(game.user, "create")) {
+            return;
+        }
+
         let statblockParseButton = document.getElementById("SFSBP-button");
         if (statblockParseButton != null) {
             return;
