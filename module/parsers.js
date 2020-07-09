@@ -1,6 +1,7 @@
 import { SFRPG } from "../../../systems/sfrpg/module/config.js";
 
 import { SBUtils, SBConfig } from "./utils.js";
+import { SBUniversalMonsterGrafts } from "./umg.js";
 
 export class SBParserMapping {}
 
@@ -381,17 +382,43 @@ class SBAbilityParser extends SBParserBase {
 
             let abilityValue = parsedAbilities[ability];
             ability = SBUtils.camelize(ability);
+
+            let matchingGraft = SBUniversalMonsterGrafts.grafts.filter((x) => x.name == ability);
+            if (matchingGraft.length > 0) {
+                matchingGraft = matchingGraft[0];
+            } else {
+                matchingGraft = null;
+            }
+
             if (Array.isArray(abilityValue)) {
                 for (let subAbility of abilityValue) {
                     let itemData = {};
                     itemData["name"] = ability + " - " + SBUtils.camelize(subAbility);
                     itemData["type"] = "feat";
+
+                    if (matchingGraft) {
+                        itemData["data.source"] = matchingGraft.source;
+                        itemData["data.description.value"] = matchingGraft.description;
+                        if (matchingGraft.guidelines) {
+                            itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
+                        }
+                    }
+
                     items.push(itemData);
                 }
             } else {
                 let itemData = {};
                 itemData["name"] = ability;
                 itemData["type"] = "feat";
+
+                if (matchingGraft) {
+                    itemData["data.source"] = matchingGraft.source;
+                    itemData["data.description.value"] = matchingGraft.description;
+                    if (matchingGraft.guidelines) {
+                        itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
+                    }
+                }
+
                 items.push(itemData);
             }
         }
@@ -415,6 +442,9 @@ class SBGearParser extends SBParserBase {
             try {
                 let withItems = rawItem.trim().split("with");
                 let baseItem = withItems[0].trim();
+                if (baseItem.endsWith("(")) {
+                    baseItem = baseItem.substring(0, baseItem.length - 1).trim();
+                }
 
                 let baseItemElements = parseSubtext(baseItem);
                 let baseItemAmountName = baseItemElements[0].split(/(\d*)?[\s]?(.*)/i);
@@ -439,6 +469,9 @@ class SBGearParser extends SBParserBase {
                 
                 if (withItems.length > 1) {
                     let withItem = withItems[1].trim();
+                    if (withItem.endsWith(")")) {
+                        withItem = withItem.substring(0, withItem.length - 1).trim();
+                    }
 
                     let withItemElements = parseSubtext(withItem);
                     let withItemAmountName = withItemElements[0].split(/(\d*)?[\s]?(.*)/i);
@@ -534,12 +567,16 @@ SBParserMapping.parsers = {
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": new SBAbilityParser(),
         "gear": new SBGearParser(),
-        "* telepathy": null
+        "* telepathy": null,
     },
     "tactics": {
         "combat": null,
         "during combat": null,
         "morale": null
     },
-    "special abilities": null
+    "special abilities": null,
+    "ecology": {
+        "environment": null,
+        "organization": null
+    }
 };

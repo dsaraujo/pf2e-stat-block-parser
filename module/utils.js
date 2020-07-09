@@ -146,14 +146,12 @@ export class SBUtils {
                     } else {
                         results.push(entry.trim());
                     }
-                    //SBUtils.log("Comma hit, pushing " + entry)
                     entry = "";
                 }
             } else {
                 entry += character;
                 if (entry.toLowerCase().endsWith("or") && stack.length == 0 && baseString[i+1] == ' ') {
                     entry = entry.substring(0, entry.length - 2);
-                    //SBUtils.log("Or hit, pushing " + entry)
                     if (!results) {
                         results = [entry.trim()];
                     } else {
@@ -166,7 +164,6 @@ export class SBUtils {
 
         entry = entry.trim();
         if (entry) {
-            //SBUtils.log("Wrapping up, pushing " + entry);
             if (!results) {
                 results = [entry];
             } else {
@@ -174,7 +171,6 @@ export class SBUtils {
             }
         }
 
-        SBUtils.log("Finished array: " + JSON.stringify(results));
         return results;
     }
 }
