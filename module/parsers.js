@@ -373,15 +373,16 @@ class SBAbilityParser extends SBParserBase {
             currentToken = "";
         }
 
+        parsedAbilities = SBUtils.splitEntries(value);
+
         //SBUtils.log("Abilities: " + JSON.stringify(parsedAbilities));
-        let abilityKeys = Object.keys(parsedAbilities);
-        for (let ability of abilityKeys) {
+        for (let ability of parsedAbilities) {
             if (!ability) {
                 continue;
             }
 
-            let abilityValue = parsedAbilities[ability];
-            ability = SBUtils.camelize(ability);
+            let abilityValue = parseSubtext(ability);
+            ability = SBUtils.camelize(abilityValue[0]);
 
             let matchingGraft = SBUniversalMonsterGrafts.grafts.filter((x) => x.name == ability);
             if (matchingGraft.length > 0) {
@@ -390,22 +391,20 @@ class SBAbilityParser extends SBParserBase {
                 matchingGraft = null;
             }
 
-            if (Array.isArray(abilityValue)) {
-                for (let subAbility of abilityValue) {
-                    let itemData = {};
-                    itemData["name"] = ability + " - " + SBUtils.camelize(subAbility);
-                    itemData["type"] = "feat";
+            if (abilityValue.length > 1) {
+                let itemData = {};
+                itemData["name"] = ability + " - " + SBUtils.camelize(abilityValue[1]);
+                itemData["type"] = "feat";
 
-                    if (matchingGraft) {
-                        itemData["data.source"] = matchingGraft.source;
-                        itemData["data.description.value"] = matchingGraft.description;
-                        if (matchingGraft.guidelines) {
-                            itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
-                        }
+                if (matchingGraft) {
+                    itemData["data.source"] = matchingGraft.source;
+                    itemData["data.description.value"] = matchingGraft.description;
+                    if (matchingGraft.guidelines) {
+                        itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
                     }
-
-                    items.push(itemData);
                 }
+
+                items.push(itemData);
             } else {
                 let itemData = {};
                 itemData["name"] = ability;
@@ -525,6 +524,70 @@ class SBGearParser extends SBParserBase {
     }
 }
 
+class SBSpellLikeParser extends SBParserBase {
+    async parse(key, value) {
+        let spells = [];
+        let errors = [];
+
+        let clSection = value.substring(1, value.indexOf(')')).trim();
+
+        // First, split up the spell blocks by level
+        let splitSpellblocks = [];
+        let spellsSection = value.substring(value.indexOf(')') + 1).trim();
+        let regex = /(((\d*)\/day)|at will|atwill)\s*-\s*(.*)/gim;
+        let block = spellsSection.split(regex);
+        let spellHeader = block[1];
+        let currentText = block[4];
+        while(currentText) {
+            let nextSet = currentText.split(regex);
+            if (nextSet.length > 1) {
+                let spellData = nextSet[0].trim();
+                if (spellHeader && spellData) {
+                    let spellObject = {level: spellHeader, spells: spellData};
+                    splitSpellblocks.push(spellObject);
+                }
+    
+                spellHeader = nextSet[1].trim();
+                currentText = nextSet[4];
+            } else {
+                if (spellHeader) {
+                    let spellObject = {level: spellHeader, spells: currentText.trim()};
+                    splitSpellblocks.push(spellObject);
+                }
+                currentText = null;
+            }
+        }
+
+        //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));
+
+        // Next up, for each spell level, split up into spells, which we can pull from the compendium using fuzzy search.
+        for (let spellBlock of splitSpellblocks) {
+            let splitSpells = SBUtils.splitEntries(spellBlock.spells);
+            for (let rawSpell of splitSpells) {
+                let parsedSpellData = parseSubtext(rawSpell);
+                let foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
+                if (foundSpell) {
+                    //SBUtils.log(">> Known spell: " + rawSpell);
+                    foundSpell["sourceId"] = foundSpell["_id"];
+                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + SBUtils.camelize(spellBlock.level) + ")";
+
+                    spells.push(foundSpell);
+                } else {
+                    //SBUtils.log(">> Unknown spell: " + rawSpell);
+                    foundSpell = {};
+                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + SBUtils.camelize(spellBlock.level) + ")";
+                    foundSpell["type"] = "spell";
+                    foundSpell["data.level"] = parseInteger(spellBlock.level[0]);
+
+                    spells.push(foundSpell);
+                }
+            }
+        }
+
+        return {spells: spells, errors: errors};
+    }
+}
+
 class SBSpellsParser extends SBParserBase {
     async parse(key, value) {
         let spells = [];
@@ -559,24 +622,27 @@ class SBSpellsParser extends SBParserBase {
             }
         }
 
-        //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));        
+        //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));
 
         // Next up, for each spell level, split up into spells, which we can pull from the compendium using fuzzy search.
         for (let spellBlock of splitSpellblocks) {
             let splitSpells = SBUtils.splitEntries(spellBlock.spells);
+            let castTimes = parseSubtext(spellBlock.level);
+            castTimes = SBUtils.camelize(castTimes[castTimes.length - 1]);
+            
             for (let rawSpell of splitSpells) {
                 let parsedSpellData = parseSubtext(rawSpell);
                 let foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
                     foundSpell["sourceId"] = foundSpell["_id"];
-                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + castTimes + ")";
 
                     spells.push(foundSpell);
                 } else {
                     //SBUtils.log(">> Unknown spell: " + rawSpell);
                     foundSpell = {};
-                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + castTimes + ")";
                     foundSpell["type"] = "spell";
                     foundSpell["data.level"] = parseInteger(spellBlock.level[0]);
 
@@ -616,7 +682,7 @@ SBParserMapping.parsers = {
         "melee": new SBAttackParser(true),
         "ranged": new SBAttackParser(false),
         "offensive abilities": new SBAbilityParser(),
-        "* spell-like abilities": null,
+        "* spell-like abilities": new SBSpellLikeParser(),
         "* spells known": new SBSpellsParser(),
         "connection": null
     },

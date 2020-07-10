@@ -159,6 +159,7 @@ export class SBStatblockParser {
         function indexOfNextKeyword(line, keywords) {
             let index = -1;
             let lowerCaseLine = line.toLowerCase();
+            let foundKeyword = "";
             for(let keyword of keywords) {
                 if (keyword.includes("*")) {
                     let regex = new RegExp(keyword.replace("*", "(\\S*)"), "i");
@@ -171,12 +172,29 @@ export class SBStatblockParser {
                 
                 let keywordIndex = lowerCaseLine.indexOf(keyword.toLowerCase());
                 if (keywordIndex != -1) {
+                    let textUpToKeyword = lowerCaseLine.substring(0, keywordIndex);
+                    let stack = [];
+                    for (let i = 0; i<textUpToKeyword.length; i++) {
+                        let character = textUpToKeyword[i];
+                        if (SBUtils.openingBrackets.includes(character)) {
+                            stack.push(character);
+                        } else if (stack.length > 0 && SBUtils.matchingClosingBrackets[stack[stack.length - 1]] == character) {
+                            stack.pop();
+                        }
+                    }
+
+                    if (stack.length > 0) {
+                        //SBUtils.log("Rejected " + keyword + " because inside " + stack[stack.length - 1]);
+                        continue;
+                    }
+
                     if (index == -1 || keywordIndex < index) {
                         index = keywordIndex;
+                        foundKeyword = keyword.toLowerCase();
                     }
                 }
             }
-            return index;
+            return {index: index, keyword: foundKeyword};
         }
 
         SBUtils.log("Parsing categories");
@@ -278,7 +296,9 @@ export class SBStatblockParser {
 
                 // Next, get the parsable value (Everything up to the next keyword)
                 var parsableValue = combinedLine;
-                var nextKeywordIndex = indexOfNextKeyword(combinedLine, availableKeywords);
+                var nextKeyword = indexOfNextKeyword(combinedLine, availableKeywords);
+                //SBUtils.log("For " + firstWord + ", next keyword is " + nextKeyword.keyword + " at " + nextKeyword.index + ", as attained from " + combinedLine);
+                var nextKeywordIndex = nextKeyword.index;
                 if (nextKeywordIndex != -1) {
                     parsableValue = combinedLine.substring(0, nextKeywordIndex).trim();
                     combinedLine = combinedLine.substring(parsableValue.length).trim();

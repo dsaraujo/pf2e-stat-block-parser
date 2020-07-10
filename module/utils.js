@@ -52,6 +52,10 @@ SBConfig.skillMapping = {
 };
 
 export class SBUtils {
+    static openingBrackets = ['(', '[', '{'];
+    static closingBrackers = [')', ']', '}'];
+    static matchingClosingBrackets = {'(': ')', '[' : ']', '{': '}'};
+
     static camelize(str) {
         if (!str) {
             return str;
@@ -135,16 +139,11 @@ export class SBUtils {
         let entry = "";
         for (let i = 0; i<baseString.length; i++) {
             let character = baseString[i];
-            if (character == '(' || character == '[' || character == '{') {
+            let stackTop = stack.length > 0 ? stack[stack.length-1] : '';
+            if (SBUtils.openingBrackets.includes(character)) {
                 entry += character;
                 stack.push(character);
-            } else if (character == ')' && stack[stack.length-1] == '(') {
-                entry += character;
-                stack.pop();
-            } else if (character == ']' && stack[stack.length-1] == '[') {
-                entry += character;
-                stack.pop();
-            } else if (character == '{' && stack[stack.length-1] == '}') {
+            } else if (stackTop && character == SBUtils.matchingClosingBrackets[stackTop]) {
                 entry += character;
                 stack.pop();
             } else if (character == ',') {
