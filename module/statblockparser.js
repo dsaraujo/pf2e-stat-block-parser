@@ -32,6 +32,8 @@ export class SBStatblockParser {
 
         // Start parsing text
         inputText = inputText.replace(/—/gi, '-');
+        inputText = inputText.replace(/–/gi, '-');
+
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
         let splitNewlines = inputText.split(/[\r\n]+/);
         splitNewlines.forEach(line => {
