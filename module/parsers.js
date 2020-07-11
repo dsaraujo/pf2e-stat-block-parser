@@ -4,12 +4,13 @@ import { SBUtils, SBConfig } from "./utils.js";
 import { SBUniversalMonsterGrafts } from "./umg.js";
 
 export class SBParserMapping {}
+export class SBParsing {}
 
 /** Convenience helper, tries to parse the number to integer, if it is NaN, will return 0 instead. */
-let parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
+SBParsing.parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
 
 /** Convenience helper, returns an array with the base text and the sub text if found. Format: base text (sub text) */
-let parseSubtext = (value) => {
+SBParsing.parseSubtext = (value) => {
     let startSubtextIndex = value.indexOf('(');
     let endSubtextIndex = value.indexOf(')');
     if (startSubtextIndex > -1 && endSubtextIndex > startSubtextIndex) {
@@ -161,20 +162,28 @@ class SBAttackParser extends SBParserBase {
         //SBUtils.log("Parsed attack: " + JSON.stringify(attackInfo));
         let attackModifier = attackInfo[2];
         
-        let damageString = attackInfo[3].split(";");
-        let normalDamage = damageString[0].split("plus")[0].trim();
+        let attackDamageRoll = undefined;
+        let attackDamageType = undefined;
         let criticalDamage = "";
-        if (damageString.length > 1) {
-            criticalDamage = damageString[1];
-        }
 
-        let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
-        let attackDamageRoll = attackDamageData[1];
-        let attackDamageType = attackDamageData[2].toLowerCase();
-        if (SBConfig.weaponDamageTypes[attackDamageType] != undefined) {
-            attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
-        } else {
-            attackDamageType = "slashing";
+        try {
+            let damageString = attackInfo[3].split(";");
+            let normalDamage = damageString[0].split("plus")[0].trim();
+            if (damageString.length > 1) {
+                criticalDamage = damageString[1];
+            }
+
+            let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
+            let attackDamageRoll = attackDamageData[1];
+            let attackDamageType = attackDamageData[2].toLowerCase();
+            if (SBConfig.weaponDamageTypes[attackDamageType] != undefined) {
+                attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
+            } else {
+                attackDamageType = "slashing";
+            }
+        } catch (err) {
+            attackDamageRoll = undefined;
+            attackDamageType = undefined;
         }
         
         let matchingItem = await SBUtils.fuzzyFindItemAsync(attackName);
@@ -197,8 +206,10 @@ class SBAttackParser extends SBParserBase {
         if (!itemData["data.ability"]) {
             itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
         }
-        itemData["data.attackBonus"] = parseInteger(attackModifier);
-        itemData["data.damage"] = {parts: [[attackDamageRoll, attackDamageType]]};
+        itemData["data.attackBonus"] = SBParsing.parseInteger(attackModifier);
+        if (attackDamageRoll && attackDamageRoll) {
+            itemData["data.damage"] = {parts: [[attackDamageRoll, attackDamageType]]};
+        }
 
         if (criticalDamage != "") {
             let criticalDamageRegex = criticalDamage.split(/(critical|crit)\s(.*)\s(.*)/i);
@@ -381,7 +392,7 @@ class SBAbilityParser extends SBParserBase {
                 continue;
             }
 
-            let abilityValue = parseSubtext(ability);
+            let abilityValue = SBParsing.parseSubtext(ability);
             ability = SBUtils.camelize(abilityValue[0]);
 
             let matchingGraft = SBUniversalMonsterGrafts.grafts.filter((x) => x.name == ability);
@@ -445,7 +456,7 @@ class SBGearParser extends SBParserBase {
                     baseItem = baseItem.substring(0, baseItem.length - 1).trim();
                 }
 
-                let baseItemElements = parseSubtext(baseItem);
+                let baseItemElements = SBParsing.parseSubtext(baseItem);
                 let baseItemAmountName = baseItemElements[0].split(/(\d*)?[\s]?(.*)/i);
                 let baseItemAmount = baseItemAmountName[1] ? baseItemAmountName[1] : 1;
                 let baseItemName = baseItemAmountName[2];
@@ -472,7 +483,7 @@ class SBGearParser extends SBParserBase {
                         withItem = withItem.substring(0, withItem.length - 1).trim();
                     }
 
-                    let withItemElements = parseSubtext(withItem);
+                    let withItemElements = SBParsing.parseSubtext(withItem);
                     let withItemAmountName = withItemElements[0].split(/(\d*)?[\s]?(.*)/i);
                     let withItemAmount = withItemAmountName[1] ? withItemAmountName[1] : 1;
                     let withItemName = withItemAmountName[2];
@@ -564,7 +575,7 @@ class SBSpellLikeParser extends SBParserBase {
         for (let spellBlock of splitSpellblocks) {
             let splitSpells = SBUtils.splitEntries(spellBlock.spells);
             for (let rawSpell of splitSpells) {
-                let parsedSpellData = parseSubtext(rawSpell);
+                let parsedSpellData = SBParsing.parseSubtext(rawSpell);
                 let foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
@@ -577,7 +588,7 @@ class SBSpellLikeParser extends SBParserBase {
                     foundSpell = {};
                     foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + SBUtils.camelize(spellBlock.level) + ")";
                     foundSpell["type"] = "spell";
-                    foundSpell["data.level"] = parseInteger(spellBlock.level[0]);
+                    foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
 
                     spells.push(foundSpell);
                 }
@@ -627,11 +638,11 @@ class SBSpellsParser extends SBParserBase {
         // Next up, for each spell level, split up into spells, which we can pull from the compendium using fuzzy search.
         for (let spellBlock of splitSpellblocks) {
             let splitSpells = SBUtils.splitEntries(spellBlock.spells);
-            let castTimes = parseSubtext(spellBlock.level);
+            let castTimes = SBParsing.parseSubtext(spellBlock.level);
             castTimes = SBUtils.camelize(castTimes[castTimes.length - 1]);
             
             for (let rawSpell of splitSpells) {
-                let parsedSpellData = parseSubtext(rawSpell);
+                let parsedSpellData = SBParsing.parseSubtext(rawSpell);
                 let foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
@@ -644,7 +655,7 @@ class SBSpellsParser extends SBParserBase {
                     foundSpell = {};
                     foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + castTimes + ")";
                     foundSpell["type"] = "spell";
-                    foundSpell["data.level"] = parseInteger(spellBlock.level[0]);
+                    foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
 
                     spells.push(foundSpell);
                 }
@@ -687,12 +698,12 @@ SBParserMapping.parsers = {
         "connection": null
     },
     "statistics": {
-        "str": new SBSingleValueParser(["data.abilities.str.mod"], false, parseInteger),
-        "dex": new SBSingleValueParser(["data.abilities.dex.mod"], false, parseInteger),
-        "con": new SBSingleValueParser(["data.abilities.con.mod"], false, parseInteger),
-        "int": new SBSingleValueParser(["data.abilities.int.mod"], false, parseInteger),
-        "wis": new SBSingleValueParser(["data.abilities.wis.mod"], false, parseInteger),
-        "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, parseInteger),
+        "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
+        "dex": new SBSingleValueParser(["data.abilities.dex.mod"], false, SBParsing.parseInteger),
+        "con": new SBSingleValueParser(["data.abilities.con.mod"], false, SBParsing.parseInteger),
+        "int": new SBSingleValueParser(["data.abilities.int.mod"], false, SBParsing.parseInteger),
+        "wis": new SBSingleValueParser(["data.abilities.wis.mod"], false, SBParsing.parseInteger),
+        "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, SBParsing.parseInteger),
         "skills": new SBSkillsParser(),
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": new SBAbilityParser(),

@@ -1,4 +1,4 @@
-import { SBCategoryParserBase, SBParserBase, SBParserMapping } from "./parsers.js";
+import { SBCategoryParserBase, SBParserBase, SBParserMapping, SBParsing } from "./parsers.js";
 import { SBUtils, SBConfig } from "./utils.js";
 
 export class SBStatblockParser {
@@ -351,6 +351,14 @@ export class SBStatblockParser {
                 }
 
                 iterationsLeft--;
+            }
+        }
+
+        // Reduce any attack bonuses on items by their ability modifier, to prevent double bonuses
+        for (let item of items) {
+            if (item.type == "weapon") {
+                let bonus = SBParsing.parseInteger(actorData["data.abilities." + item["data.ability"] + ".mod"]);
+                item["data.attackBonus"] -= bonus;
             }
         }
 
