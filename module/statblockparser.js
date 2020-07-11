@@ -1,4 +1,4 @@
-import { SBCategoryParserBase, SBParserBase, SBParserMapping } from "./parsers.js";
+import { SBCategoryParserBase, SBParserBase, SBParserMapping, SBParsing } from "./parsers.js";
 import { SBUtils, SBConfig } from "./utils.js";
 
 export class SBStatblockParser {
@@ -32,6 +32,8 @@ export class SBStatblockParser {
 
         // Start parsing text
         inputText = inputText.replace(/—/gi, '-');
+        inputText = inputText.replace(/–/gi, '-');
+
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
         let splitNewlines = inputText.split(/[\r\n]+/);
         splitNewlines.forEach(line => {
@@ -351,6 +353,14 @@ export class SBStatblockParser {
                 }
 
                 iterationsLeft--;
+            }
+        }
+
+        // Reduce any attack bonuses on items by their ability modifier, to prevent double bonuses
+        for (let item of items) {
+            if (item.type == "weapon") {
+                let bonus = SBParsing.parseInteger(actorData["data.abilities." + item["data.ability"] + ".mod"]);
+                item["data.attackBonus"] -= bonus;
             }
         }
 
