@@ -81,7 +81,7 @@ export class SBVTTESParser {
             let target = this.attributeMapping[key];
             let parsedValue = parsedJson.attribs.filter(x => x.name == key);
             if (parsedValue != null) {
-                SBUtils.log("> " + JSON.stringify(parsedValue[0]));
+                //SBUtils.log("> " + JSON.stringify(parsedValue[0]));
                 try {
                     target(characterData.actorData, parsedValue[0]);
                 } catch {
