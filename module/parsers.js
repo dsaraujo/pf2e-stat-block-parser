@@ -740,7 +740,7 @@ SBParserMapping.parsers = {
         "offensive abilities": new SBAbilityParser(),
         "* spell-like abilities": new SBSpellLikeParser(),
         "* spells known": new SBSpellsParser(),
-        "connection": SBDescriptionParser('offense')
+        "connection": new SBDescriptionParser('offense')
     },
     "statistics": {
         "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
