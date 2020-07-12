@@ -11,6 +11,7 @@ export class SBStatblockParser {
         let tokens = [];
         let items = [];
         let spells = [];
+        let abilityDescriptions = [];
         
         // NPCs by default have no SP or RP
         actorData["data.attributes.sp.max"] = 0;
@@ -210,40 +211,21 @@ export class SBStatblockParser {
                 continue;
             }
             
-            if (categoryParsing.type == typeof(SBCategoryParserBase)) {
+            if (categoryParsing instanceof SBCategoryParserBase) {
                 let parsedData = null;
                 try {
-                    parsedData = await parser.parse(category, value);
+                    parsedData = await categoryParsing.parse(category, value);
                 } catch (err) {
                     errors.push([firstWord, err]);
                     continue;
                 }
 
-                if (parsedData.actorData != undefined) {
-                    actorData = {...actorData, ...parsedData.actorData};
-                }
-
-                if (parsedData.items != undefined) {
-                    for (let item of parsedData.items) {
-                        if (!item["name"]) {
-                            SBUtils.log("Parser for " + category + " produced an invalid item.");
-                        }
-                    }
-                    items = items.concat(parsedData.items);
-                }
-
-                if (parsedData.spells != undefined) {
-                    for (let spell of parsedData.spells) {
-                        if (!spell["name"]) {
-                            SBUtils.log("Parser for " + category + " produced an invalid item.");
-                        }
-                    }
-                    spells = spells.concat(parsedData.spells);
-                }
-
-                if (parsedData.errors != undefined) {
-                    errors = errors.concat(parsedData.errors);
-                }
+                let processedResults = this.processParsedData(parsedData, actorData, items, spells, abilityDescriptions, errors);
+                actorData = processedResults.actorData;
+                items = processedResults.items;
+                spells = processedResults.spells;
+                abilityDescriptions = processedResults.abilityDescriptions;
+                errors = processedResults.errors;
                 continue;
             }
 
@@ -323,31 +305,12 @@ export class SBStatblockParser {
                         continue;
                     }
 
-                    if (parsedData.actorData != undefined) {
-                        actorData = {...actorData, ...parsedData.actorData};
-                    }
-    
-                    if (parsedData.items != undefined) {
-                        for (let item of parsedData.items) {
-                            if (!item["name"]) {
-                                SBUtils.log("Parser for " + category + "." + firstWord + " produced an invalid item.");
-                            }
-                        }
-                        items = items.concat(parsedData.items);
-                    }
-
-                    if (parsedData.spells != undefined) {
-                        for (let spell of parsedData.spells) {
-                            if (!spell["name"]) {
-                                SBUtils.log("Parser for " + category + " produced an invalid item.");
-                            }
-                        }
-                        spells = spells.concat(parsedData.spells);
-                    }
-
-                    if (parsedData.errors != undefined) {
-                        errors = errors.concat(parsedData.errors);
-                    }
+                    let processedResults = this.processParsedData(parsedData, actorData, items, spells, abilityDescriptions, errors);
+                    actorData = processedResults.actorData;
+                    items = processedResults.items;
+                    spells = processedResults.spells;
+                    abilityDescriptions = processedResults.abilityDescriptions;
+                    errors = processedResults.errors;
                 } else {
                     SBUtils.log("No parser for " + category + "." + firstWord + " (Can be ignored safely)");
                 }
@@ -364,6 +327,41 @@ export class SBStatblockParser {
             }
         }
 
-        return {success: true, actorData: actorData, items: items, spells: spells, errors: errors};
+        return {success: true, actorData: actorData, items: items, spells: spells, abilityDescriptions: abilityDescriptions, errors: errors};
+    }
+
+    processParsedData(parsedData, actorData, items, spells, abilityDescriptions, errors) {
+
+        if (parsedData.actorData != undefined) {
+            actorData = {...actorData, ...parsedData.actorData};
+        }
+
+        if (parsedData.items != undefined) {
+            for (let item of parsedData.items) {
+                if (!item["name"]) {
+                    SBUtils.log("Parser for " + category + "." + firstWord + " produced an invalid item.");
+                }
+            }
+            items = items.concat(parsedData.items);
+        }
+
+        if (parsedData.spells != undefined) {
+            for (let spell of parsedData.spells) {
+                if (!spell["name"]) {
+                    SBUtils.log("Parser for " + category + " produced an invalid item.");
+                }
+            }
+            spells = spells.concat(parsedData.spells);
+        }
+
+        if (parsedData.abilityDescriptions != undefined) {
+            abilityDescriptions = abilityDescriptions.concat(parsedData.abilityDescriptions);
+        }
+
+        if (parsedData.errors != undefined) {
+            errors = errors.concat(parsedData.errors);
+        }
+        
+        return {actorData: actorData, items: items, spells: spells, abilityDescriptions: abilityDescriptions, errors: errors};
     }
 }

@@ -40,6 +40,7 @@ class SBProgram {
             let actorData = {name: "Generated Actor", type: "npc"};
             let items = [];
             let spells = [];
+            let abilityDescriptions = [];
             let errors = [];
 
             let selectedParser = null;
@@ -61,6 +62,7 @@ class SBProgram {
                 actorData = parseResult.actorData;
                 items = parseResult.items;
                 spells = parseResult.spells;
+                abilityDescriptions = parseResult.abilityDescriptions;
                 errors = parseResult.errors;
             } catch (error) {
                 SBUtils.log("Parsing had an error: " + error + ".");
@@ -91,9 +93,25 @@ class SBProgram {
                 SBProgram.logErrors(errors);
                 return;
             }
+
+            if (abilityDescriptions.length > 0) {
+                SBUtils.log(`> Processing ${abilityDescriptions.length} ability description(s).`);
+                for (let abilityDescription of abilityDescriptions) {
+                    for (let i = 0; i<items.length; i++) {
+                        if (SBUtils.stringStartsWith(abilityDescription.name, items[i]["name"], false)) {
+                            items[i]["name"] = abilityDescription.name;
+                            if (items[i]["data.description.value"]) {
+                                items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + items[i]["data.description"];
+                            } else {
+                                items[i]["data.description.value"] = abilityDescription.description;
+                            }
+                        }
+                    }
+                }
+            }
             
-            SBUtils.log("> Adding items.");
             if (items.length > 0) {
+                SBUtils.log(`> Adding ${items.length} item(s).`);
                 let addedItemIds = [];
                 for (let itemData of items) {
                     try {
@@ -110,8 +128,8 @@ class SBProgram {
                 }
             }
             
-            SBUtils.log("> Adding spells.");
             if (spells.length > 0) {
+                SBUtils.log(`> Adding ${spells.length} spell(s).`);
                 let addedSpellIds = [];
                 for (let spellData of spells) {
                     try {

@@ -668,6 +668,37 @@ class SBSpellsParser extends SBParserBase {
     }
 }
 
+class SBSpecialAbilitiesParser extends SBCategoryParserBase {
+    async parse(key, value) {
+        let errors = [];
+        let abilityDescriptions = [];
+
+        // Iterate through the special abilities
+        let currentAbilityKey = "";
+        let currentAbilityText = "";
+        for (let line of value) {
+            let matched = line.match(/(.*\s\([Ex|Su|Sp]*\))\s(.*)/i);
+            if (matched != null) {
+                if (currentAbilityKey && currentAbilityText) {
+                    abilityDescriptions.push({name: currentAbilityKey, description: currentAbilityText});
+                    currentAbilityKey = "";
+                    currentAbilityText = "";
+                }
+                currentAbilityKey = matched[1].trim();
+                currentAbilityText = matched[2].trim();
+            } else {
+                currentAbilityText += " " + line.trim();
+            }
+        }
+
+        if (currentAbilityKey && currentAbilityText) {
+            abilityDescriptions.push({name: currentAbilityKey, description: currentAbilityText});
+        }
+
+        return {abilityDescriptions: abilityDescriptions, errors: errors};
+    }
+}
+
 SBParserMapping.parsers = {
     "base": {
         "init": new SBSingleValueParser(["data.attributes.init.total"]),
@@ -718,7 +749,7 @@ SBParserMapping.parsers = {
         "during combat": null,
         "morale": null
     },
-    "special abilities": null,
+    "special abilities": new SBSpecialAbilitiesParser(),
     "ecology": {
         "environment": null,
         "organization": null
