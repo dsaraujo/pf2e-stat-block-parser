@@ -2,7 +2,10 @@ import { SBUtils, SBConfig } from "./utils.js";
 
 export class SBPCGenParser {
     attributeMapping = {
-        "root.character.name": ["name"]
+        "root.character.name": ["name"],
+        "root.character.alignment": ["data.details.alignment"],
+        "root.character.size": ["data.traits.size"],
+        "root.character.race": ["data.details.race"]
     };
 
     getNode(xmlDoc, path, bGetTextNode = true) {
