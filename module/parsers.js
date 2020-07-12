@@ -694,6 +694,7 @@ SBParserMapping.parsers = {
         "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
         "melee": new SBAttackParser(true),
         "ranged": new SBAttackParser(false),
+        "multiattack": null,
         "offensive abilities": new SBAbilityParser(),
         "* spell-like abilities": new SBSpellLikeParser(),
         "* spells known": new SBSpellsParser(),
