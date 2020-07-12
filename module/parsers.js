@@ -762,7 +762,7 @@ SBParserMapping.parsers = {
     },
     "special abilities": new SBSpecialAbilitiesParser(),
     "ecology": {
-        "environment": null,
-        "organization": null
+        "environment": new SBDescriptionParser('ecology'),
+        "organization": new SBDescriptionParser('ecology')
     }
 };
