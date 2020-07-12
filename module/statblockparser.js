@@ -8,14 +8,17 @@ export class SBStatblockParser {
             return {success: false};
         }
 
-        let tokens = [];
-        let items = [];
-        let spells = [];
-        let abilityDescriptions = [];
-        
+        let characterData = {
+            actorData: actorData,
+            items: [],
+            spells: [],
+            abilityDescriptions: [],
+            characterDescriptions: []
+        }
+
         // NPCs by default have no SP or RP
-        actorData["data.attributes.sp.max"] = 0;
-        actorData["data.attributes.rp.max"] = 0;
+        characterData.actorData["data.attributes.sp.max"] = 0;
+        characterData.actorData["data.attributes.rp.max"] = 0;
 
         let bNameHandled = false;
         let bSizeHandled = false;
@@ -25,8 +28,6 @@ export class SBStatblockParser {
         
         let category = "base";
         delete availableCategories[category];
-
-        let recognizedKeywords = Object.keys(SBParserMapping.parsers[category]);
 
         let categoryLines = {};
         let errors = [];
@@ -66,8 +67,8 @@ export class SBStatblockParser {
                         }
                         
                         bNameHandled = true;
-                        actorData['name'] = npcName;
-                        actorData['data.details.cr'] = npcCR;
+                        characterData.actorData['name'] = npcName;
+                        characterData.actorData['data.details.cr'] = npcCR;
                         return;
                     }
                 }
@@ -80,9 +81,9 @@ export class SBStatblockParser {
                         let npcClass = genderRaceClassBlock[3];
 
                         bRaceHandled = true;
-                        actorData['data.details.gender'] = SBUtils.camelize(gender);
-                        actorData['data.details.race'] = SBUtils.camelize(race);
-                        actorData['data.details.class'] = SBUtils.camelize(npcClass);
+                        characterData.actorData['data.details.gender'] = SBUtils.camelize(gender);
+                        characterData.actorData['data.details.race'] = SBUtils.camelize(race);
+                        characterData.actorData['data.details.class'] = SBUtils.camelize(npcClass);
                         return;
                     }
                 }
@@ -104,12 +105,12 @@ export class SBStatblockParser {
                         size = size.toLowerCase();
                         
                         bSizeHandled = true;
-                        actorData['data.details.type'] = SBUtils.camelize(type);
+                        characterData.actorData['data.details.type'] = SBUtils.camelize(type);
                         if (subType) {
-                            actorData['data.details.subtype'] = SBUtils.camelize(subType);
+                            characterData.actorData['data.details.subtype'] = SBUtils.camelize(subType);
                         }
-                        actorData['data.details.alignment'] = alignment;
-                        actorData['data.traits.size'] = size;
+                        characterData.actorData['data.details.alignment'] = alignment;
+                        characterData.actorData['data.traits.size'] = size;
                         return;
                     }
                 }
@@ -220,11 +221,8 @@ export class SBStatblockParser {
                     continue;
                 }
 
-                let processedResults = this.processParsedData(parsedData, actorData, items, spells, abilityDescriptions, errors);
-                actorData = processedResults.actorData;
-                items = processedResults.items;
-                spells = processedResults.spells;
-                abilityDescriptions = processedResults.abilityDescriptions;
+                let processedResults = this.processParsedData(parsedData, characterData, errors);
+                characterData = processedResults.characterData;
                 errors = processedResults.errors;
                 continue;
             }
@@ -305,11 +303,8 @@ export class SBStatblockParser {
                         continue;
                     }
 
-                    let processedResults = this.processParsedData(parsedData, actorData, items, spells, abilityDescriptions, errors);
-                    actorData = processedResults.actorData;
-                    items = processedResults.items;
-                    spells = processedResults.spells;
-                    abilityDescriptions = processedResults.abilityDescriptions;
+                    let processedResults = this.processParsedData(parsedData, characterData, errors);
+                    characterData = processedResults.characterData;
                     errors = processedResults.errors;
                 } else {
                     SBUtils.log("No parser for " + category + "." + firstWord + " (Can be ignored safely)");
@@ -320,20 +315,20 @@ export class SBStatblockParser {
         }
 
         // Reduce any attack bonuses on items by their ability modifier, to prevent double bonuses
-        for (let item of items) {
+        for (let item of characterData.items) {
             if (item.type == "weapon") {
-                let bonus = SBParsing.parseInteger(actorData["data.abilities." + item["data.ability"] + ".mod"]);
+                let bonus = SBParsing.parseInteger(characterData.actorData["data.abilities." + item["data.ability"] + ".mod"]);
                 item["data.attackBonus"] -= bonus;
             }
         }
 
-        return {success: true, actorData: actorData, items: items, spells: spells, abilityDescriptions: abilityDescriptions, errors: errors};
+        return {success: true, characterData: characterData, errors: errors};
     }
 
-    processParsedData(parsedData, actorData, items, spells, abilityDescriptions, errors) {
+    processParsedData(parsedData, characterData, errors) {
 
         if (parsedData.actorData != undefined) {
-            actorData = {...actorData, ...parsedData.actorData};
+            characterData.actorData = {...characterData.actorData, ...parsedData.actorData};
         }
 
         if (parsedData.items != undefined) {
@@ -342,7 +337,7 @@ export class SBStatblockParser {
                     SBUtils.log("Parser for " + category + "." + firstWord + " produced an invalid item.");
                 }
             }
-            items = items.concat(parsedData.items);
+            characterData.items = characterData.items.concat(parsedData.items);
         }
 
         if (parsedData.spells != undefined) {
@@ -351,17 +346,17 @@ export class SBStatblockParser {
                     SBUtils.log("Parser for " + category + " produced an invalid item.");
                 }
             }
-            spells = spells.concat(parsedData.spells);
+            characterData.spells = characterData.spells.concat(parsedData.spells);
         }
 
         if (parsedData.abilityDescriptions != undefined) {
-            abilityDescriptions = abilityDescriptions.concat(parsedData.abilityDescriptions);
+            characterData.abilityDescriptions = characterData.abilityDescriptions.concat(parsedData.abilityDescriptions);
         }
 
         if (parsedData.errors != undefined) {
             errors = errors.concat(parsedData.errors);
         }
         
-        return {actorData: actorData, items: items, spells: spells, abilityDescriptions: abilityDescriptions, errors: errors};
+        return {characterData: characterData, errors: errors};
     }
 }

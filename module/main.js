@@ -37,10 +37,12 @@ class SBProgram {
         if (textResult.result) {
             // Create actor
             let dataFormat = textResult.dataFormat;
-            let actorData = {name: "Generated Actor", type: "npc"};
-            let items = [];
-            let spells = [];
-            let abilityDescriptions = [];
+            let characterData = {
+                actorData: {name: "Generated Actor", type: "npc"},
+                items: [],
+                spells: [],
+                abilityDescriptions: []
+            }
             let errors = [];
 
             let selectedParser = null;
@@ -53,16 +55,13 @@ class SBProgram {
             // Start parsing
             SBUtils.log("Starting parsing input for format: " + dataFormat);
             try {
-                let parseResult = await selectedParser.parseInput(actorData, textResult.text.trim());
+                let parseResult = await selectedParser.parseInput(characterData.actorData, textResult.text.trim());
                 if (!parseResult.success) {
                     SBUtils.log("Parsing failed.");
                     return;
                 }
               
-                actorData = parseResult.actorData;
-                items = parseResult.items;
-                spells = parseResult.spells;
-                abilityDescriptions = parseResult.abilityDescriptions;
+                characterData = parseResult.characterData;
                 errors = parseResult.errors;
             } catch (error) {
                 SBUtils.log("Parsing had an error: " + error + ".");
@@ -87,33 +86,33 @@ class SBProgram {
             }
 
             SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
-            let actor = await Actor.create(actorData);
+            let actor = await Actor.create(characterData.actorData);
             if (actor == null) {
                 SBUtils.log("Failed to create new actor.");
                 SBProgram.logErrors(errors);
                 return;
             }
 
-            if (abilityDescriptions.length > 0) {
-                SBUtils.log(`> Processing ${abilityDescriptions.length} ability description(s).`);
-                for (let abilityDescription of abilityDescriptions) {
-                    for (let i = 0; i<items.length; i++) {
-                        if (SBUtils.stringStartsWith(abilityDescription.name, items[i]["name"], false)) {
-                            items[i]["name"] = abilityDescription.name;
-                            if (items[i]["data.description.value"]) {
-                                items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + items[i]["data.description"];
+            if (characterData.abilityDescriptions.length > 0) {
+                SBUtils.log(`> Processing ${characterData.abilityDescriptions.length} ability description(s).`);
+                for (let abilityDescription of characterData.abilityDescriptions) {
+                    for (let i = 0; i<characterData.items.length; i++) {
+                        if (SBUtils.stringStartsWith(abilityDescription.name, characterData.items[i]["name"], false)) {
+                            characterData.items[i]["name"] = abilityDescription.name;
+                            if (characterData.items[i]["data.description.value"]) {
+                                characterData.items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + characterData.items[i]["data.description"];
                             } else {
-                                items[i]["data.description.value"] = abilityDescription.description;
+                                characterData.items[i]["data.description.value"] = abilityDescription.description;
                             }
                         }
                     }
                 }
             }
             
-            if (items.length > 0) {
-                SBUtils.log(`> Adding ${items.length} item(s).`);
+            if (characterData.items.length > 0) {
+                SBUtils.log(`> Adding ${characterData.items.length} item(s).`);
                 let addedItemIds = [];
-                for (let itemData of items) {
+                for (let itemData of characterData.items) {
                     try {
                         //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
                         if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {
@@ -128,10 +127,10 @@ class SBProgram {
                 }
             }
             
-            if (spells.length > 0) {
-                SBUtils.log(`> Adding ${spells.length} spell(s).`);
+            if (characterData.spells.length > 0) {
+                SBUtils.log(`> Adding ${characterData.spells.length} spell(s).`);
                 let addedSpellIds = [];
-                for (let spellData of spells) {
+                for (let spellData of characterData.spells) {
                     try {
                         //SBUtils.log(">> Creating spell: " + JSON.stringify(itemData));
                         if (!spellData["sourceId"] || !addedSpellIds.includes(spellData["sourceId"])) {
