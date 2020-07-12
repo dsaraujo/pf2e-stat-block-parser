@@ -1,5 +1,6 @@
 import { ActorSheetSFRPGNPC } from "../../../systems/sfrpg/module/actor/sheet/npc.js";
 
+import { SBPCGenParser } from "./pcgenparser.js";
 import { SBStatblockParser } from "./statblockparser.js";
 import { SBTextInputDialog } from "./text-input.js";
 import { SBUtils } from "./utils.js";
@@ -48,10 +49,18 @@ class SBProgram {
             let bHasMultiAttacks = false;
 
             let selectedParser = null;
-            if (dataFormat === "vttes") {
-                selectedParser = new SBVTTESParser();
-            } else {
-                selectedParser = new SBStatblockParser();
+            switch (dataFormat) {
+                default:
+                    selectedParser = new SBStatblockParser();
+                    break;
+
+                case "vttes":
+                    selectedParser = new SBVTTESParser();
+                    break;
+
+                case "pcgen":
+                    selectedParser = new SBPCGenParser();
+                    break;
             }
           
             // Start parsing
