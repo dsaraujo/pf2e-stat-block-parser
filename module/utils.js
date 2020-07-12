@@ -73,11 +73,20 @@ export class SBUtils {
     }
 
     static stringStartsWith(string, searchString, bCaseSensitive = true) {
-        if (bCaseSensitive) {
-            return startPart.startsWith(searchString);
-        } else {
-            let startPart = string.substring(0, searchString.length);
-            return startPart.toLowerCase() === searchString.toLowerCase();
+        try {
+            if (searchString.length > string.length) {
+                return false;
+            }
+
+            if (bCaseSensitive) {
+                return string.startsWith(searchString);
+            } else {
+                let startPart = string.substring(0, searchString.length);
+                return startPart.toLowerCase() === searchString.toLowerCase();
+            }
+        } catch (err) {
+            SBUtils.log(`stringStartsWith('${string}', '${searchString}', ${bCaseSensitive}) threw an error: ${err}`);
+            throw err;
         }
     }
 
