@@ -54,14 +54,26 @@ export class SBVTTESParser {
             return {success: false};
         }
 
+        let characterData = {
+            actorData: actorData,
+            items: [],
+            spells: [],
+            abilityDescriptions: [],
+            characterDescriptions: []
+        }
+
+        // NPCs by default have no SP or RP
+        characterData.actorData["data.attributes.sp.max"] = 0;
+        characterData.actorData["data.attributes.rp.max"] = 0;
+
         let items = [];
         let errors = [];
 
         let parsedJson = JSON.parse(inputText);
 
-        actorData["name"] = parsedJson.name;
+        characterData.actorData["name"] = parsedJson.name;
         if (parsedJson.avatar) {
-            actorData["img"] = parsedJson.avatar;
+            characterData.actorData["img"] = parsedJson.avatar;
         }
 
         let recognizedMappings = Object.keys(this.attributeMapping);
@@ -72,13 +84,13 @@ export class SBVTTESParser {
             if (parsedValue != null) {
                 SBUtils.log("> " + JSON.stringify(parsedValue[0]));
                 try {
-                    target(actorData, parsedValue[0]);
+                    target(characterData.actorData, parsedValue[0]);
                 } catch {
                     errors.push([firstWord, err]);
                 }
             }
         }
 
-        return {success: true, actorData: actorData, items: items, errors: errors};
+        return {success: true, characterData: characterData, errors: errors};
     }
 }
