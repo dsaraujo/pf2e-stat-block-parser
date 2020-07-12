@@ -353,6 +353,10 @@ export class SBStatblockParser {
             characterData.abilityDescriptions = characterData.abilityDescriptions.concat(parsedData.abilityDescriptions);
         }
 
+        if (parsedData.characterDescriptions != undefined) {
+            characterData.characterDescriptions = characterData.characterDescriptions.concat(parsedData.characterDescriptions);
+        }
+
         if (parsedData.errors != undefined) {
             errors = errors.concat(parsedData.errors);
         }

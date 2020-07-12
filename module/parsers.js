@@ -668,6 +668,17 @@ class SBSpellsParser extends SBParserBase {
     }
 }
 
+class SBDescriptionParser extends SBParserBase {
+    constructor(category) {
+        super();
+        this.category = category;
+    }
+
+    async parse(key, value) {
+        return {characterDescriptions: [{category: SBUtils.camelize(this.category), title: SBUtils.camelize(key), body: value}]};
+    }
+}
+
 class SBSpecialAbilitiesParser extends SBCategoryParserBase {
     async parse(key, value) {
         let errors = [];
@@ -745,9 +756,9 @@ SBParserMapping.parsers = {
         "* telepathy": null,
     },
     "tactics": {
-        "combat": null,
-        "during combat": null,
-        "morale": null
+        "combat": new SBDescriptionParser('tactics'),
+        "during combat": new SBDescriptionParser('tactics'),
+        "morale": new SBDescriptionParser('tactics')
     },
     "special abilities": new SBSpecialAbilitiesParser(),
     "ecology": {

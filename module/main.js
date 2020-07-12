@@ -41,7 +41,8 @@ class SBProgram {
                 actorData: {name: "Generated Actor", type: "npc"},
                 items: [],
                 spells: [],
-                abilityDescriptions: []
+                abilityDescriptions: [],
+                characterDescriptions: []
             }
             let errors = [];
 
@@ -91,6 +92,37 @@ class SBProgram {
                 SBUtils.log("Failed to create new actor.");
                 SBProgram.logErrors(errors);
                 return;
+            }
+
+            if (characterData.characterDescriptions.length > 0) {
+                SBUtils.log(`> Processing ${characterData.characterDescriptions.length} character description(s).`);
+
+                characterData.characterDescriptions.sort(function(a, b) {
+                    if (a.category != b.category) {
+                        return a.category.localeCompare(b.category);
+                    }
+                    if (a.title != b.title) {
+                        return a.title.localeCompare(b.title);
+                    }
+                    return 0;
+                });
+
+                let fullDescription = "";
+                let currentCategory = "";
+                for (let description of characterData.characterDescriptions) {
+                    if (currentCategory != description.category) {
+                        fullDescription += `<h2>${description.category}</h2>\n`;
+                        currentCategory = description.category;
+                    }
+                    fullDescription += `<h3>${description.title}</h3>\n`;
+                    fullDescription += `<p>${description.body}</p>\n`;
+                    fullDescription += `<p>&nbsp;</p>\n`;
+                }
+                if (fullDescription) {
+                    let actorDescription = {};
+                    actorDescription["data.details.biography.value"] = fullDescription;
+                    await actor.update(actorDescription);
+                }
             }
 
             if (characterData.abilityDescriptions.length > 0) {
