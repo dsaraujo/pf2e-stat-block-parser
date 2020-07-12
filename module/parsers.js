@@ -679,6 +679,14 @@ class SBDescriptionParser extends SBParserBase {
     }
 }
 
+class SBTelepathyParser extends SBParserBase {
+    async parse(key, value) {
+        let actorData = {};
+        actorData["data.traits.languages.custom"] = SBUtils.camelize(key) + " " + value;
+        return {actorData: actorData};
+    }
+}
+
 class SBSpecialAbilitiesParser extends SBCategoryParserBase {
     async parse(key, value) {
         let errors = [];
@@ -753,7 +761,7 @@ SBParserMapping.parsers = {
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": new SBAbilityParser(),
         "gear": new SBGearParser(),
-        "* telepathy": null,
+        "* telepathy": new SBTelepathyParser()
     },
     "tactics": {
         "combat": new SBDescriptionParser('tactics'),

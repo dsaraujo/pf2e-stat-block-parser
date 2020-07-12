@@ -297,7 +297,7 @@ export class SBStatblockParser {
                 if (parser != null) {
                     let parsedData = null;
                     try {
-                        parsedData = await parser.parse(rawKeyword, parsableValue);
+                        parsedData = await parser.parse(firstWord, parsableValue);
                     } catch (err) {
                         errors.push([firstWord, err]);
                         continue;
