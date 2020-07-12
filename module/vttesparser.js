@@ -66,7 +66,6 @@ export class SBVTTESParser {
         characterData.actorData["data.attributes.sp.max"] = 0;
         characterData.actorData["data.attributes.rp.max"] = 0;
 
-        let items = [];
         let errors = [];
 
         let parsedJson = JSON.parse(inputText);
