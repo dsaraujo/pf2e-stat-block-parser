@@ -165,6 +165,14 @@ export class SBUtils {
                         results.push(entry.trim());
                     }
                     entry = "";
+                } else if (entry.toLowerCase().endsWith(" and") && stack.length == 0 && baseString[i+1] == ' ') {
+                    entry = entry.substring(0, entry.length - 3);
+                    if (!results) {
+                        results = [entry.trim()];
+                    } else {
+                        results.push(entry.trim());
+                    }
+                    entry = "";
                 }
             }
         }
