@@ -174,8 +174,8 @@ class SBAttackParser extends SBParserBase {
             }
 
             let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
-            let attackDamageRoll = attackDamageData[1];
-            let attackDamageType = attackDamageData[2].toLowerCase();
+            attackDamageRoll = attackDamageData[1];
+            attackDamageType = attackDamageData[2].toLowerCase();
             if (SBConfig.weaponDamageTypes[attackDamageType] != undefined) {
                 attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
             } else {
@@ -216,10 +216,12 @@ class SBAttackParser extends SBParserBase {
             let criticalDamageEffect = criticalDamageRegex[2];
             let criticalDamageRoll = criticalDamageRegex[3];
             
+            itemData["data.critical"] = {effect: "", parts: []};
+
             if (criticalDamageEffect != "") {
                 itemData["data.critical.effect"] = SBUtils.camelize(criticalDamageEffect);
             }
-            if (criticalDamageRoll != "") {
+            if (criticalDamageRoll != "" && attackDamageType) {
                 itemData["data.critical.parts"] = [[criticalDamageRoll, attackDamageType]];
             }
         }
