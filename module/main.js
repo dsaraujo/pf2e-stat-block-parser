@@ -88,6 +88,7 @@ class SBProgram {
             let actor = await Actor.create(actorData);
             if (actor == null) {
                 SBUtils.log("Failed to create new actor.");
+                SBProgram.logErrors(errors);
                 return;
             }
             
@@ -95,12 +96,16 @@ class SBProgram {
             if (items.length > 0) {
                 let addedItemIds = [];
                 for (let itemData of items) {
-                    //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
-                    if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {
-                        await actor.createOwnedItem(itemData);
-                        if (itemData["sourceId"]) {
-                            addedItemIds.push(itemData["sourceId"]);
+                    try {
+                        //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
+                        if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {
+                            await actor.createOwnedItem(itemData);
+                            if (itemData["sourceId"]) {
+                                addedItemIds.push(itemData["sourceId"]);
+                            }
                         }
+                    } catch (err) {
+                        errors.push(["Failed to create item: " + itemData["name"], err]);
                     }
                 }
             }
@@ -109,12 +114,16 @@ class SBProgram {
             if (spells.length > 0) {
                 let addedSpellIds = [];
                 for (let spellData of spells) {
-                    //SBUtils.log(">> Creating spell: " + JSON.stringify(itemData));
-                    if (!spellData["sourceId"] || !addedSpellIds.includes(spellData["sourceId"])) {
-                        await actor.createOwnedItem(spellData);
-                        if (spellData["sourceId"]) {
-                            addedSpellIds.push(spellData["sourceId"]);
+                    try {
+                        //SBUtils.log(">> Creating spell: " + JSON.stringify(itemData));
+                        if (!spellData["sourceId"] || !addedSpellIds.includes(spellData["sourceId"])) {
+                            await actor.createOwnedItem(spellData);
+                            if (spellData["sourceId"]) {
+                                addedSpellIds.push(spellData["sourceId"]);
+                            }
                         }
+                    } catch (err) {
+                        errors.push(["Failed to create spell: " + spellData["name"], err]);
                     }
                 }
             }
@@ -123,9 +132,29 @@ class SBProgram {
             let sheet = new ActorSheetSFRPGNPC(actor);
             sheet.render(true);
 
+            SBProgram.logErrors(errors);
+
             if (errors.length > 0) {
                 throw errors[0][1];
             }
+        }
+    }
+
+    static logErrors(errors) {
+        if (errors.length > 0) {
+            let errorMessage = "";
+            SBUtils.log("> There were " + errors.length + " issue(s) parsing the provided statblock:");
+            for(let error of errors) {
+                let errorText = "Failed to parse '" + error[0] + "' (" + error[1] + ")";
+
+                SBUtils.log(">> " + errorText);
+                if (errorMessage.length > 0) {
+                    errorMessage += "<br/>";
+                }
+                errorMessage += errorText;
+            }
+
+            ui.notifications.error("There were " + errors.length + " issue(s) parsing the provided statblock:<br/>" + errorMessage + "<br/><br/>Click to dismiss.", {permanent: true});
         }
     }
 }
