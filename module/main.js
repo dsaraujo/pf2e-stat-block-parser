@@ -45,6 +45,7 @@ class SBProgram {
                 characterDescriptions: []
             }
             let errors = [];
+            let bHasMultiAttacks = false;
 
             let selectedParser = null;
             if (dataFormat === "vttes") {
@@ -152,6 +153,10 @@ class SBProgram {
                             if (itemData["sourceId"]) {
                                 addedItemIds.push(itemData["sourceId"]);
                             }
+
+                            if (itemData["name"].includes("MultiATK")) {
+                                bHasMultiAttacks = true;
+                            }
                         }
                     } catch (err) {
                         errors.push(["Failed to create item: " + itemData["name"], err]);
@@ -182,6 +187,10 @@ class SBProgram {
             sheet.render(true);
 
             SBProgram.logErrors(errors);
+
+            if (bHasMultiAttacks) {
+                ui.notifications.info("This character has multiattacks, please check the Action Types and Ability Modifiers of these attacks and adjust their attack bonuses accordingly.<br/><br/>Click to dismiss.", {permanent: true});
+            }
 
             if (errors.length > 0) {
                 throw errors[0][1];

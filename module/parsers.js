@@ -131,9 +131,10 @@ class SBSkillsParser extends SBParserBase {
 }
 
 class SBAttackParser extends SBParserBase {
-    constructor(bIsMelee) {
+    constructor(bIsMelee, bIsMulti) {
         super();
         this.bIsMelee = bIsMelee;
+        this.bIsMulti = bIsMulti;
     }
 
     async parse(key, value) {
@@ -190,6 +191,9 @@ class SBAttackParser extends SBParserBase {
         //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
         let itemData = matchingItem != null ? matchingItem : {"name": attackName};
+        if (this.bIsMulti) {
+            itemData["name"] = "[MultiATK] " + itemData["name"];
+        }
         if (itemData["_id"]) {
             itemData["sourceId"] = itemData["_id"];
             delete itemData["_id"];
@@ -205,6 +209,9 @@ class SBAttackParser extends SBParserBase {
         }
         if (!itemData["data.ability"]) {
             itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
+        }
+        if (this.bIsMulti) {
+            itemData["data.ability"] = "";
         }
         itemData["data.attackBonus"] = SBParsing.parseInteger(attackModifier);
         if (attackDamageRoll && attackDamageRoll) {
@@ -744,7 +751,7 @@ SBParserMapping.parsers = {
         "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
         "melee": new SBAttackParser(true),
         "ranged": new SBAttackParser(false),
-        "multiattack": null,
+        "multiattack": new SBAttackParser(true, true),
         "offensive abilities": new SBAbilityParser(),
         "* spell-like abilities": new SBSpellLikeParser(),
         "* spells known": new SBSpellsParser(),
