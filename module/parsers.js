@@ -174,8 +174,8 @@ class SBAttackParser extends SBParserBase {
             }
 
             let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
-            let attackDamageRoll = attackDamageData[1];
-            let attackDamageType = attackDamageData[2].toLowerCase();
+            attackDamageRoll = attackDamageData[1];
+            attackDamageType = attackDamageData[2].toLowerCase();
             if (SBConfig.weaponDamageTypes[attackDamageType] != undefined) {
                 attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
             } else {
@@ -216,10 +216,12 @@ class SBAttackParser extends SBParserBase {
             let criticalDamageEffect = criticalDamageRegex[2];
             let criticalDamageRoll = criticalDamageRegex[3];
             
+            itemData["data.critical"] = {effect: "", parts: []};
+
             if (criticalDamageEffect != "") {
                 itemData["data.critical.effect"] = SBUtils.camelize(criticalDamageEffect);
             }
-            if (criticalDamageRoll != "") {
+            if (criticalDamageRoll != "" && attackDamageType) {
                 itemData["data.critical.parts"] = [[criticalDamageRoll, attackDamageType]];
             }
         }
@@ -666,6 +668,56 @@ class SBSpellsParser extends SBParserBase {
     }
 }
 
+class SBDescriptionParser extends SBParserBase {
+    constructor(category) {
+        super();
+        this.category = category;
+    }
+
+    async parse(key, value) {
+        return {characterDescriptions: [{category: SBUtils.camelize(this.category), title: SBUtils.camelize(key), body: value}]};
+    }
+}
+
+class SBTelepathyParser extends SBParserBase {
+    async parse(key, value) {
+        let actorData = {};
+        actorData["data.traits.languages.custom"] = SBUtils.camelize(key) + " " + value;
+        return {actorData: actorData};
+    }
+}
+
+class SBSpecialAbilitiesParser extends SBCategoryParserBase {
+    async parse(key, value) {
+        let errors = [];
+        let abilityDescriptions = [];
+
+        // Iterate through the special abilities
+        let currentAbilityKey = "";
+        let currentAbilityText = "";
+        for (let line of value) {
+            let matched = line.match(/(.*\s\([Ex|Su|Sp]*\))\s(.*)/i);
+            if (matched != null) {
+                if (currentAbilityKey && currentAbilityText) {
+                    abilityDescriptions.push({name: currentAbilityKey, description: currentAbilityText});
+                    currentAbilityKey = "";
+                    currentAbilityText = "";
+                }
+                currentAbilityKey = matched[1].trim();
+                currentAbilityText = matched[2].trim();
+            } else {
+                currentAbilityText += " " + line.trim();
+            }
+        }
+
+        if (currentAbilityKey && currentAbilityText) {
+            abilityDescriptions.push({name: currentAbilityKey, description: currentAbilityText});
+        }
+
+        return {abilityDescriptions: abilityDescriptions, errors: errors};
+    }
+}
+
 SBParserMapping.parsers = {
     "base": {
         "init": new SBSingleValueParser(["data.attributes.init.total"]),
@@ -692,10 +744,11 @@ SBParserMapping.parsers = {
         "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
         "melee": new SBAttackParser(true),
         "ranged": new SBAttackParser(false),
+        "multiattack": null,
         "offensive abilities": new SBAbilityParser(),
         "* spell-like abilities": new SBSpellLikeParser(),
         "* spells known": new SBSpellsParser(),
-        "connection": null
+        "connection": new SBDescriptionParser('offense')
     },
     "statistics": {
         "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
@@ -708,16 +761,16 @@ SBParserMapping.parsers = {
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": new SBAbilityParser(),
         "gear": new SBGearParser(),
-        "* telepathy": null,
+        "* telepathy": new SBTelepathyParser()
     },
     "tactics": {
-        "combat": null,
-        "during combat": null,
-        "morale": null
+        "combat": new SBDescriptionParser('tactics'),
+        "during combat": new SBDescriptionParser('tactics'),
+        "morale": new SBDescriptionParser('tactics')
     },
-    "special abilities": null,
+    "special abilities": new SBSpecialAbilitiesParser(),
     "ecology": {
-        "environment": null,
-        "organization": null
+        "environment": new SBDescriptionParser('ecology'),
+        "organization": new SBDescriptionParser('ecology')
     }
 };

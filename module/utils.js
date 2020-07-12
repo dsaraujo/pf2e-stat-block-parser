@@ -73,11 +73,20 @@ export class SBUtils {
     }
 
     static stringStartsWith(string, searchString, bCaseSensitive = true) {
-        if (bCaseSensitive) {
-            return startPart.startsWith(searchString);
-        } else {
-            let startPart = string.substring(0, searchString.length);
-            return startPart.toLowerCase() === searchString.toLowerCase();
+        try {
+            if (searchString.length > string.length) {
+                return false;
+            }
+
+            if (bCaseSensitive) {
+                return string.startsWith(searchString);
+            } else {
+                let startPart = string.substring(0, searchString.length);
+                return startPart.toLowerCase() === searchString.toLowerCase();
+            }
+        } catch (err) {
+            SBUtils.log(`stringStartsWith('${string}', '${searchString}', ${bCaseSensitive}) threw an error: ${err}`);
+            throw err;
         }
     }
 
@@ -159,6 +168,14 @@ export class SBUtils {
                 entry += character;
                 if (entry.toLowerCase().endsWith(" or") && stack.length == 0 && baseString[i+1] == ' ') {
                     entry = entry.substring(0, entry.length - 2);
+                    if (!results) {
+                        results = [entry.trim()];
+                    } else {
+                        results.push(entry.trim());
+                    }
+                    entry = "";
+                } else if (entry.toLowerCase().endsWith(" and") && stack.length == 0 && baseString[i+1] == ' ') {
+                    entry = entry.substring(0, entry.length - 3);
                     if (!results) {
                         results = [entry.trim()];
                     } else {
