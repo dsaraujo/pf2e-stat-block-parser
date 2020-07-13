@@ -1,11 +1,69 @@
 import { SBUtils, SBConfig } from "./utils.js";
 
+class SBLambdaParser {
+    constructor(parserFunction) {
+        this.parserFunction = parserFunction;
+    }
+
+    parse(key, value) {
+        this.parserFunction(key, value);
+    }
+}
+
+const SBDirectFieldAssignmentMode = {
+    Direct: "direct",
+    LowerCase: "lowercase",
+    Camelized: "camelized",
+    Integer: "integer"
+};
+
+class SBDirectFieldParser {
+    constructor(targetFields, assignmentMode = SBDirectFieldAssignmentMode.Direct) {
+        this.targetFields = targetFields;
+        this.assignmentMode = assignmentMode;
+    }
+
+    parse(key, value) {
+        switch (this.assignmentMode) {
+            default:
+            case SBDirectFieldAssignmentMode.Direct:
+                break;
+            case SBDirectFieldAssignmentMode.LowerCase:
+                value = value.toLowerCase();
+                break;
+            case SBDirectFieldAssignmentMode.Camelized:
+                value = SBUtils.camelize(value);
+                break;
+            case SBDirectFieldAssignmentMode.Integer:
+                value = parseInt(value);
+                if (Number.isNaN(value)) {
+                    value = 0;
+                }
+                break;
+        }
+
+        for (let field of this.targetFields) {
+            key[field] = value;
+        }
+    }
+}
+
 export class SBPCGenParser {
     attributeMapping = {
-        "root.character.name": ["name"],
-        "root.character.alignment": ["data.details.alignment"],
-        "root.character.size": ["data.traits.size"],
-        "root.character.race": ["data.details.race"]
+        "root.character.name": new SBDirectFieldParser(["name"]),
+        "root.character.alignment": new SBDirectFieldParser(["data.details.alignment"]),
+        "root.character.speed": new SBDirectFieldParser(["data.attributes.speed.value"]),
+        "root.character.size": new SBDirectFieldParser(["data.traits.size"], SBDirectFieldAssignmentMode.LowerCase),
+        "root.character.race": new SBDirectFieldParser(["data.details.race"], SBDirectFieldAssignmentMode.Camelized),
+        "root.character.hp.total": new SBDirectFieldParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
+        "root.character.sp.total": new SBDirectFieldParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
+        "root.character.rp.total": new SBDirectFieldParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
+        "root.character.abilities.strength.bonus": new SBDirectFieldParser(["data.abilities.str.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.dexterity.bonus": new SBDirectFieldParser(["data.abilities.dex.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.constitution.bonus": new SBDirectFieldParser(["data.abilities.con.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.intelligence.bonus": new SBDirectFieldParser(["data.abilities.int.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.wisdom.bonus": new SBDirectFieldParser(["data.abilities.wis.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.charisma.bonus": new SBDirectFieldParser(["data.abilities.cha.mod"], SBDirectFieldAssignmentMode.Integer)
     };
 
     getNode(xmlDoc, path, bGetTextNode = true) {
@@ -64,10 +122,10 @@ export class SBPCGenParser {
 
             let keys = Object.keys(this.attributeMapping);
             for (let key of keys) {
-                let targetAttribute = this.attributeMapping[key];
                 let parsedValue = this.getNode(xmlDoc, key);
                 if (parsedValue) {
-                    characterData.actorData[targetAttribute] = parsedValue.nodeValue;
+                    let valueParser = this.attributeMapping[key];
+                    valueParser.parse(characterData.actorData, parsedValue.nodeValue);
                 }
             }
         } catch (err) {
