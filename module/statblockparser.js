@@ -242,6 +242,8 @@ export class SBStatblockParser {
                 }
             }
 
+            combinedLine = combinedLine.trim();
+
             // Now we try to consume tokens
             let iterationsLeft = 100;
             while (combinedLine && iterationsLeft > 0) {
@@ -254,7 +256,7 @@ export class SBStatblockParser {
                         let regex = new RegExp(availableKeyword.replace("*", "(\\S*)"), "i");
                         let matched = combinedLine.match(regex);
                         if (matched != null) {
-                            //SBUtils.log("SWK: Keyword " + keyword + " is now " + JSON.stringify(matched));
+                            //SBUtils.log("SWK: Keyword " + availableKeyword + " is now " + JSON.stringify(matched));
                             availableKeyword = matched[0];
                         }
                     }
@@ -270,6 +272,7 @@ export class SBStatblockParser {
                 // If no keyword was found, consume precisely 1 word and try again.
                 if (!firstWord) {
                     var firstSpace = combinedLine.indexOf(" ");
+                    //SBUtils.log(`First space in '${combinedLine} is at index ${firstSpace}`);
                     firstWord = firstSpace > 0 ? combinedLine.substring(0, firstSpace) : combinedLine;
                     combinedLine = combinedLine.substring(firstWord.length).trim();
                     //SBUtils.log("No keyword found, parsed out " + firstWord);
