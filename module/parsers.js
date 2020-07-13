@@ -743,6 +743,7 @@ SBParserMapping.parsers = {
         "sr": new SBSingleValueParser(["data.traits.sr"], false),
         "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/"),
         "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())),
+        "resist": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())), // Hero Lab support
         "weaknesses": new SBWeaknessesParser(),
         "immunities": new SBImmunitiesParser(),
         "defensive abilities": new SBAbilityParser()
@@ -753,6 +754,7 @@ SBParserMapping.parsers = {
         "ranged": new SBAttackParser(false),
         "multiattack": new SBAttackParser(true, true),
         "offensive abilities": new SBAbilityParser(),
+        "spell-like abilities": new SBSpellLikeParser(), // Hero Lab support
         "* spell-like abilities": new SBSpellLikeParser(),
         "* spells known": new SBSpellsParser(),
         "connection": new SBDescriptionParser('offense')
@@ -768,6 +770,7 @@ SBParserMapping.parsers = {
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": new SBAbilityParser(),
         "gear": new SBGearParser(),
+        "other gear": new SBGearParser(), // Hero Lab support
         "* telepathy": new SBTelepathyParser()
     },
     "tactics": {
@@ -779,5 +782,6 @@ SBParserMapping.parsers = {
     "ecology": {
         "environment": new SBDescriptionParser('ecology'),
         "organization": new SBDescriptionParser('ecology')
-    }
+    },
+    "hero lab": null // Hero Lab support
 };

@@ -36,9 +36,21 @@ export class SBStatblockParser {
         inputText = inputText.replace(/—/gi, '-');
         inputText = inputText.replace(/–/gi, '-');
 
+        // Hero Lab support
+        let bHeroLabFile = SBUtils.stringContains(inputText, "Hero Lab", false);
+
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
         let splitNewlines = inputText.split(/[\r\n]+/);
+        let lineIndex = -1;
         splitNewlines.forEach(line => {
+            lineIndex = lineIndex + 1;
+
+            if (bHeroLabFile && lineIndex == 0) {
+                bNameHandled = true;
+                characterData.actorData['name'] = line;
+                return;
+            }
+
             // Detect category
             for (let availableCat of availableCategories) {
                 if (SBUtils.stringStartsWith(line, availableCat, false)) {
