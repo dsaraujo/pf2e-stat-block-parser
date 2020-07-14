@@ -105,13 +105,12 @@ export class SBStatblockParser {
                     if (sizeBlock[0].length == 0) {
                         let alignment = sizeBlock[1];
                         let size = sizeBlock[2];
-                        let typeRace = sizeBlock[3];
 
-                        let typeSeparation = typeRace.split(/(\S*)( \((.*)\))?/i);
-                        let type = typeSeparation[1];
+                        let typeSeparation = SBParsing.parseSubtext(sizeBlock[3]);
+                        let type = typeSeparation[0];
                         let subType = "";
-                        if (typeSeparation.length > 3) {
-                            subType = typeSeparation[3];
+                        if (typeSeparation.length > 1) {
+                            subType = typeSeparation[1];
                         }
 
                         size = size.toLowerCase();
