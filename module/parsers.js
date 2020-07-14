@@ -769,6 +769,7 @@ SBParserMapping.parsers = {
         "skills": new SBSkillsParser(),
         "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
         "other abilities": new SBAbilityParser(),
+        "feats": new SBAbilityParser(),
         "gear": new SBGearParser(),
         "other gear": new SBGearParser(), // Hero Lab support
         "* telepathy": new SBTelepathyParser()
