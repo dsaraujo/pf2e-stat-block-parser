@@ -1,0 +1,43 @@
+0.2.11:
+- Cleaned up subtype parsing, subtypes are stored but the NPC sheet doesn't display it, it only has a field for Type.
+- Added Feats to the supported keywords set for the Statistics block.
+
+0.2.10:
+- Added basic support for PCGen, feel free to add fields with pull requests if you use this software, I do not have it, so I don't have enough source material to develop it further.
+- Added a couple of hooks for Herolab exports, it's similar enough to Paizo-Style that is parses reasonably okay, with a couple of minor exceptions for which I have now accounted. (As far as I am aware of them anyway)
+- Fixed a parsing error when there's unexpected whitespaces in the statblocks.
+
+0.2.9:
+- Created PCGen parsing framework.
+- Fixing completely non-functional vttes parser.
+
+0.2.8:
+- Added support for multiattacks to Paizo-style statblocks.
+
+0.2.7:
+- Added error reporting when it fails to create items or spells.
+- Added support for 'and' in series of data.
+- Added support for the special abilities block, added support for tactics (morale, combat), ecology (organization, environment), and connection. These are now parsed into the Biography section.
+- Added proper support for limited telepathy as a language.
+- Fixed a minor weapon parsing bug w.r.t. critical damage caused by 0.2.6's fix to double attack bonuses
+- Fixed multiattack text getting merged into the ranged attack
+- Did some code clean-up.
+
+0.2.6:
+- Removed double attack bonuses from NPC attacks.
+- Better handling for PDF's funny - symbols.
+
+0.2.5:
+- Added support for spell-like abilities.
+- Added support for normal abilities.
+- Added security, only users with Create Token permissions can parse statblocks.
+- Added times per day info on spells.
+
+0.2.4:
+- Added support for spells.
+- Fixed gear parsing no longer splitting armor into arm and or.
+- Improved handling of , separated values.
+- Cleaned up code.
+
+0.2.3 and older:
+- Core foundation of the module.
