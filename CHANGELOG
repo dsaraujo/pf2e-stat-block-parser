@@ -1,3 +1,6 @@
+0.3.0:
+- Prepared repository for public release.
+
 0.2.11:
 - Cleaned up subtype parsing, subtypes are stored but the NPC sheet doesn't display it, it only has a field for Type.
 - Added Feats to the supported keywords set for the Statistics block.

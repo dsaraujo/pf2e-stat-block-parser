@@ -2,7 +2,7 @@
     "name": "sfrpg-statblock-parser",
     "title": "SFRPG Statblock Parser",
     "description": "A module to convert SFRPG NPC stat blocks into Actors",
-    "version": "0.2.11",
+    "version": "0.3.0",
     "author": "Deepflame",
     "systems": ["sfrpg"],
     "esmodules": ["./module/main.js", "./module/text-input.js"],
