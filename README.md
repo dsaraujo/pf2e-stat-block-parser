@@ -5,9 +5,10 @@ A simple FoundryVTT module that allows GMs to parse the statblocks of Starfinder
 ## Use
 
 To use simply go to the actors tab in FoundryVTT, and click the Parse Statblock button at the bottom. Paste in the statblock text, and click ok.
-The main focus of this module is to support Paizo-style statblocks, this means you must include the category headers like defense, offense, statistics, etc.
 
-An example stat block:
+The main focus of this module is to support Paizo-style statblocks, this means you must include the category headers like defense, offense, statistics, etc. However, to some extent, HeroLab statblocks are also supported, as they are very similar to Paizo-style. Finally, there is a basic implementation for PCGen XML and VTTES JSON exported characters.
+
+An example Paizo-style statblock:
 ~~~
 Simple Mook CR 1/2
 LE Medium humanoid (human)
