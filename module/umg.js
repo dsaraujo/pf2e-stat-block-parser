@@ -1,6 +1,6 @@
-export class SBUniversalMonsterGrafts {}
+export class SBUniversalMonsterRules {}
 
-SBUniversalMonsterGrafts.grafts = [
+SBUniversalMonsterRules.specialAbilities = [
     {
       name: "Alien Presence",
       abilityType: "Ex or Su",

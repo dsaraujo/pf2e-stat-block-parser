@@ -155,8 +155,8 @@ export class SBUtils {
             } else if (stackTop && character == SBUtils.matchingClosingBrackets[stackTop]) {
                 entry += character;
                 stack.pop();
-            } else if (character == ',') {
-                if (stack.length == 0 && entry.length > 0) {
+            } else if (character === ',' || character === ';') {
+                if (stack.length === 0 && entry.length > 0) {
                     if (!results) {
                         results = [entry.trim()];
                     } else {
