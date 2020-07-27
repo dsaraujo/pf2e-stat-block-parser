@@ -1,3 +1,7 @@
+0.3.1:
+- Improved handling of attacks: Now supports universal monster rules in attacks.
+- Improved handling of defensive abilities, trailing ; are now ignored.
+
 0.3.0:
 - Prepared repository for public release.
 
