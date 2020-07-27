@@ -1,7 +1,7 @@
 import { SFRPG } from "../../../systems/sfrpg/module/config.js";
 
 import { SBUtils, SBConfig } from "./utils.js";
-import { SBUniversalMonsterGrafts } from "./umg.js";
+import { SBUniversalMonsterRules } from "./umg.js";
 
 export class SBParserMapping {}
 export class SBParsing {}
@@ -157,18 +157,19 @@ class SBAttackParser extends SBParserBase {
     /** Will parse an attack using the attack format: attack name +attackRoll (damageRoll damageType ; critical effect) */
     async parseAttack(attack, bIsMeleeAttack) {
         //SBUtils.log("Parsing attack: " + attack);
-        let attackInfo = attack.split(/(.*)\s([\+|-][\s]*\d*)\s\((.*)\)/i);
-                    
-        let attackName = SBUtils.camelize(attackInfo[1]);
+        let attackInfo = SBParsing.parseSubtext(attack);
+
+        let mainBlock = attackInfo[0].split(/(.*)\s([\+|-][\s]*\d*)/i);
+        let attackName = SBUtils.camelize(mainBlock[1]);
         //SBUtils.log("Parsed attack: " + JSON.stringify(attackInfo));
-        let attackModifier = attackInfo[2];
+        let attackModifier = mainBlock[2];
         
         let attackDamageRoll = undefined;
         let attackDamageType = undefined;
         let criticalDamage = "";
 
         try {
-            let damageString = attackInfo[3].split(";");
+            let damageString = attackInfo[2].split(";");
             let normalDamage = damageString[0].split("plus")[0].trim();
             if (damageString.length > 1) {
                 criticalDamage = damageString[1];
@@ -188,9 +189,20 @@ class SBAttackParser extends SBParserBase {
         }
         
         let matchingItem = await SBUtils.fuzzyFindItemAsync(attackName);
+        if (matchingItem == null) {
+            matchingItem = await SBUtils.fuzzyFindSpellAsync(attackName);
+        }
         //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
         let itemData = matchingItem != null ? matchingItem : {"name": attackName};
+
+        if (matchingItem == null) {
+            let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == attackName);
+            if (matchingRule.length > 0) {
+                itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
+            }
+        }
+
         if (this.bIsMulti) {
             itemData["name"] = "[MultiATK] " + itemData["name"];
         }
@@ -404,7 +416,7 @@ class SBAbilityParser extends SBParserBase {
             let abilityValue = SBParsing.parseSubtext(ability);
             ability = SBUtils.camelize(abilityValue[0]);
 
-            let matchingGraft = SBUniversalMonsterGrafts.grafts.filter((x) => x.name == ability);
+            let matchingGraft = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == ability);
             if (matchingGraft.length > 0) {
                 matchingGraft = matchingGraft[0];
             } else {
