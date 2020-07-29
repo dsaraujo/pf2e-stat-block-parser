@@ -119,7 +119,16 @@ class SBProgram {
 
                 let fullDescription = "";
                 let currentCategory = "";
+                let bInSecretMode = false;
                 for (let description of characterData.characterDescriptions) {
+                    if (description.bIsSecret && !bInSecretMode) {
+                        bInSecretMode = true;
+                        fullDescription += "<section class=\"secret\">\n";
+                    } else if (!description.bIsSecret && bInSecretMode) {
+                        bInSecretMode = false;
+                        fullDescription += "</section>\n";
+                    }
+
                     if (currentCategory != description.category) {
                         fullDescription += `<h2>${description.category}</h2>\n`;
                         currentCategory = description.category;

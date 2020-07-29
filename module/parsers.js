@@ -688,13 +688,14 @@ class SBSpellsParser extends SBParserBase {
 }
 
 class SBDescriptionParser extends SBParserBase {
-    constructor(category) {
+    constructor(category, bIsSecret = true) {
         super();
         this.category = category;
+        this.bIsSecret = bIsSecret;
     }
 
     async parse(key, value) {
-        return {characterDescriptions: [{category: SBUtils.camelize(this.category), title: SBUtils.camelize(key), body: value}]};
+        return {characterDescriptions: [{category: SBUtils.camelize(this.category), title: SBUtils.camelize(key), body: value, bIsSecret: this.bIsSecret}]};
     }
 }
 
