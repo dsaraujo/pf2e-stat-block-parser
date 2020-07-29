@@ -1,3 +1,8 @@
+0.3.2:
+- Fixed damage roll parsing.
+- Now marking tactics as GM Secret in the Biography page.
+- Added support for "before combat" tactics.
+
 0.3.1:
 - Improved handling of attacks: Now supports universal monster rules in attacks.
 - Improved handling of defensive abilities, trailing ; are now ignored.
