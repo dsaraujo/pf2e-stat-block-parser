@@ -788,7 +788,7 @@ SBParserMapping.parsers = {
         "* telepathy": new SBTelepathyParser()
     },
     "tactics": {
-        "combat": new SBDescriptionParser('tactics'),
+        "before combat": new SBDescriptionParser('tactics'),
         "during combat": new SBDescriptionParser('tactics'),
         "morale": new SBDescriptionParser('tactics')
     },
