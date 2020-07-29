@@ -169,7 +169,7 @@ class SBAttackParser extends SBParserBase {
         let criticalDamage = "";
 
         try {
-            let damageString = attackInfo[2].split(";");
+            let damageString = attackInfo[1].split(";");
             let normalDamage = damageString[0].split("plus")[0].trim();
             if (damageString.length > 1) {
                 criticalDamage = damageString[1];
