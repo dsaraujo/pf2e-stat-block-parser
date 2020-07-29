@@ -169,7 +169,7 @@ class SBAttackParser extends SBParserBase {
         let criticalDamage = "";
 
         try {
-            let damageString = attackInfo[2].split(";");
+            let damageString = attackInfo[1].split(";");
             let normalDamage = damageString[0].split("plus")[0].trim();
             if (damageString.length > 1) {
                 criticalDamage = damageString[1];
@@ -688,13 +688,14 @@ class SBSpellsParser extends SBParserBase {
 }
 
 class SBDescriptionParser extends SBParserBase {
-    constructor(category) {
+    constructor(category, bIsSecret = true) {
         super();
         this.category = category;
+        this.bIsSecret = bIsSecret;
     }
 
     async parse(key, value) {
-        return {characterDescriptions: [{category: SBUtils.camelize(this.category), title: SBUtils.camelize(key), body: value}]};
+        return {characterDescriptions: [{category: SBUtils.camelize(this.category), title: SBUtils.camelize(key), body: value, bIsSecret: this.bIsSecret}]};
     }
 }
 
@@ -787,7 +788,7 @@ SBParserMapping.parsers = {
         "* telepathy": new SBTelepathyParser()
     },
     "tactics": {
-        "combat": new SBDescriptionParser('tactics'),
+        "before combat": new SBDescriptionParser('tactics'),
         "during combat": new SBDescriptionParser('tactics'),
         "morale": new SBDescriptionParser('tactics')
     },
