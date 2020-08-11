@@ -137,10 +137,10 @@ export class SBStatblockParser {
         function getRawMatchingKeyword(input, keywords) {
             for (let keyword of keywords) {
                 if (keyword.includes("*")) {
-                    let regex = new RegExp(keyword.replace("*", "(\\S*)"), "i");
+                    let regex = new RegExp(keyword.replace("*", "([^\\s;]*)"), "i");
                     let matched = input.match(regex);
                     if (matched != null) {
-                        //SBUtils.log("SWK: Keyword " + keyword + " is now " + JSON.stringify(matched));
+                        //SBUtils.log("gRMK: Keyword " + keyword + " is now " + JSON.stringify(matched));
                         //keyword = matched[0];
                         return keyword;
                     }
@@ -156,7 +156,7 @@ export class SBStatblockParser {
         function startsWithKeyword(line, keywords) {
             for (let keyword of keywords) {
                 if (keyword.includes("*")) {
-                    let regex = new RegExp(keyword.replace("*", "(\\S*)"), "i");
+                    let regex = new RegExp(keyword.replace("*", "([^\\s;]*)"), "i");
                     let matched = line.match(regex);
                     if (matched != null) {
                         //SBUtils.log("SWK: Keyword " + keyword + " is now " + JSON.stringify(matched));
@@ -175,17 +175,24 @@ export class SBStatblockParser {
             let index = -1;
             let lowerCaseLine = line.toLowerCase();
             let foundKeyword = "";
+
+            let bLog = false;
+
+            if (bLog) SBUtils.log(`Available keywords: ` + keywords);
             for(let keyword of keywords) {
+                const oldKeyword = keyword;
                 if (keyword.includes("*")) {
-                    let regex = new RegExp(keyword.replace("*", "(\\S*)"), "i");
+                    let regex = new RegExp(keyword.replace("*", "([^\\s;]*)"), "i");
                     let matched = line.match(regex);
                     if (matched != null) {
-                        //SBUtils.log("IONK: Keyword " + keyword + " is now " + JSON.stringify(matched));// + ", from line: " + line);
-                        keyword = matched[0];
+                        keyword = matched[0].trim();
+                        SBUtils.log("IONK: Keyword " + oldKeyword + " is now " + JSON.stringify(keyword));// + ", from line: " + line);
                     }
                 }
                 
                 let keywordIndex = lowerCaseLine.indexOf(keyword.toLowerCase());
+
+                if (bLog) SBUtils.log(`>> Evaluating '${keyword}' in '${line}'; Index is ${keywordIndex}`);
                 if (keywordIndex != -1) {
                     let textUpToKeyword = lowerCaseLine.substring(0, keywordIndex);
                     let stack = [];
@@ -199,16 +206,19 @@ export class SBStatblockParser {
                     }
 
                     if (stack.length > 0) {
-                        //SBUtils.log("Rejected " + keyword + " because inside " + stack[stack.length - 1]);
+                        SBUtils.log("Rejected '" + keyword + "' because inside " + stack[stack.length - 1]);
                         continue;
                     }
 
                     if (index == -1 || keywordIndex < index) {
                         index = keywordIndex;
                         foundKeyword = keyword.toLowerCase();
+                        if (bLog) SBUtils.log(`>>> Next best keyword is ${foundKeyword}, at index ${index}`);
                     }
                 }
             }
+
+            if (bLog) SBUtils.log(`> Selected ${foundKeyword} at ${index}`);
             return {index: index, keyword: foundKeyword};
         }
 
@@ -273,10 +283,11 @@ export class SBStatblockParser {
                     }
                     
                     if (SBUtils.stringStartsWith(combinedLine, availableKeyword, false)) {
-                        //SBUtils.log("Starts with keyword " + availableKeyword);
                         firstWord = availableKeyword;
                         availableKeywords = availableKeywords.filter(x => x != firstWord.toLowerCase());
                         combinedLine = combinedLine.substring(firstWord.length).trim();
+                        //SBUtils.log(`Starts with keyword ${firstWord}, line to process now '${combinedLine}'`);
+                        break;
                     }
                 }
 
@@ -305,7 +316,7 @@ export class SBStatblockParser {
                     parsableValue = parsableValue.substring(0, parsableValue.length - 1).trim();
                 }
 
-                //SBUtils.log(">> Evaluating " + firstWord + ", with value: " + parsableValue);
+                //SBUtils.log(`>> Evaluating '${firstWord}', with value: '${parsableValue}'`);
                 let rawKeyword = getRawMatchingKeyword(firstWord, availableKeywords);
                 var parser = SBParserMapping.parsers[category][rawKeyword];
                 if (parser != null) {

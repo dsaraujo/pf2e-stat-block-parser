@@ -5,6 +5,7 @@ import { SBStatblockParser } from "./statblockparser.js";
 import { SBTextInputDialog } from "./text-input.js";
 import { SBUtils } from "./utils.js";
 import { SBVTTESParser } from "./vttesparser.js";
+import { SBParsing } from "./parsers.js";
 
 class SBProgram {
     static ensureParseStatblockVisible() {
@@ -148,10 +149,13 @@ class SBProgram {
                 SBUtils.log(`> Processing ${characterData.abilityDescriptions.length} ability description(s).`);
                 for (let abilityDescription of characterData.abilityDescriptions) {
                     for (let i = 0; i<characterData.items.length; i++) {
-                        if (SBUtils.stringStartsWith(abilityDescription.name, characterData.items[i]["name"], false)) {
+                        let typeString = SBParsing.parseSubtext(abilityDescription.name)[0];
+                        if (SBUtils.stringStartsWith(typeString, characterData.items[i]["name"], false)
+                            || SBUtils.stringStartsWith(characterData.items[i]["name"], typeString, false)) {
                             characterData.items[i]["name"] = abilityDescription.name;
-                            if (characterData.items[i]["data.description.value"]) {
-                                characterData.items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + characterData.items[i]["data.description"];
+                            const originalDesc = characterData.items[i]["data.description.value"];
+                            if (originalDesc) {
+                                characterData.items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + originalDesc;
                             } else {
                                 characterData.items[i]["data.description.value"] = abilityDescription.description;
                             }
