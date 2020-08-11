@@ -163,6 +163,7 @@ class SBAttackParser extends SBParserBase {
         let attackName = SBUtils.camelize(mainBlock[1]);
         //SBUtils.log("Parsed attack: " + JSON.stringify(attackInfo));
         let attackModifier = mainBlock[2];
+        let additionalName = "";
         
         let attackDamageRoll = undefined;
         let attackDamageType = undefined;
@@ -170,7 +171,8 @@ class SBAttackParser extends SBParserBase {
 
         try {
             let damageString = attackInfo[1].split(";");
-            let normalDamage = damageString[0].split("plus")[0].trim();
+            let damageBlock = damageString[0].split("plus");
+            let normalDamage = damageBlock[0].trim();
             if (damageString.length > 1) {
                 criticalDamage = damageString[1];
             }
@@ -182,6 +184,10 @@ class SBAttackParser extends SBParserBase {
                 attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
             } else {
                 attackDamageType = "slashing";
+            }
+
+            if (damageBlock.length > 1) {
+                additionalName = " (plus " + SBUtils.camelize(damageBlock[1].trim()) + ")";
             }
         } catch (err) {
             attackDamageRoll = undefined;
@@ -206,6 +212,10 @@ class SBAttackParser extends SBParserBase {
         if (this.bIsMulti) {
             itemData["name"] = "[MultiATK] " + itemData["name"];
         }
+        if (additionalName) {
+            itemData["name"] += additionalName;
+        }
+
         if (itemData["_id"]) {
             itemData["sourceId"] = itemData["_id"];
             delete itemData["_id"];
