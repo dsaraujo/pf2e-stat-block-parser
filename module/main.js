@@ -5,7 +5,7 @@ import { SBStatblockParser } from "./statblockparser.js";
 import { SBTextInputDialog } from "./text-input.js";
 import { SBUtils } from "./utils.js";
 import { SBVTTESParser } from "./vttesparser.js";
-import { SBParsing } from "./parsers.js";
+import { SBParsing, initParsers } from "./parsers.js";
 
 class SBProgram {
     static ensureParseStatblockVisible() {
@@ -245,4 +245,8 @@ Hooks.on("renderSidebarTab", async (app, html) => {
         SBProgram.ensureParseStatblockVisible();
     }
 });
-SBUtils.log("SFRPG Statblock Parser initialized.");
+
+Hooks.on("ready", function() {
+    initParsers();
+    SBUtils.log("SFRPG Statblock Parser initialized.");
+});
