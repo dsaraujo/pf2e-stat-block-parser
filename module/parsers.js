@@ -687,7 +687,7 @@ class SBSpellsParser extends SBParserBase {
     }
 }
 
-class SBDescriptionParser extends SBParserBase {
+class SBDescriptionParser extends SBCategoryParserBase {
     constructor(category, bIsSecret = true) {
         super();
         this.category = category;
@@ -695,6 +695,12 @@ class SBDescriptionParser extends SBParserBase {
     }
 
     async parse(key, value) {
+        if (key === "description") {
+            while (value && value.length > 0 && value[0] === "") {
+                value.shift();
+            }
+            value = value.join('<br/><br/>');
+        }
         return {characterDescriptions: [{category: SBUtils.camelize(this.category), title: SBUtils.camelize(key), body: value, bIsSecret: this.bIsSecret}]};
     }
 }
@@ -797,5 +803,6 @@ SBParserMapping.parsers = {
         "environment": new SBDescriptionParser('ecology'),
         "organization": new SBDescriptionParser('ecology')
     },
+    "description": new SBDescriptionParser('description', false),
     "hero lab": null // Hero Lab support
 };
