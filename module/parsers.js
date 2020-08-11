@@ -1,5 +1,3 @@
-import { SFRPG } from "../../../systems/sfrpg/module/config.js";
-
 import { SBUtils, SBConfig } from "./utils.js";
 import { SBUniversalMonsterRules } from "./umg.js";
 
@@ -163,6 +161,7 @@ class SBAttackParser extends SBParserBase {
         let attackName = SBUtils.camelize(mainBlock[1]);
         //SBUtils.log("Parsed attack: " + JSON.stringify(attackInfo));
         let attackModifier = mainBlock[2];
+        let additionalName = "";
         
         let attackDamageRoll = undefined;
         let attackDamageType = undefined;
@@ -170,7 +169,8 @@ class SBAttackParser extends SBParserBase {
 
         try {
             let damageString = attackInfo[1].split(";");
-            let normalDamage = damageString[0].split("plus")[0].trim();
+            let damageBlock = damageString[0].split("plus");
+            let normalDamage = damageBlock[0].trim();
             if (damageString.length > 1) {
                 criticalDamage = damageString[1];
             }
@@ -182,6 +182,10 @@ class SBAttackParser extends SBParserBase {
                 attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
             } else {
                 attackDamageType = "slashing";
+            }
+
+            if (damageBlock.length > 1) {
+                additionalName = " (plus " + SBUtils.camelize(damageBlock[1].trim()) + ")";
             }
         } catch (err) {
             attackDamageRoll = undefined;
@@ -206,6 +210,10 @@ class SBAttackParser extends SBParserBase {
         if (this.bIsMulti) {
             itemData["name"] = "[MultiATK] " + itemData["name"];
         }
+        if (additionalName) {
+            itemData["name"] += additionalName;
+        }
+
         if (itemData["_id"]) {
             itemData["sourceId"] = itemData["_id"];
             delete itemData["_id"];
@@ -304,7 +312,7 @@ class SBLanguagesParser extends SBTraitParser {
 
 class SBWeaknessesParser extends SBParserBase {
     async parse(key, value) {
-        let recognizedWeaknesses = Object.keys(SFRPG.damageTypes).map(x => x.toLowerCase());
+        let recognizedWeaknesses = Object.keys(CONFIG["SFRPG"].damageTypes).map(x => x.toLowerCase());
 
         let knownWeaknesses = [];
         let customWeaknesses = "";
@@ -330,8 +338,8 @@ class SBWeaknessesParser extends SBParserBase {
 
 class SBImmunitiesParser extends SBParserBase {
     async parse(key, value) {
-        let recognizedConditionImmunities = Object.keys(SFRPG.conditionTypes).map(x => x.toLowerCase());
-        let recognizedDamageImmunities = Object.keys(SFRPG.damageTypes).map(x => x.toLowerCase());
+        let recognizedConditionImmunities = Object.keys(CONFIG["SFRPG"].conditionTypes).map(x => x.toLowerCase());
+        let recognizedDamageImmunities = Object.keys(CONFIG["SFRPG"].damageTypes).map(x => x.toLowerCase());
 
         let knownConditionImmunities = [];
         let knownDamageImmunities = [];
@@ -687,7 +695,7 @@ class SBSpellsParser extends SBParserBase {
     }
 }
 
-class SBDescriptionParser extends SBParserBase {
+class SBDescriptionParser extends SBCategoryParserBase {
     constructor(category, bIsSecret = true) {
         super();
         this.category = category;
@@ -695,6 +703,12 @@ class SBDescriptionParser extends SBParserBase {
     }
 
     async parse(key, value) {
+        if (key === "description") {
+            while (value && value.length > 0 && value[0] === "") {
+                value.shift();
+            }
+            value = value.join('<br/><br/>');
+        }
         return {characterDescriptions: [{category: SBUtils.camelize(this.category), title: SBUtils.camelize(key), body: value, bIsSecret: this.bIsSecret}]};
     }
 }
@@ -738,64 +752,71 @@ class SBSpecialAbilitiesParser extends SBCategoryParserBase {
     }
 }
 
-SBParserMapping.parsers = {
-    "base": {
-        "init": new SBSingleValueParser(["data.attributes.init.total"]),
-        "senses": new SBSingleValueParser(["data.traits.senses"], false),
-        "perception": new SBSkillParser()
-    },
-    "defense": {
-        "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
-        "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
-        "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
-        "eac": new SBSingleValueParser(["data.attributes.eac.value"]),
-        "kac": new SBSingleValueParser(["data.attributes.kac.value"]),
-        "fort": new SBSingleValueParser(["data.attributes.fort.bonus"]),
-        "ref": new SBSingleValueParser(["data.attributes.reflex.bonus"]),
-        "will": new SBSingleValueParser(["data.attributes.will.bonus"]),
-        "sr": new SBSingleValueParser(["data.traits.sr"], false),
-        "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/"),
-        "resistances": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())),
-        "resist": new SBTraitParser("data.traits.dr", Object.keys(SFRPG.energyDamageTypes).map(x => x.toLowerCase())), // Hero Lab support
-        "weaknesses": new SBWeaknessesParser(),
-        "immunities": new SBImmunitiesParser(),
-        "defensive abilities": new SBAbilityParser()
-    },
-    "offense": {
-        "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
-        "melee": new SBAttackParser(true),
-        "ranged": new SBAttackParser(false),
-        "multiattack": new SBAttackParser(true, true),
-        "offensive abilities": new SBAbilityParser(),
-        "spell-like abilities": new SBSpellLikeParser(), // Hero Lab support
-        "* spell-like abilities": new SBSpellLikeParser(),
-        "* spells known": new SBSpellsParser(),
-        "connection": new SBDescriptionParser('offense')
-    },
-    "statistics": {
-        "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
-        "dex": new SBSingleValueParser(["data.abilities.dex.mod"], false, SBParsing.parseInteger),
-        "con": new SBSingleValueParser(["data.abilities.con.mod"], false, SBParsing.parseInteger),
-        "int": new SBSingleValueParser(["data.abilities.int.mod"], false, SBParsing.parseInteger),
-        "wis": new SBSingleValueParser(["data.abilities.wis.mod"], false, SBParsing.parseInteger),
-        "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, SBParsing.parseInteger),
-        "skills": new SBSkillsParser(),
-        "languages": new SBLanguagesParser("data.traits.languages", Object.keys(SFRPG.languages).map(x => x.toLowerCase())),
-        "other abilities": new SBAbilityParser(),
-        "feats": new SBAbilityParser(),
-        "gear": new SBGearParser(),
-        "other gear": new SBGearParser(), // Hero Lab support
-        "* telepathy": new SBTelepathyParser()
-    },
-    "tactics": {
-        "before combat": new SBDescriptionParser('tactics'),
-        "during combat": new SBDescriptionParser('tactics'),
-        "morale": new SBDescriptionParser('tactics')
-    },
-    "special abilities": new SBSpecialAbilitiesParser(),
-    "ecology": {
-        "environment": new SBDescriptionParser('ecology'),
-        "organization": new SBDescriptionParser('ecology')
-    },
-    "hero lab": null // Hero Lab support
-};
+export function initParsers() {
+    if (SBParserMapping.parsers) {
+        return;
+    }
+    
+    SBParserMapping.parsers = {
+        "base": {
+            "init": new SBSingleValueParser(["data.attributes.init.total"]),
+            "senses": new SBSingleValueParser(["data.traits.senses"], false),
+            "perception": new SBSkillParser()
+        },
+        "defense": {
+            "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
+            "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
+            "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
+            "eac": new SBSingleValueParser(["data.attributes.eac.value"]),
+            "kac": new SBSingleValueParser(["data.attributes.kac.value"]),
+            "fort": new SBSingleValueParser(["data.attributes.fort.bonus"]),
+            "ref": new SBSingleValueParser(["data.attributes.reflex.bonus"]),
+            "will": new SBSingleValueParser(["data.attributes.will.bonus"]),
+            "sr": new SBSingleValueParser(["data.traits.sr"], false),
+            "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/"),
+            "resistances": new SBTraitParser("data.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())),
+            "resist": new SBTraitParser("data.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())), // Hero Lab support
+            "weaknesses": new SBWeaknessesParser(),
+            "immunities": new SBImmunitiesParser(),
+            "defensive abilities": new SBAbilityParser()
+        },
+        "offense": {
+            "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
+            "melee": new SBAttackParser(true),
+            "ranged": new SBAttackParser(false),
+            "multiattack": new SBAttackParser(true, true),
+            "offensive abilities": new SBAbilityParser(),
+            "spell-like abilities": new SBSpellLikeParser(), // Hero Lab support
+            "* spell-like abilities": new SBSpellLikeParser(),
+            "* spells known": new SBSpellsParser(),
+            "connection": new SBDescriptionParser('offense')
+        },
+        "statistics": {
+            "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
+            "dex": new SBSingleValueParser(["data.abilities.dex.mod"], false, SBParsing.parseInteger),
+            "con": new SBSingleValueParser(["data.abilities.con.mod"], false, SBParsing.parseInteger),
+            "int": new SBSingleValueParser(["data.abilities.int.mod"], false, SBParsing.parseInteger),
+            "wis": new SBSingleValueParser(["data.abilities.wis.mod"], false, SBParsing.parseInteger),
+            "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, SBParsing.parseInteger),
+            "skills": new SBSkillsParser(),
+            "languages": new SBLanguagesParser("data.traits.languages", Object.keys(CONFIG["SFRPG"].languages).map(x => x.toLowerCase())),
+            "other abilities": new SBAbilityParser(),
+            "feats": new SBAbilityParser(),
+            "gear": new SBGearParser(),
+            "other gear": new SBGearParser(), // Hero Lab support
+            "* telepathy": new SBTelepathyParser()
+        },
+        "tactics": {
+            "before combat": new SBDescriptionParser('tactics'),
+            "during combat": new SBDescriptionParser('tactics'),
+            "morale": new SBDescriptionParser('tactics')
+        },
+        "special abilities": new SBSpecialAbilitiesParser(),
+        "ecology": {
+            "environment": new SBDescriptionParser('ecology'),
+            "organization": new SBDescriptionParser('ecology')
+        },
+        "description": new SBDescriptionParser('description', false),
+        "hero lab": null // Hero Lab support
+    };
+}
