@@ -95,7 +95,7 @@ export class SBUtils {
     }
 
     /** Will try to find an entry in the specified compendium that matches all the terms, will return the first entry that does. */
-    static async fuzzyFindCompendiumAsync(compendiumName, entryName) {
+    static async fuzzyFindCompendiumAsync(compendiumName, searchString) {
         let compendium = game.packs.find(element => element.title.includes(compendiumName));
         if (compendium == undefined) {
             SBUtils.log("Could not find compendium named " + compendium + ".");
@@ -105,14 +105,19 @@ export class SBUtils {
         // Let the compendium load
         await compendium.getIndex();
         
-        let terms = entryName.toLowerCase().split(' ');
+        let terms = searchString.toLowerCase().replace(/[,;()\[\]'"]/g,"").split(' ');
         let entryWeWant = null;
         for (let entry of compendium.index) {
             let entryName = entry.name.toLowerCase();
+            let entryTerms = entryName.replace(/[,;()\[\]'"]/g,"").split(' ');
+
+            if (terms.length !== entryTerms.length) {
+                continue;
+            }
             
             let bAllTermsPresent = true;
             for (let term of terms) {
-                if (!entryName.includes(term)) {
+                if (!entryTerms.includes(term)) {
                     bAllTermsPresent = false;
                     break;
                 }
