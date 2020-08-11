@@ -1,5 +1,3 @@
-import { ActorSheetSFRPGNPC } from "../../../systems/sfrpg/module/actor/sheet/npc.js";
-
 import { SBPCGenParser } from "./pcgenparser.js";
 import { SBStatblockParser } from "./statblockparser.js";
 import { SBTextInputDialog } from "./text-input.js";
@@ -205,7 +203,8 @@ class SBProgram {
             }
             
             SBUtils.log("Actor created, opening sheet.");
-            let sheet = new ActorSheetSFRPGNPC(actor);
+            let registeredSheet = Actors.registeredSheets.find(x => x.name === "ActorSheetSFRPGNPC");
+            let sheet = new registeredSheet(actor);
             sheet.render(true);
 
             SBProgram.logErrors(errors);
