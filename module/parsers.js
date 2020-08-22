@@ -139,11 +139,22 @@ class SBAttackParser extends SBParserBase {
         let items = [];
         let errors = [];
         
+        let prefix = "";
         let allAttacks = SBUtils.splitEntries(value);
         for (let attack of allAttacks) {
             try {
-                let itemData = await this.parseAttack(attack.trim(), this.bIsMelee);
-                items.push(itemData);
+                let attackInput = attack;
+                if (prefix) {
+                    attackInput = prefix + " or " + attackInput;
+                }
+
+                let itemData = await this.parseAttack(attackInput.trim(), this.bIsMelee);
+                if (itemData !== null) {
+                    items.push(itemData);
+                    prefix = "";
+                } else {
+                    prefix = attack.trim();
+                }
             } catch (err) {
                 errors.push([key + " -> " + attack.trim(), err]);
             }
@@ -158,6 +169,10 @@ class SBAttackParser extends SBParserBase {
         let attackInfo = SBParsing.parseSubtext(attack);
 
         let mainBlock = attackInfo[0].split(/(.*)\s([\+|-][\s]*\d*)/i);
+        if (mainBlock.length < 2) {
+            return null;
+        }
+
         let attackName = SBUtils.camelize(mainBlock[1]);
         //SBUtils.log("Parsed attack: " + JSON.stringify(attackInfo));
         let attackModifier = mainBlock[2];
@@ -196,9 +211,10 @@ class SBAttackParser extends SBParserBase {
         if (matchingItem == null) {
             matchingItem = await SBUtils.fuzzyFindSpellAsync(attackName);
         }
+
         //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
-        let itemData = matchingItem != null ? matchingItem : {"name": attackName};
+        let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
 
         if (matchingItem == null) {
             let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == attackName);
@@ -218,16 +234,16 @@ class SBAttackParser extends SBParserBase {
             itemData["sourceId"] = itemData["_id"];
             delete itemData["_id"];
         }
-        if (!itemData["type"]) {
+        if (!itemData.type) {
             itemData["type"] = "weapon";
         }
-        if (!itemData["data.actionType"]) {
+        if (!itemData.data.actionType) {
             itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
         }
-        if (!itemData["data.weaponType"]) {
+        if (!itemData.data.weaponType) {
             itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
         }
-        if (!itemData["data.ability"]) {
+        if (!itemData.data.ability) {
             itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
         }
         if (this.bIsMulti) {
@@ -251,6 +267,10 @@ class SBAttackParser extends SBParserBase {
             if (criticalDamageRoll != "" && attackDamageType) {
                 itemData["data.critical.parts"] = [[criticalDamageRoll, attackDamageType]];
             }
+        }
+
+        if (!itemData["name"]) {
+            throw "No name for attack.";
         }
         
         return itemData;
@@ -373,6 +393,12 @@ class SBImmunitiesParser extends SBParserBase {
 }
 
 class SBAbilityParser extends SBParserBase {
+    constructor(additionalNameOutput) {
+        super();
+
+        this.additionalNameOutput = additionalNameOutput;
+    }
+
     async parse(key, value) {
         let items = [];
 
@@ -462,7 +488,12 @@ class SBAbilityParser extends SBParserBase {
             }
         }
 
-        return {items: items};
+        let actorData = {};
+        if (this.additionalNameOutput) {
+            let auraNames = items.map(x => SBParsing.parseSubtext(x.name)[0]);
+            actorData[this.additionalNameOutput] = auraNames.join(', ');
+        }
+        return {actorData: actorData, items: items};
     }
 }
 
@@ -731,12 +762,14 @@ class SBSpecialAbilitiesParser extends SBCategoryParserBase {
         let currentAbilityText = "";
         for (let line of value) {
             let matched = line.match(/(.*\s\([Ex|Su|Sp]*\))\s(.*)/i);
-            if (matched != null) {
+            if (matched && matched.length === 3) {
                 if (currentAbilityKey && currentAbilityText) {
-                    abilityDescriptions.push({name: currentAbilityKey, description: currentAbilityText});
+                    let newAbility = {name: currentAbilityKey, description: currentAbilityText};
+                    abilityDescriptions.push(newAbility);
                     currentAbilityKey = "";
                     currentAbilityText = "";
                 }
+
                 currentAbilityKey = matched[1].trim();
                 currentAbilityText = matched[2].trim();
             } else {
@@ -745,7 +778,8 @@ class SBSpecialAbilitiesParser extends SBCategoryParserBase {
         }
 
         if (currentAbilityKey && currentAbilityText) {
-            abilityDescriptions.push({name: currentAbilityKey, description: currentAbilityText});
+            let newAbility = {name: currentAbilityKey, description: currentAbilityText};
+            abilityDescriptions.push(newAbility);
         }
 
         return {abilityDescriptions: abilityDescriptions, errors: errors};
@@ -761,7 +795,8 @@ export function initParsers() {
         "base": {
             "init": new SBSingleValueParser(["data.attributes.init.total"]),
             "senses": new SBSingleValueParser(["data.traits.senses"], false),
-            "perception": new SBSkillParser()
+            "perception": new SBSkillParser(),
+            "aura": new SBAbilityParser("data.details.aura")
         },
         "defense": {
             "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
@@ -789,7 +824,9 @@ export function initParsers() {
             "spell-like abilities": new SBSpellLikeParser(), // Hero Lab support
             "* spell-like abilities": new SBSpellLikeParser(),
             "* spells known": new SBSpellsParser(),
-            "connection": new SBDescriptionParser('offense')
+            "connection": new SBDescriptionParser('offense'),
+            "space": null,
+            "reach": null
         },
         "statistics": {
             "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
