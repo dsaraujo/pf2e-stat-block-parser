@@ -196,9 +196,10 @@ class SBAttackParser extends SBParserBase {
         if (matchingItem == null) {
             matchingItem = await SBUtils.fuzzyFindSpellAsync(attackName);
         }
+
         //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
-        let itemData = matchingItem != null ? matchingItem : {"name": attackName};
+        let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
 
         if (matchingItem == null) {
             let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == attackName);
@@ -218,16 +219,16 @@ class SBAttackParser extends SBParserBase {
             itemData["sourceId"] = itemData["_id"];
             delete itemData["_id"];
         }
-        if (!itemData["type"]) {
+        if (!itemData.type) {
             itemData["type"] = "weapon";
         }
-        if (!itemData["data.actionType"]) {
+        if (!itemData.data.actionType) {
             itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
         }
-        if (!itemData["data.weaponType"]) {
+        if (!itemData.data.weaponType) {
             itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
         }
-        if (!itemData["data.ability"]) {
+        if (!itemData.data.ability) {
             itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
         }
         if (this.bIsMulti) {
@@ -789,7 +790,9 @@ export function initParsers() {
             "spell-like abilities": new SBSpellLikeParser(), // Hero Lab support
             "* spell-like abilities": new SBSpellLikeParser(),
             "* spells known": new SBSpellsParser(),
-            "connection": new SBDescriptionParser('offense')
+            "connection": new SBDescriptionParser('offense'),
+            "space": null,
+            "reach": null
         },
         "statistics": {
             "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
