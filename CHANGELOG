@@ -1,3 +1,13 @@
+0.3.4:
+- Parser no longer fails on space and reach.
+- Fixed weapon types getting overwritten even though they were valid from the item data.
+- Fixed a parsing error when keywords were partially contained in values, such as "sp" contained in "spatial".
+- Added additional error reporting when an item has no name due to parsing mishaps.
+- Combining attack names when an attack fails to parse, propagating it to the next attack. This fixes an issue where one attack such as "claw or incorporeal claw" would get parsed as two separate attacks.
+- Added support for auras, aura field will be available in sfrpg system from version 0.4.
+- Fixed various little parsing mistakes.
+- Added more support for VTTES json files, it now parses most of the data.
+
 0.3.3:
 - Fixed bazaar support for Forge.
 - Fixed fuzzy search over-eagerly matching attacks to items, "Claw" will no longer return "Plasmaclaw Rifle".
