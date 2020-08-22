@@ -166,6 +166,13 @@ class SBProgram {
                 SBUtils.log(`> Adding ${characterData.items.length} item(s).`);
                 let addedItemIds = [];
                 for (let itemData of characterData.items) {
+                    if (!itemData["name"]) {
+                        errors.push([`Parser produced an item of type ${itemData.type} without a name.`, ""]);
+                        SBUtils.log(`Parser produced an item without a name.`);
+                        console.log(itemData);
+                        continue;
+                    }
+
                     try {
                         //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
                         if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {

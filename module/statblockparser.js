@@ -189,6 +189,8 @@ export class SBStatblockParser {
                         SBUtils.log("IONK: Keyword " + oldKeyword + " is now " + JSON.stringify(keyword));// + ", from line: " + line);
                     }
                 }
+
+                keyword += " ";
                 
                 let keywordIndex = lowerCaseLine.indexOf(keyword.toLowerCase());
 
@@ -212,7 +214,7 @@ export class SBStatblockParser {
 
                     if (index == -1 || keywordIndex < index) {
                         index = keywordIndex;
-                        foundKeyword = keyword.toLowerCase();
+                        foundKeyword = keyword.trim().toLowerCase();
                         if (bLog) SBUtils.log(`>>> Next best keyword is ${foundKeyword}, at index ${index}`);
                     }
                 }
