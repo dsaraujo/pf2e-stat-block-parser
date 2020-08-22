@@ -1,4 +1,5 @@
 import { SBUtils, SBConfig } from "./utils.js";
+import { SBUniversalMonsterRules } from "./umg.js";
 
 export class SBVTTESParser {
     parseSkill(dict, skill, value) {
@@ -60,18 +61,22 @@ export class SBVTTESParser {
 
             let languages = val.current.split(',');
             for (let language of languages) {
-                let keyedLanguage = language.trim().toLowerCase();
-                if (keyedLanguage == "lashunta") {
-                    keyedLanguage = "castrovelian";
-                }
-
-                if (keyedLanguage in CONFIG["SFRPG"].languages) {
-                    officialLanguages.push(keyedLanguage);
-                } else {
-                    if (customLanguages.length > 0) {
-                        customLanguages += ", ";
+                try {
+                    let keyedLanguage = language.trim().toLowerCase();
+                    if (keyedLanguage == "lashunta") {
+                        keyedLanguage = "castrovelian";
                     }
-                    customLanguages += SBUtils.camelize(language);
+
+                    if (keyedLanguage in CONFIG["SFRPG"].languages) {
+                        officialLanguages.push(keyedLanguage);
+                    } else {
+                        if (customLanguages.length > 0) {
+                            customLanguages += ", ";
+                        }
+                        customLanguages += SBUtils.camelize(language);
+                    }
+                } catch (err) {
+                    errors.push([language, err]);
                 }
             }
 
@@ -84,19 +89,23 @@ export class SBVTTESParser {
 
             let rawResistances = val.current.split(',');
             for (let resistance of rawResistances) {
-                let resistanceMatch = resistance.trim().match(/(\D*)(\d*)/);
-                let resist = resistanceMatch[1].trim().toLowerCase();
-                let amount = resistanceMatch[2].trim();
+                try {
+                    let resistanceMatch = resistance.trim().match(/(\D*)(\d*)/);
+                    let resist = resistanceMatch[1].trim().toLowerCase();
+                    let amount = resistanceMatch[2].trim();
 
-                if (resist in CONFIG["SFRPG"].energyDamageTypes) {
-                    let resistData = {};
-                    resistData[resist] = amount;
-                    officialResists.push(resistData);
-                } else {
-                    if (customResists.length > 0) {
-                        customResists += ", ";
+                    if (resist in CONFIG["SFRPG"].energyDamageTypes) {
+                        let resistData = {};
+                        resistData[resist] = amount;
+                        officialResists.push(resistData);
+                    } else {
+                        if (customResists.length > 0) {
+                            customResists += ", ";
+                        }
+                        customResists += SBUtils.camelize(resist) + " " + amount;
                     }
-                    customResists += SBUtils.camelize(resist) + " " + amount;
+                } catch (err) {
+                    errors.push([resistance, err]);
                 }
             }
 
@@ -169,8 +178,114 @@ export class SBVTTESParser {
             }
         }
 
-        //console.log(repeatingAbilities);
-        //console.log(repeatingAttacks);
+        for (let key of Object.keys(repeatingAbilities)) {
+            let ability = repeatingAbilities[key];
+            if (!ability.name) {
+                continue;
+            }
+
+            let abilityName = ability.name.current;
+
+            try {
+                let matchingItem = await SBUtils.fuzzyFindItemAsync(abilityName);
+                if (matchingItem == null) {
+                    matchingItem = await SBUtils.fuzzyFindSpellAsync(abilityName);
+                    if (matchingItem == null) {
+                        matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Class Features", abilityName)
+                        if (matchingItem == null) {
+                            matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Feats", abilityName)
+                        }
+                    }
+                }
+
+                let itemData = matchingItem != null ? matchingItem : {"name": abilityName, data: {}};
+                if (matchingItem == null) {
+                    let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == abilityName);
+                    if (matchingRule.length > 0) {
+                        itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
+                    }
+                }
+
+                if (itemData["_id"]) {
+                    itemData["sourceId"] = itemData["_id"];
+                    delete itemData["_id"];
+                }
+
+                if (!itemData.type) {
+                    itemData["type"] = "feat";
+                }
+
+                if (ability.description && ability.description.current) {
+                    if (itemData.data.description && itemData.data.description.value) {
+                        itemData["data.description.value"] = itemData.data.description.value + "<br />Parsed data:<br />" + ability.description.current;
+                    } else {
+                        itemData["data.description.value"] = ability.description.current;
+                    }
+                }
+
+                characterData.items.push(itemData);
+            } catch (err) {
+                errors.push([abilityName, err]);
+            }
+        }
+
+        for (let key of Object.keys(repeatingAttacks)) {
+            let attack = repeatingAttacks[key];
+            if (!attack.name) {
+                continue;
+            }
+
+            let attackName = attack.name.current;
+
+            try {
+                let bIsMeleeAttack = (attack.engagement_range.current === "melee");
+
+                let matchingItem = await SBUtils.fuzzyFindItemAsync(attackName);
+                if (matchingItem == null) {
+                    matchingItem = await SBUtils.fuzzyFindSpellAsync(attackName);
+                }
+
+                let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
+                if (matchingItem == null) {
+                    let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == attackName);
+                    if (matchingRule.length > 0) {
+                        itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
+                    }
+                }
+
+                if (itemData["_id"]) {
+                    itemData["sourceId"] = itemData["_id"];
+                    delete itemData["_id"];
+                }
+
+                if (!itemData.type) {
+                    itemData["type"] = "weapon";
+                }
+                if (!itemData.data.actionType) {
+                    itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
+                }
+                if (!itemData.data.weaponType) {
+                    itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
+                }
+                if (!itemData.data.ability) {
+                    itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
+                }
+
+                itemData["data.attackBonus"] = attack.total;
+
+                if (attack.description && attack.description.current) {
+                    if (itemData.data.description && itemData.data.description.value) {
+                        itemData["data.description.value"] = itemData.data.description.value + "<br />Parsed data:<br />" + attack.description.current;
+                    } else {
+                        itemData["data.description.value"] = attack.description.current;
+                    }
+                }
+
+                characterData.items.push(itemData);
+            } catch (err) {
+                errors.push([attackName, err]);
+            }
+        }
 
         return {success: true, characterData: characterData, errors: errors};
     }
