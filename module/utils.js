@@ -73,6 +73,9 @@ export class SBUtils {
     }
 
     static stringStartsWith(string, searchString, bCaseSensitive = true) {
+        if (!string) return false;
+        if (!searchString) return false;
+
         try {
             if (searchString.length > string.length) {
                 return false;
@@ -96,6 +99,16 @@ export class SBUtils {
 
     /** Will try to find an entry in the specified compendium that matches all the terms, will return the first entry that does. */
     static async fuzzyFindCompendiumAsync(compendiumName, searchString) {
+        if (!compendiumName) {
+            SBUtils.log("No compendium name specified.");
+            return null;
+        }
+
+        if (!searchString) {
+            SBUtils.log("No search string specified.");
+            return null;
+        }
+
         let compendium = game.packs.find(element => element.title.includes(compendiumName));
         if (compendium == undefined) {
             SBUtils.log("Could not find compendium named " + compendium + ".");

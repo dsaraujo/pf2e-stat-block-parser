@@ -490,8 +490,8 @@ class SBAbilityParser extends SBParserBase {
 
         let actorData = {};
         if (this.additionalNameOutput) {
-            actorData[this.additionalNameOutput] = items.map(x => x.name).join(', ');
-            console.log(actorData);
+            let auraNames = items.map(x => SBParsing.parseSubtext(x.name)[0]);
+            actorData[this.additionalNameOutput] = auraNames.join(', ');
         }
         return {actorData: actorData, items: items};
     }

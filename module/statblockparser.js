@@ -27,7 +27,7 @@ export class SBStatblockParser {
         let availableCategories = Object.keys(SBParserMapping.parsers);
         
         let category = "base";
-        delete availableCategories[category];
+        availableCategories = availableCategories.filter(x => x !== category);
 
         let categoryLines = {};
         let errors = [];
@@ -55,7 +55,7 @@ export class SBStatblockParser {
             for (let availableCat of availableCategories) {
                 if (SBUtils.stringStartsWith(line, availableCat, false)) {
                     category = availableCat;
-                    delete availableCategories[category];
+                    availableCategories = availableCategories.filter(x => x !== category);
                     line = line.substring(category.length + 1);
                 }
             }
