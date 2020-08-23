@@ -85,7 +85,7 @@ export class SBVTTESParser {
             let officialLanguages = [];
             let customLanguages = "";
 
-            let languages = val.current.split(',');
+            let languages = val.current.split(/[,;]/g);
             for (let language of languages) {
                 try {
                     let keyedLanguage = language.trim().toLowerCase();
