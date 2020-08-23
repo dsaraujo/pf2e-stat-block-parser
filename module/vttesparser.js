@@ -195,6 +195,7 @@ export class SBVTTESParser {
         // Now we parse advanced attributes, repeating_ability and repeating_attack
         let repeatingAbilities = {};
         let repeatingAttacks = {};
+        let repeatingSpells = {};
         for (let attrib of parsedJson.attribs) {
             if (attrib.name.startsWith("repeating_ability_")) {
                 let cutname = attrib.name.substring("repeating_ability_".length);
@@ -214,6 +215,15 @@ export class SBVTTESParser {
                     repeatingAttacks[id] = {};
                 }
                 repeatingAttacks[id][key] = {current: attrib.current, max: attrib.max};
+            } else if (attrib.name.startsWith("repeating_spell_")) {
+                let cutname = attrib.name.substring("repeating_spell_".length);
+                let id = cutname.substring(0, 20);
+                let key = cutname.substring(21);
+
+                if (!(id in repeatingSpells)) {
+                    repeatingSpells[id] = {};
+                }
+                repeatingSpells[id][key] = {current: attrib.current, max: attrib.max};
             }
         }
 
@@ -264,6 +274,10 @@ export class SBVTTESParser {
 
                 if (ability.dc_base && ability.dc_base.current) {
                     itemData["data.save.dc"] = ability.dc_base.current;
+                }
+
+                if (ability.type && ability.type.current === "SP") {
+                    itemData["data.preparation"] = { prepared: true, mode: "innate" };
                 }
 
                 characterData.items.push(itemData);
@@ -333,6 +347,65 @@ export class SBVTTESParser {
                 characterData.items.push(itemData);
             } catch (err) {
                 errors.push([attackName, err]);
+            }
+        }
+
+        for (let key of Object.keys(repeatingSpells)) {
+            let spell = repeatingSpells[key];
+            if (!spell.name) {
+                continue;
+            }
+
+            let spellName = spell.name.current;
+
+            try {
+                let matchingItem = await SBUtils.fuzzyFindItemAsync(spellName);
+                if (matchingItem == null) {
+                    matchingItem = await SBUtils.fuzzyFindSpellAsync(spellName);
+                    if (matchingItem == null) {
+                        matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Class Features", spellName)
+                        if (matchingItem == null) {
+                            matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Feats", spellName)
+                        }
+                    }
+                }
+
+                let itemData = matchingItem != null ? matchingItem : {"name": spellName, data: {}};
+                if (matchingItem == null) {
+                    let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == spellName);
+                    if (matchingRule.length > 0) {
+                        itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
+                    }
+                }
+
+                if (itemData["_id"]) {
+                    itemData["sourceId"] = itemData["_id"];
+                    delete itemData["_id"];
+                }
+
+                if (!itemData.type) {
+                    itemData["type"] = "feat";
+                }
+
+                if (spell.description && spell.description.current) {
+                    if (itemData.data.description && itemData.data.description.value) {
+                        itemData["data.description.value"] = itemData.data.description.value + "<br />Parsed data:<br />" + spell.description.current;
+                    } else {
+                        itemData["data.description.value"] = spell.description.current;
+                    }
+                }
+
+                if (spell.dc_base && spell.dc_base.current) {
+                    itemData["data.save.dc"] = spell.dc_base.current;
+                }
+
+                itemData["data.preparation"] = { prepared: true };
+
+                console.log(JSON.stringify(itemData));
+
+                characterData.items.push(itemData);
+            } catch (err) {
+                errors.push([spellName, err]);
             }
         }
 
