@@ -407,6 +407,47 @@ export class SBVTTESParser {
             }
         }
 
+        // Now iterate over GM descriptions and append it to the secret biography
+        let bonusDescriptions = [];
+        for (let attrib of parsedJson.attribs) {
+            if (attrib.name.endsWith("_description") && !attrib.name.endsWith("_expand_description")) {
+                let cleanedUpName = SBUtils.camelize(attrib.name.replace("_"," ").trim());
+                if (attrib.name.startsWith("repeating_")) {
+                    let match = attrib.name.match(/repeating_([^_]*)_(.{20})_description/i);
+                    let type = match[1];
+                    let id = match[2];
+
+                    let nameAttribKey = "repeating_" + type + "_" + id + "_name";
+                    let nameAttrib = parsedJson.attribs.find(x => x.name === nameAttribKey);
+                    if (nameAttrib) {
+                        cleanedUpName = SBUtils.camelize(nameAttrib.current + " Description");
+                    }
+                }
+
+                bonusDescriptions.push(cleanedUpName + ": " + attrib.current);
+            }
+        }
+
+        if (bonusDescriptions.length > 0) {
+            let bonusDesc = "<section class=\"secret\"><strong>Additional notes</strong><br />";
+            for (let desc of bonusDescriptions) {
+                bonusDesc += desc + "<br />";
+            }
+            bonusDesc += "</section>";
+            
+            let oldDesc = characterData.actorData["data.details.biography.value"];
+            if (oldDesc) {
+                characterData.actorData["data.details.biography.value"] = oldDesc + "<br />" + bonusDesc;
+            } else {
+                characterData.actorData["data.details.biography.value"] = bonusDesc;
+            }
+        }
+
+        let oldDesc = characterData.actorData["data.details.biography.value"];
+        if (oldDesc) {
+            characterData.actorData["data.details.biography.value"] = oldDesc + "<br />";
+        }
+
         return {success: true, characterData: characterData, errors: errors};
     }
 }
