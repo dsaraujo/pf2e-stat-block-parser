@@ -63,6 +63,8 @@ export class SBVTTESParser {
         "will_base": (dict,val) => { dict["data.attributes.will.bonus"] = val.current; },
         "resistances": (dict,val) => { SBUtils.log("> TODO: Implement resistances") }, // "Electricity 5, fire 5"
         "speed": (dict,val) => { dict["data.attributes.speed.value"] = val.current; },
+        "space": (dict,val) => { dict["data.attributes.space"] = val.current; },
+        "reach": (dict,val) => { dict["data.attributes.reach"] = val.current; },
         "acrobatics": (dict, val) => { this.parseSkill(dict, "acr", val); },
         "athletics": (dict, val) => { this.parseSkill(dict, "ath", val); },
         "bluff": (dict, val) => { this.parseSkill(dict, "blu", val); },
