@@ -2,10 +2,39 @@ import { SBUtils, SBConfig } from "./utils.js";
 import { SBUniversalMonsterRules } from "./umg.js";
 
 export class SBVTTESParser {
+    skillNames = ["acrobatics", "athletics", "bluff", "computers", "culture",
+        "diplomacy", "disguise", "engineering", "intimidate", "life_science",
+        "medicine", "mysticism", "perception", "physical_science", "piloting",
+        "profession", "sense_motive", "sleight_of_hand", "stealth", "survival"
+    ];
+
     parseSkill(dict, skill, value) {
         if (value.current != 0) {
             dict["data.skills." + skill + ".enabled"] = true;
             dict["data.skills." + skill + ".mod"] = value.current;
+        }
+    }
+
+    addSectionedData(dict, sectionName, content, isSecret) {
+        if (!sectionName || !content) return;
+
+        let sectionData = "";
+        if (isSecret) {
+            sectionData += "<section class=\"secret\">";
+        }
+        
+        sectionData += "<strong>" + sectionName + "</strong><br />";
+        sectionData += content.replace("\n", "<br />").replace("\\n", "<br />") + "<br />";
+        
+        if (isSecret) {
+            sectionData += "</section>";
+        }
+        
+        let oldDesc = dict["data.details.biography.value"];
+        if (oldDesc) {
+            dict["data.details.biography.value"] = oldDesc + "<br />" + sectionData;
+        } else {
+            dict["data.details.biography.value"] = sectionData;
         }
     }
 
@@ -407,29 +436,34 @@ export class SBVTTESParser {
             }
         }
 
-        // Now iterate over GM descriptions and append it to the secret biography
+        // Add tactics, environment, organization, etc.
+        let tactics = parsedJson.attribs.find(x => x.name === "tactics");
+        if (tactics) {
+            this.addSectionedData(characterData.actorData, "Tactics", tactics.current, true);
+        }
+
+        let environment = parsedJson.attribs.find(x => x.name === "environment");
+        if (environment) {
+            this.addSectionedData(characterData.actorData, "Environment", environment.current, true);
+        }
+
+        let organization = parsedJson.attribs.find(x => x.name === "organization");
+        if (organization) {
+            this.addSectionedData(characterData.actorData, "Organization", organization.current, true);
+        }
+
+        // Now iterate over skill contextual notes
         let bonusDescriptions = [];
+        let skillDescriptionKeys = this.skillNames.map(x => x + "_description");
         for (let attrib of parsedJson.attribs) {
-            if (attrib.name.endsWith("_description") && !attrib.name.endsWith("_expand_description")) {
+            if (skillDescriptionKeys.includes(attrib.name)) {
                 let cleanedUpName = SBUtils.camelize(attrib.name.replace("_"," ").trim());
-                if (attrib.name.startsWith("repeating_")) {
-                    let match = attrib.name.match(/repeating_([^_]*)_(.{20})_description/i);
-                    let type = match[1];
-                    let id = match[2];
-
-                    let nameAttribKey = "repeating_" + type + "_" + id + "_name";
-                    let nameAttrib = parsedJson.attribs.find(x => x.name === nameAttribKey);
-                    if (nameAttrib) {
-                        cleanedUpName = SBUtils.camelize(nameAttrib.current + " Description");
-                    }
-                }
-
                 bonusDescriptions.push(cleanedUpName + ": " + attrib.current);
             }
         }
 
         if (bonusDescriptions.length > 0) {
-            let bonusDesc = "<section class=\"secret\"><strong>Additional notes</strong><br />";
+            let bonusDesc = "<section class=\"secret\"><strong>Skill notes</strong><br />";
             for (let desc of bonusDescriptions) {
                 bonusDesc += desc + "<br />";
             }
