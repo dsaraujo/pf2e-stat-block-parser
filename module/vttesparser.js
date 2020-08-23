@@ -159,6 +159,7 @@ export class SBVTTESParser {
         // NPCs by default have no SP or RP
         characterData.actorData["data.attributes.sp.max"] = 0;
         characterData.actorData["data.attributes.rp.max"] = 0;
+        characterData.actorData['data.traits.size'] = "medium";
 
         let errors = [];
 
