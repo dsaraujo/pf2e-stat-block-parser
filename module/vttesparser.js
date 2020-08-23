@@ -2,10 +2,39 @@ import { SBUtils, SBConfig } from "./utils.js";
 import { SBUniversalMonsterRules } from "./umg.js";
 
 export class SBVTTESParser {
+    skillNames = ["acrobatics", "athletics", "bluff", "computers", "culture",
+        "diplomacy", "disguise", "engineering", "intimidate", "life_science",
+        "medicine", "mysticism", "perception", "physical_science", "piloting",
+        "profession", "sense_motive", "sleight_of_hand", "stealth", "survival"
+    ];
+
     parseSkill(dict, skill, value) {
         if (value.current != 0) {
             dict["data.skills." + skill + ".enabled"] = true;
             dict["data.skills." + skill + ".mod"] = value.current;
+        }
+    }
+
+    addSectionedData(dict, sectionName, content, isSecret) {
+        if (!sectionName || !content) return;
+
+        let sectionData = "";
+        if (isSecret) {
+            sectionData += "<section class=\"secret\">";
+        }
+        
+        sectionData += "<strong>" + sectionName + "</strong><br />";
+        sectionData += content.replace("\n", "<br />").replace("\\n", "<br />") + "<br />";
+        
+        if (isSecret) {
+            sectionData += "</section>";
+        }
+        
+        let oldDesc = dict["data.details.biography.value"];
+        if (oldDesc) {
+            dict["data.details.biography.value"] = oldDesc + "<br />" + sectionData;
+        } else {
+            dict["data.details.biography.value"] = sectionData;
         }
     }
 
@@ -34,6 +63,8 @@ export class SBVTTESParser {
         "will_base": (dict,val) => { dict["data.attributes.will.bonus"] = val.current; },
         "resistances": (dict,val) => { SBUtils.log("> TODO: Implement resistances") }, // "Electricity 5, fire 5"
         "speed": (dict,val) => { dict["data.attributes.speed.value"] = val.current; },
+        "space": (dict,val) => { dict["data.attributes.space"] = val.current; },
+        "reach": (dict,val) => { dict["data.attributes.reach"] = val.current; },
         "acrobatics": (dict, val) => { this.parseSkill(dict, "acr", val); },
         "athletics": (dict, val) => { this.parseSkill(dict, "ath", val); },
         "bluff": (dict, val) => { this.parseSkill(dict, "blu", val); },
@@ -55,11 +86,45 @@ export class SBVTTESParser {
         "stealth": (dict, val) => { this.parseSkill(dict, "ste", val); },
         "survival": (dict, val) => { this.parseSkill(dict, "sur", val); },
 
+        "size": (dict, val) => {
+            let sizes = Object.keys(CONFIG["SFRPG"].actorSizes);
+            let indexOfMedium = sizes.indexOf("medium");
+            let desiredIndex = indexOfMedium + Number(val.current);
+            let size = sizes[desiredIndex];
+            dict["data.traits.size"] = size;
+        },
+
+        "bio": (dict, val) => {
+            let biography = "<strong>Biography</strong><br />";
+            biography += unescape(val);
+
+            let oldDesc = dict["data.details.biography.value"];
+            dict["data.details.biography.value"] = biography;
+            if (oldDesc) {
+                dict["data.details.biography.value"] += "<br />" + oldDesc;
+            }
+        },
+
+        "gmnotes": (dict, val) => {
+            let gmNotes = "";
+            gmNotes = "<section class=\"secret\"><strong>GM Notes</strong><br/>";
+            gmNotes += unescape(val);
+            gmNotes += "</section>";
+
+            let oldDesc = dict["data.details.biography.value"];
+            if (oldDesc) {
+                dict["data.details.biography.value"] += "<br />";
+                dict["data.details.biography.value"] += gmNotes;
+            } else {
+                dict["data.details.biography.value"] = gmNotes;
+            }
+        },
+
         "languages": (dict, val) => {
             let officialLanguages = [];
             let customLanguages = "";
 
-            let languages = val.current.split(',');
+            let languages = val.current.split(/[,;]/g);
             for (let language of languages) {
                 try {
                     let keyedLanguage = language.trim().toLowerCase();
@@ -118,6 +183,10 @@ export class SBVTTESParser {
             return {success: false};
         }
 
+        if (!actorData.data) {
+            actorData.data = {};
+        }
+
         let characterData = {
             actorData: actorData,
             items: [],
@@ -129,6 +198,7 @@ export class SBVTTESParser {
         // NPCs by default have no SP or RP
         characterData.actorData["data.attributes.sp.max"] = 0;
         characterData.actorData["data.attributes.rp.max"] = 0;
+        characterData.actorData['data.traits.size'] = "medium";
 
         let errors = [];
 
@@ -137,6 +207,14 @@ export class SBVTTESParser {
         characterData.actorData["name"] = parsedJson.name;
         if (parsedJson.avatar) {
             characterData.actorData["img"] = parsedJson.avatar;
+        }
+
+        if (parsedJson.bio) {
+            this.attributeMapping["bio"](characterData.actorData, parsedJson.bio);
+        }
+
+        if (parsedJson.gmnotes) {
+            this.attributeMapping["gmnotes"](characterData.actorData, parsedJson.gmnotes);
         }
 
         let recognizedMappings = Object.keys(this.attributeMapping);
@@ -156,6 +234,7 @@ export class SBVTTESParser {
         // Now we parse advanced attributes, repeating_ability and repeating_attack
         let repeatingAbilities = {};
         let repeatingAttacks = {};
+        let repeatingSpells = {};
         for (let attrib of parsedJson.attribs) {
             if (attrib.name.startsWith("repeating_ability_")) {
                 let cutname = attrib.name.substring("repeating_ability_".length);
@@ -175,6 +254,15 @@ export class SBVTTESParser {
                     repeatingAttacks[id] = {};
                 }
                 repeatingAttacks[id][key] = {current: attrib.current, max: attrib.max};
+            } else if (attrib.name.startsWith("repeating_spell_")) {
+                let cutname = attrib.name.substring("repeating_spell_".length);
+                let id = cutname.substring(0, 20);
+                let key = cutname.substring(21);
+
+                if (!(id in repeatingSpells)) {
+                    repeatingSpells[id] = {};
+                }
+                repeatingSpells[id][key] = {current: attrib.current, max: attrib.max};
             }
         }
 
@@ -223,6 +311,14 @@ export class SBVTTESParser {
                     }
                 }
 
+                if (ability.dc_base && ability.dc_base.current) {
+                    itemData["data.save.dc"] = ability.dc_base.current;
+                }
+
+                if (ability.type && ability.type.current === "SP") {
+                    itemData["data.preparation"] = { prepared: true, mode: "innate" };
+                }
+
                 characterData.items.push(itemData);
             } catch (err) {
                 errors.push([abilityName, err]);
@@ -267,11 +363,17 @@ export class SBVTTESParser {
                 if (!itemData.data.weaponType) {
                     itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
                 }
-                if (!itemData.data.ability) {
-                    itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
-                }
 
-                itemData["data.attackBonus"] = attack.total;
+                itemData["data.ability"] = "";
+                itemData["data.attackBonus"] = attack.total.current;
+
+                let damage = itemData["data.damage"];
+                if (damage) {
+                    let firstPart = itemData["data.damage"].parts.len > 0 ? itemData["data.damage"].parts[0] : [0, "S"];
+                    itemData["data.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
+                } else {
+                    itemData["data.damage"] = {parts: [[attack.damage_total.current, "S"]]};
+                }
 
                 if (attack.description && attack.description.current) {
                     if (itemData.data.description && itemData.data.description.value) {
@@ -285,6 +387,109 @@ export class SBVTTESParser {
             } catch (err) {
                 errors.push([attackName, err]);
             }
+        }
+
+        for (let key of Object.keys(repeatingSpells)) {
+            let spell = repeatingSpells[key];
+            if (!spell.name) {
+                continue;
+            }
+
+            let spellName = spell.name.current;
+
+            try {
+                let matchingItem = await SBUtils.fuzzyFindItemAsync(spellName);
+                if (matchingItem == null) {
+                    matchingItem = await SBUtils.fuzzyFindSpellAsync(spellName);
+                    if (matchingItem == null) {
+                        matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Class Features", spellName)
+                        if (matchingItem == null) {
+                            matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Feats", spellName)
+                        }
+                    }
+                }
+
+                let itemData = matchingItem != null ? matchingItem : {"name": spellName, data: {}};
+                if (matchingItem == null) {
+                    let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == spellName);
+                    if (matchingRule.length > 0) {
+                        itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
+                    }
+                }
+
+                if (itemData["_id"]) {
+                    itemData["sourceId"] = itemData["_id"];
+                    delete itemData["_id"];
+                }
+
+                if (!itemData.type) {
+                    itemData["type"] = "feat";
+                }
+
+                if (spell.description && spell.description.current) {
+                    if (itemData.data.description && itemData.data.description.value) {
+                        itemData["data.description.value"] = itemData.data.description.value + "<br />Parsed data:<br />" + spell.description.current;
+                    } else {
+                        itemData["data.description.value"] = spell.description.current;
+                    }
+                }
+
+                if (spell.dc_base && spell.dc_base.current) {
+                    itemData["data.save.dc"] = spell.dc_base.current;
+                }
+
+                itemData["data.preparation"] = { prepared: true };
+
+                characterData.items.push(itemData);
+            } catch (err) {
+                errors.push([spellName, err]);
+            }
+        }
+
+        // Add tactics, environment, organization, etc.
+        let tactics = parsedJson.attribs.find(x => x.name === "tactics");
+        if (tactics) {
+            this.addSectionedData(characterData.actorData, "Tactics", tactics.current, true);
+        }
+
+        let environment = parsedJson.attribs.find(x => x.name === "environment");
+        if (environment) {
+            this.addSectionedData(characterData.actorData, "Environment", environment.current, true);
+        }
+
+        let organization = parsedJson.attribs.find(x => x.name === "organization");
+        if (organization) {
+            this.addSectionedData(characterData.actorData, "Organization", organization.current, true);
+        }
+
+        // Now iterate over skill contextual notes
+        let bonusDescriptions = [];
+        let skillDescriptionKeys = this.skillNames.map(x => x + "_description");
+        for (let attrib of parsedJson.attribs) {
+            if (skillDescriptionKeys.includes(attrib.name)) {
+                let cleanedUpName = SBUtils.camelize(attrib.name.replace("_"," ").trim());
+                bonusDescriptions.push(cleanedUpName + ": " + attrib.current);
+            }
+        }
+
+        if (bonusDescriptions.length > 0) {
+            let bonusDesc = "<section class=\"secret\"><strong>Skill notes</strong><br />";
+            for (let desc of bonusDescriptions) {
+                bonusDesc += desc + "<br />";
+            }
+            bonusDesc += "</section>";
+            
+            let oldDesc = characterData.actorData["data.details.biography.value"];
+            if (oldDesc) {
+                characterData.actorData["data.details.biography.value"] = oldDesc + "<br />" + bonusDesc;
+            } else {
+                characterData.actorData["data.details.biography.value"] = bonusDesc;
+            }
+        }
+
+        let oldDesc = characterData.actorData["data.details.biography.value"];
+        if (oldDesc) {
+            characterData.actorData["data.details.biography.value"] = oldDesc + "<br />";
         }
 
         return {success: true, characterData: characterData, errors: errors};

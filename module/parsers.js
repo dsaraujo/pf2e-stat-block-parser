@@ -243,13 +243,10 @@ class SBAttackParser extends SBParserBase {
         if (!itemData.data.weaponType) {
             itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
         }
-        if (!itemData.data.ability) {
-            itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
-        }
-        if (this.bIsMulti) {
-            itemData["data.ability"] = "";
-        }
+
+        itemData["data.ability"] = "";
         itemData["data.attackBonus"] = SBParsing.parseInteger(attackModifier);
+        
         if (attackDamageRoll && attackDamageRoll) {
             itemData["data.damage"] = {parts: [[attackDamageRoll, attackDamageType]]};
         }
@@ -825,8 +822,8 @@ export function initParsers() {
             "* spell-like abilities": new SBSpellLikeParser(),
             "* spells known": new SBSpellsParser(),
             "connection": new SBDescriptionParser('offense'),
-            "space": null,
-            "reach": null
+            "space": new SBSingleValueParser(["data.attributes.space"], false),
+            "reach": new SBSingleValueParser(["data.attributes.reach"], false)
         },
         "statistics": {
             "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),

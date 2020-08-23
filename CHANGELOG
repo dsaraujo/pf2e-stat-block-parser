@@ -1,3 +1,23 @@
+0.3.5:
+- VTTES support has been updated:
+--- Added support for parsing bio into Biography.
+--- GM Notes are now parsed into Biography as GM secret.
+--- Skill notes are now parsed into the Biography as GM secret.
+--- Tactics, environment, and organization are now parsed into the Biography as GM secret.
+--- Added spell parsing.
+--- Fixed a bug with language parsing ignoring ; as a splitting token.
+--- Default NPC size is now medium.
+--- Added size parsing.
+--- Attacks now parse with attack and damage bonuses correctly copied from the data.
+--- Disabled ability score usage for NPC weapons, and removed ability score adjustment.
+--- Ability Save DCs are now copied over.
+--- Added support for Space and Reach, which will be available in SFRPG from version 0.4.
+--- Pasting in a VTTES json now automatically switches the text input mode to VTTES json.
+--- VTTES support is no longer considered highly incomplete.
+- Paizo Block updates:
+--- Disabled ability score usage for NPC weapons, and removed ability score adjustment.
+--- Added support for Space and Reach, which will be available in SFRPG from version 0.4.
+
 0.3.4:
 - Parser no longer fails on space and reach.
 - Fixed weapon types getting overwritten even though they were valid from the item data.
