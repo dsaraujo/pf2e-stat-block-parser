@@ -84,6 +84,14 @@ export class SBVTTESParser {
         "stealth": (dict, val) => { this.parseSkill(dict, "ste", val); },
         "survival": (dict, val) => { this.parseSkill(dict, "sur", val); },
 
+        "size": (dict, val) => {
+            let sizes = Object.keys(CONFIG["SFRPG"].actorSizes);
+            let indexOfMedium = sizes.indexOf("medium");
+            let desiredIndex = indexOfMedium + Number(val.current);
+            let size = sizes[desiredIndex];
+            dict["data.traits.size"] = size;
+        },
+
         "bio": (dict, val) => {
             let biography = "<strong>Biography</strong><br />";
             biography += unescape(val);
