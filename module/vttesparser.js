@@ -306,11 +306,17 @@ export class SBVTTESParser {
                 if (!itemData.data.weaponType) {
                     itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
                 }
-                if (!itemData.data.ability) {
-                    itemData["data.ability"] = bIsMeleeAttack ? "str" : "dex";
-                }
 
-                itemData["data.attackBonus"] = attack.total;
+                itemData["data.ability"] = "";
+                itemData["data.attackBonus"] = attack.total.current;
+
+                let damage = itemData["data.damage"];
+                if (damage) {
+                    let firstPart = itemData["data.damage"].parts.len > 0 ? itemData["data.damage"].parts[0] : [0, "S"];
+                    itemData["data.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
+                } else {
+                    itemData["data.damage"] = {parts: [[attack.damage_total.current, "S"]]};
+                }
 
                 if (attack.description && attack.description.current) {
                     if (itemData.data.description && itemData.data.description.value) {
