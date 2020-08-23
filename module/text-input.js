@@ -23,6 +23,20 @@ export class SBTextInputDialog extends Dialog {
     async _onTextChanged(event) {
         const textEntryBox = event.currentTarget;
         SBTextInputDialog.enteredText = textEntryBox.value;
+
+        try {
+            let parsedJson = JSON.parse(SBTextInputDialog.enteredText);
+            if (parsedJson.schema_version === 2) {
+                let formatSelectors = document.getElementsByName("inputFormat");
+                for (let selector of formatSelectors) {
+                    selector.value = "vttes";
+                }
+                SBTextInputDialog.dataFormat = "vttes";
+            }
+
+        } catch (err) {
+
+        }
     }
 
     static async textInputDialog({actor, title, originalText=""}={}) {

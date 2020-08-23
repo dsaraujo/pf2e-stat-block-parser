@@ -401,8 +401,6 @@ export class SBVTTESParser {
 
                 itemData["data.preparation"] = { prepared: true };
 
-                console.log(JSON.stringify(itemData));
-
                 characterData.items.push(itemData);
             } catch (err) {
                 errors.push([spellName, err]);
