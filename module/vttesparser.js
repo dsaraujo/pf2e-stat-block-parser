@@ -55,6 +55,32 @@ export class SBVTTESParser {
         "stealth": (dict, val) => { this.parseSkill(dict, "ste", val); },
         "survival": (dict, val) => { this.parseSkill(dict, "sur", val); },
 
+        "bio": (dict, val) => {
+            let biography = "<strong>Biography</strong><br />";
+            biography += unescape(val);
+
+            let oldDesc = dict["data.details.biography.value"];
+            dict["data.details.biography.value"] = biography;
+            if (oldDesc) {
+                dict["data.details.biography.value"] += "<br />" + oldDesc;
+            }
+        },
+
+        "gmnotes": (dict, val) => {
+            let gmNotes = "";
+            gmNotes = "<section class=\"secret\"><strong>GM Notes</strong><br/>";
+            gmNotes += unescape(val);
+            gmNotes += "</section>";
+
+            let oldDesc = dict["data.details.biography.value"];
+            if (oldDesc) {
+                dict["data.details.biography.value"] += "<br />";
+                dict["data.details.biography.value"] += gmNotes;
+            } else {
+                dict["data.details.biography.value"] = gmNotes;
+            }
+        },
+
         "languages": (dict, val) => {
             let officialLanguages = [];
             let customLanguages = "";
@@ -118,6 +144,10 @@ export class SBVTTESParser {
             return {success: false};
         }
 
+        if (!actorData.data) {
+            actorData.data = {};
+        }
+
         let characterData = {
             actorData: actorData,
             items: [],
@@ -137,6 +167,14 @@ export class SBVTTESParser {
         characterData.actorData["name"] = parsedJson.name;
         if (parsedJson.avatar) {
             characterData.actorData["img"] = parsedJson.avatar;
+        }
+
+        if (parsedJson.bio) {
+            this.attributeMapping["bio"](characterData.actorData, parsedJson.bio);
+        }
+
+        if (parsedJson.gmnotes) {
+            this.attributeMapping["gmnotes"](characterData.actorData, parsedJson.gmnotes);
         }
 
         let recognizedMappings = Object.keys(this.attributeMapping);
