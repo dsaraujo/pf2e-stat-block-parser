@@ -262,6 +262,10 @@ export class SBVTTESParser {
                     }
                 }
 
+                if (ability.dc_base && ability.dc_base.current) {
+                    itemData["data.save.dc"] = ability.dc_base.current;
+                }
+
                 characterData.items.push(itemData);
             } catch (err) {
                 errors.push([abilityName, err]);
