@@ -341,14 +341,6 @@ export class SBStatblockParser {
             }
         }
 
-        // Reduce any attack bonuses on items by their ability modifier, to prevent double bonuses
-        for (let item of characterData.items) {
-            if (item.type == "weapon") {
-                let bonus = SBParsing.parseInteger(characterData.actorData["data.abilities." + item["data.ability"] + ".mod"]);
-                item["data.attackBonus"] -= bonus;
-            }
-        }
-
         return {success: true, characterData: characterData, errors: errors};
     }
 
