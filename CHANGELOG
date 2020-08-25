@@ -3,6 +3,7 @@
 --- Fixed "P & C" damage type not parsed correctly.
 --- Fixed ; getting parsed out of attack damage sections, confusing the damage type parsing.
 --- Fixed speed special values not getting parsed properly.
+--- Abilities being parsed may now pull from the class features and feats compendiums too.
 
 0.3.5:
 - VTTES support has been updated:
