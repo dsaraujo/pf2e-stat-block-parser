@@ -119,10 +119,10 @@ export class SBUtils {
         // Let the compendium load
         await compendium.getIndex();
         
-        let terms = searchString.toLowerCase().replace(/[,;()\[\]'"]/g,"").split(' ');
+        let terms = searchString.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim().replace(/[,;()\[\]'"]/g,"").split(' ');
         let entryWeWant = null;
         for (let entry of compendium.index) {
-            let entryName = entry.name.toLowerCase();
+            let entryName = entry.name.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim();
             let entryTerms = entryName.replace(/[,;()\[\]'"]/g,"").split(' ');
 
             if (terms.length !== entryTerms.length) {

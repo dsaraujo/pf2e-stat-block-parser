@@ -459,10 +459,19 @@ class SBAbilityParser extends SBParserBase {
                 matchingGraft = null;
             }
 
+            let existingItemData = await SBUtils.fuzzyFindCompendiumAsync("Class Features", ability);
+            if (!existingItemData) {
+                existingItemData = await SBUtils.fuzzyFindCompendiumAsync("Feats", ability);
+            }
+
             if (abilityValue.length > 1) {
-                let itemData = {};
-                itemData["name"] = ability + " - " + SBUtils.camelize(abilityValue[1]);
-                itemData["type"] = "feat";
+                let itemData = existingItemData || {};
+                if (!("name" in itemData)) {
+                    itemData["name"] = ability + " - " + SBUtils.camelize(abilityValue[1]);
+                }
+                if (!("type" in itemData)) {
+                    itemData["type"] = "feat";
+                }
 
                 if (matchingGraft) {
                     itemData["data.source"] = matchingGraft.source;
@@ -474,9 +483,13 @@ class SBAbilityParser extends SBParserBase {
 
                 items.push(itemData);
             } else {
-                let itemData = {};
-                itemData["name"] = ability;
-                itemData["type"] = "feat";
+                let itemData = existingItemData || {};
+                if (!("name" in itemData)) {
+                    itemData["name"] = ability;
+                }
+                if (!("type" in itemData)) {
+                    itemData["type"] = "feat";
+                }
 
                 if (matchingGraft) {
                     itemData["data.source"] = matchingGraft.source;
