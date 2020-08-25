@@ -64,23 +64,28 @@ class SBSingleValueParser extends SBParserBase {
 }
 
 class SBSplitValueParser extends SBParserBase {
-    constructor(targetFields, delimiter) {
+    constructor(targetFields, delimiter, oneToOne = true) {
         super();
         this.targetFields = targetFields;
         this.delimiter = delimiter;
+        this.oneToOne = oneToOne;
     }
 
     async parse(key, value) {
         let parsedData = {};
 
         let splitValue = value.split(this.delimiter);
-        if (splitValue.length != this.targetFields.length) {
-            SBUtils.log("Mismatching number of fields for " + key);
+        if (splitValue.length != this.targetFields.length && this.oneToOne) {
+            throw "Mismatching number of fields for " + key;
         }
 
         let max = Math.min(splitValue.length, this.targetFields.length);
         for(let i = 0; i<max; i++) {
-            parsedData[this.targetFields[i]] = splitValue[i];
+            let targetIndex = i;
+            if (i >= this.targetFields.length) {
+                targetIndex = this.targetFields.length - 1;
+            }
+            parsedData[this.targetFields[targetIndex]] = splitValue[i];
         }
 
         return {actorData: parsedData};
@@ -813,7 +818,7 @@ export function initParsers() {
             "defensive abilities": new SBAbilityParser()
         },
         "offense": {
-            "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
+            "speed": new SBSplitValueParser(["data.attributes.speed.value", "data.attributes.speed.special"], ",", false),
             "melee": new SBAttackParser(true),
             "ranged": new SBAttackParser(false),
             "multiattack": new SBAttackParser(true, true),

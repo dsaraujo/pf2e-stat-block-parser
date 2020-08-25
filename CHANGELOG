@@ -2,6 +2,7 @@
 - PAIZO Block updates:
 --- Fixed "P & C" damage type not parsed correctly.
 --- Fixed ; getting parsed out of attack damage sections, confusing the damage type parsing.
+--- Fixed speed special values not getting parsed properly.
 
 0.3.5:
 - VTTES support has been updated:
