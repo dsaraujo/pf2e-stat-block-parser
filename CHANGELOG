@@ -4,6 +4,7 @@
 --- Fixed ; getting parsed out of attack damage sections, confusing the damage type parsing.
 --- Fixed speed special values not getting parsed properly.
 --- Abilities being parsed may now pull from the class features and feats compendiums too.
+--- Refactored usage of built-in Universal Creature Rules to SFRPG system Universal Creature Rules.
 
 0.3.5:
 - VTTES support has been updated:

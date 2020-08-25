@@ -1,5 +1,4 @@
 import { SBUtils, SBConfig } from "./utils.js";
-import { SBUniversalMonsterRules } from "./umg.js";
 
 export class SBParserMapping {}
 export class SBParsing {}
@@ -8,17 +7,7 @@ export class SBParsing {}
 SBParsing.parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
 
 /** Convenience helper, returns an array with the base text and the sub text if found. Format: base text (sub text) */
-SBParsing.parseSubtext = (value) => {
-    let startSubtextIndex = value.indexOf('(');
-    let endSubtextIndex = value.indexOf(')');
-    if (startSubtextIndex > -1 && endSubtextIndex > startSubtextIndex) {
-        let baseValue = value.substring(0, startSubtextIndex).trim();
-        let subValue = value.substring(startSubtextIndex+1, endSubtextIndex).trim();
-        return [baseValue, subValue];
-    } else {
-        return [value];
-    }
-}
+SBParsing.parseSubtext = (value) => { return SBUtils.parseSubtext(value); }
 
 export class SBParserBase {
     constructor() {
@@ -213,20 +202,16 @@ class SBAttackParser extends SBParserBase {
         }
         
         let matchingItem = await SBUtils.fuzzyFindItemAsync(attackName);
-        if (matchingItem == null) {
+        if (!matchingItem) {
             matchingItem = await SBUtils.fuzzyFindSpellAsync(attackName);
+            if (!matchingItem) {
+                matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Universal Creature Rules", attackName);
+            }
         }
 
         //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
         let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
-
-        if (matchingItem == null) {
-            let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == attackName);
-            if (matchingRule.length > 0) {
-                itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
-            }
-        }
 
         if (this.bIsMulti) {
             itemData["name"] = "[MultiATK] " + itemData["name"];
@@ -452,16 +437,12 @@ class SBAbilityParser extends SBParserBase {
             let abilityValue = SBParsing.parseSubtext(ability);
             ability = SBUtils.camelize(abilityValue[0]);
 
-            let matchingGraft = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == ability);
-            if (matchingGraft.length > 0) {
-                matchingGraft = matchingGraft[0];
-            } else {
-                matchingGraft = null;
-            }
-
             let existingItemData = await SBUtils.fuzzyFindCompendiumAsync("Class Features", ability);
             if (!existingItemData) {
                 existingItemData = await SBUtils.fuzzyFindCompendiumAsync("Feats", ability);
+                if (!existingItemData) {
+                    existingItemData = await SBUtils.fuzzyFindCompendiumAsync("Universal Creature Rules", ability);
+                }
             }
 
             if (abilityValue.length > 1) {
@@ -473,14 +454,6 @@ class SBAbilityParser extends SBParserBase {
                     itemData["type"] = "feat";
                 }
 
-                if (matchingGraft) {
-                    itemData["data.source"] = matchingGraft.source;
-                    itemData["data.description.value"] = matchingGraft.description;
-                    if (matchingGraft.guidelines) {
-                        itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
-                    }
-                }
-
                 items.push(itemData);
             } else {
                 let itemData = existingItemData || {};
@@ -489,14 +462,6 @@ class SBAbilityParser extends SBParserBase {
                 }
                 if (!("type" in itemData)) {
                     itemData["type"] = "feat";
-                }
-
-                if (matchingGraft) {
-                    itemData["data.source"] = matchingGraft.source;
-                    itemData["data.description.value"] = matchingGraft.description;
-                    if (matchingGraft.guidelines) {
-                        itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
-                    }
                 }
 
                 items.push(itemData);

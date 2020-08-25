@@ -1,5 +1,4 @@
 import { SBUtils, SBConfig } from "./utils.js";
-import { SBUniversalMonsterRules } from "./umg.js";
 
 export class SBVTTESParser {
     skillNames = ["acrobatics", "athletics", "bluff", "computers", "culture",
@@ -276,24 +275,20 @@ export class SBVTTESParser {
 
             try {
                 let matchingItem = await SBUtils.fuzzyFindItemAsync(abilityName);
-                if (matchingItem == null) {
+                if (!matchingItem) {
                     matchingItem = await SBUtils.fuzzyFindSpellAsync(abilityName);
-                    if (matchingItem == null) {
+                    if (!matchingItem) {
                         matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Class Features", abilityName)
-                        if (matchingItem == null) {
+                        if (!matchingItem) {
                             matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Feats", abilityName)
+                            if (!matchingItem) {
+                                matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Universal Creature Rules", abilityName)
+                            }
                         }
                     }
                 }
 
                 let itemData = matchingItem != null ? matchingItem : {"name": abilityName, data: {}};
-                if (matchingItem == null) {
-                    let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == abilityName);
-                    if (matchingRule.length > 0) {
-                        itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
-                    }
-                }
-
                 if (itemData["_id"]) {
                     itemData["sourceId"] = itemData["_id"];
                     delete itemData["_id"];
@@ -339,16 +334,12 @@ export class SBVTTESParser {
                 let matchingItem = await SBUtils.fuzzyFindItemAsync(attackName);
                 if (matchingItem == null) {
                     matchingItem = await SBUtils.fuzzyFindSpellAsync(attackName);
-                }
-
-                let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
-                if (matchingItem == null) {
-                    let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == attackName);
-                    if (matchingRule.length > 0) {
-                        itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
+                    if (!matchingItem) {
+                        matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Universal Creature Rules", attackName)
                     }
                 }
 
+                let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
                 if (itemData["_id"]) {
                     itemData["sourceId"] = itemData["_id"];
                     delete itemData["_id"];
@@ -405,18 +396,14 @@ export class SBVTTESParser {
                         matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Class Features", spellName)
                         if (matchingItem == null) {
                             matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Feats", spellName)
+                            if (!matchingItem) {
+                                matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Universal Creature Rules", spellName)
+                            }
                         }
                     }
                 }
 
                 let itemData = matchingItem != null ? matchingItem : {"name": spellName, data: {}};
-                if (matchingItem == null) {
-                    let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == spellName);
-                    if (matchingRule.length > 0) {
-                        itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
-                    }
-                }
-
                 if (itemData["_id"]) {
                     itemData["sourceId"] = itemData["_id"];
                     delete itemData["_id"];

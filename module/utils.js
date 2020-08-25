@@ -115,14 +115,17 @@ export class SBUtils {
             SBUtils.log("Could not find compendium named " + compendium + ".");
             return null;
         }
+
+        let rawString = this.parseSubtext(searchString)[0];
         
         // Let the compendium load
         await compendium.getIndex();
         
-        let terms = searchString.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim().replace(/[,;()\[\]'"]/g,"").split(' ');
+        let terms = rawString.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim().replace(/[,;()\[\]'"]/g,"").split(' ');
         let entryWeWant = null;
         for (let entry of compendium.index) {
-            let entryName = entry.name.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim();
+            let rawEntryName = this.parseSubtext(entry.name)[0];
+            let entryName = rawEntryName.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim();
             let entryTerms = entryName.replace(/[,;()\[\]'"]/g,"").split(' ');
 
             if (terms.length !== entryTerms.length) {
@@ -159,6 +162,18 @@ export class SBUtils {
 
     static async fuzzyFindSpellAsync(statBlockSpellName) {
         return this.fuzzyFindCompendiumAsync("Spells", statBlockSpellName);
+    }
+
+    static parseSubtext = (value) => {
+        let startSubtextIndex = value.indexOf('(');
+        let endSubtextIndex = value.indexOf(')');
+        if (startSubtextIndex > -1 && endSubtextIndex > startSubtextIndex) {
+            let baseValue = value.substring(0, startSubtextIndex).trim();
+            let subValue = value.substring(startSubtextIndex+1, endSubtextIndex).trim();
+            return [baseValue, subValue];
+        } else {
+            return [value];
+        }
     }
 
     static splitEntries(baseString) {
