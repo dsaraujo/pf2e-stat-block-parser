@@ -22,6 +22,7 @@ SBConfig.weaponDamageTypes = {
     "b & so": "bludgeoning+sonic",
     "p": "piercing",
     "p & s": "piercing+sonic",
+    "p & c": "cold+piercing",
     "s": "slashing",
     "s & p": "slashing+piercing",
     "s & so": "slashing+sonic"
@@ -181,6 +182,8 @@ export class SBUtils {
                         results.push(entry.trim());
                     }
                     entry = "";
+                } else {
+                    entry += character;
                 }
             } else {
                 entry += character;

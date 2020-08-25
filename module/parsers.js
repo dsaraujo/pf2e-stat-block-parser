@@ -193,7 +193,7 @@ class SBAttackParser extends SBParserBase {
             let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
             attackDamageRoll = attackDamageData[1];
             attackDamageType = attackDamageData[2].toLowerCase();
-            if (SBConfig.weaponDamageTypes[attackDamageType] != undefined) {
+            if (SBConfig.weaponDamageTypes[attackDamageType]) {
                 attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
             } else {
                 attackDamageType = "slashing";
