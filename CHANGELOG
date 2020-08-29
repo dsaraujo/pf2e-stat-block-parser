@@ -8,6 +8,7 @@
 --- Abilities being parsed may now pull from the class features and feats compendiums too.
 --- Refactored usage of built-in Universal Creature Rules to SFRPG system Universal Creature Rules.
 --- Tweaked item parsing logic to prevent duplicate item parsing.
+--- Improved credstick parsing.
 - VTTES support updates:
 --- Fixing a parsing error when engagement_range was missing from attacks.
 --- Fixing a parsing error when attacks didn't have damage_total specified. For example, smoke and stickybomb grenades.

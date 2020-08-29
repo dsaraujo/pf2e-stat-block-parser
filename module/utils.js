@@ -172,8 +172,8 @@ export class SBUtils {
         }
 
         statBlockItemName = statBlockItemName.replace("batteries", "battery");
-        if (SBUtils.stringContains(statBlockItemName, "battery")) {
-            if (!SBUtils.stringContains(statBlockItemName, "capacity")) {
+        if (SBUtils.stringContains(statBlockItemName, "battery", false)) {
+            if (!SBUtils.stringContains(statBlockItemName, "capacity", false)) {
                 statBlockItemName += ", standard";
             }
         }

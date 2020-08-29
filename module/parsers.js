@@ -503,7 +503,7 @@ class SBGearParser extends SBParserBase {
                 }
                 
                 //SBUtils.log("Parsed gear item: " + baseItemAmount + "x " + baseItemName);
-                itemsToAdd.push({item: baseItemName, amount: baseItemAmount, subText: baseItemElements[1], source: baseItem});
+                itemsToAdd.push({item: baseItemName, amount: baseItemAmount, subText: baseItemElements[1], source: baseItem, subText: baseItemElements[1]});
                 
                 if (withItems.length > 1) {
                     let withItem = withItems[1].trim();
@@ -518,7 +518,7 @@ class SBGearParser extends SBParserBase {
                     }
 
                     //SBUtils.log("Parsed gear item: " + withItemAmount + "x " + withItemName);
-                    itemsToAdd.push({item: withItemName, amount: withItemAmount, subText: withItemElements[1], source: withItem});
+                    itemsToAdd.push({item: withItemName, amount: withItemAmount, subText: withItemElements[1], source: withItem, subText: withItemElements[1]});
                 }
             } catch (err) {
                 errors.push([`${key} -> ${rawItem}`, err]);
@@ -540,6 +540,15 @@ class SBGearParser extends SBParserBase {
                 if (!itemData["type"]) {
                     itemData["type"] = "goods";
                 }
+
+                if (SBUtils.stringContains(itemData["name"], "credstick", false)) {
+                    if (itemToAdd.subText) {
+                        let textSplit = itemToAdd.subText.split(' ');
+                        itemData["data.price"] = Number(textSplit[0].trim());
+                        itemData["name"] = `Credstick (${itemData["data.price"]} credits)`;
+                    }
+                }
+
                 items.push(itemData);
             } catch (err) {
                 errors.push([`${key} -> ${itemToAdd.item}`, err]);
