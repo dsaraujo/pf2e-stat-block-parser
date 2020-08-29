@@ -602,18 +602,38 @@ class SBSpellLikeParser extends SBParserBase {
             for (let rawSpell of splitSpells) {
                 let parsedSpellData = SBParsing.parseSubtext(rawSpell);
                 let foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
+                
+                let spellActivation = spellBlock.level.split('/');
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
                     foundSpell["sourceId"] = foundSpell["_id"];
-                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + SBUtils.camelize(spellBlock.level) + ")";
+                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+                    foundSpell["data.preparation"] = { prepared: true, mode: "innate" };
+
+                    if (spellActivation.length == 2) {
+                        foundSpell["data.activation"] = {};
+                        foundSpell["data.activation.cost"] = spellActivation[0];
+                        foundSpell["data.activation.type"] = spellActivation[1];
+                    } else {
+                        foundSpell["name"] += " (" + SBUtils.camelize(spellBlock.level) + ")";
+                    }
 
                     spells.push(foundSpell);
                 } else {
                     //SBUtils.log(">> Unknown spell: " + rawSpell);
                     foundSpell = {};
-                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + SBUtils.camelize(spellBlock.level) + ")";
+                    foundSpell["name"] = SBUtils.camelize(rawSpell);
                     foundSpell["type"] = "spell";
                     foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
+                    foundSpell["data.preparation"] = { prepared: true, mode: "innate" };
+
+                    if (spellActivation.length == 2) {
+                        foundSpell["data.activation"] = {};
+                        foundSpell["data.activation.cost"] = spellActivation[0];
+                        foundSpell["data.activation.type"] = spellActivation[1];
+                    } else {
+                        foundSpell["name"] += " (" + SBUtils.camelize(spellBlock.level) + ")";
+                    }
 
                     spells.push(foundSpell);
                 }
@@ -676,11 +696,16 @@ class SBSpellsParser extends SBParserBase {
                     max: castTimes[0]
                 };
                 isNormalSpell = true;
+            } else if (SBUtils.stringContains(spellBlock.level, "at will", false)) {
+                isNormalSpell = true;
             }
             
             for (let rawSpell of splitSpells) {
                 let parsedSpellData = SBParsing.parseSubtext(rawSpell);
                 let foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
+
+                let preparation = { prepared: true, mode: (SBUtils.stringContains(spellBlock.level, "at will", false)) ? "always" : null };
+
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
                     foundSpell["sourceId"] = foundSpell["_id"];
@@ -689,6 +714,7 @@ class SBSpellsParser extends SBParserBase {
                         foundSpell["name"] += " (" + castTimes + ")";
                     }
 
+                    foundSpell["data.preparation"] = preparation;
                     spells.push(foundSpell);
                 } else {
                     //SBUtils.log(">> Unknown spell: " + rawSpell);
@@ -699,6 +725,7 @@ class SBSpellsParser extends SBParserBase {
                     }
 
                     foundSpell["type"] = "spell";
+                    foundSpell["data.preparation"] = preparation;
                     foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
 
                     spells.push(foundSpell);
