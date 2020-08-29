@@ -1,3 +1,6 @@
+0.3.8:"
+- Marked compatibility with FoundryVTT v0.6.6.
+
 0.3.7:
 - PAIZO Block updates:
 --- Improved spell parsing by assigning them the correct preparation settings and activation cost.
