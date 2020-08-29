@@ -356,7 +356,17 @@ export class SBStatblockParser {
                     SBUtils.log("Parser for " + category + "." + firstWord + " produced an invalid item.");
                 }
             }
-            characterData.items = characterData.items.concat(parsedData.items);
+
+            for (let item of parsedData.items) {
+                let existingItem = characterData.items.find(x => x.name === item.name);
+                if (existingItem) {
+                    // If it already exists, it's likely a weapon that was parsed during the earlier passes.
+                    // Reduce quantity by 1 to prevent duplicate items.
+                    existingItem.data.quantity += item.data.quantity - 1;
+                } else {
+                    characterData.items.push(item);
+                }
+            }
         }
 
         if (parsedData.spells != undefined) {

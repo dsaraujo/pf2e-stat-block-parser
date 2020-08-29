@@ -486,9 +486,6 @@ class SBGearParser extends SBParserBase {
 
         let splitValues = SBUtils.splitEntries(value);
         for (let rawItem of splitValues) {
-            // Common substitutions
-            //rawItem = rawItem.toLowerCase().replace("batteries", "battery standard");
-
             try {
                 let withItems = rawItem.trim().split("with");
                 let baseItem = withItems[0].trim();
@@ -501,17 +498,8 @@ class SBGearParser extends SBParserBase {
                 let baseItemAmount = baseItemAmountName[1] ? baseItemAmountName[1] : 1;
                 let baseItemName = baseItemAmountName[2];
 
-                // More common substitutions
-                if (baseItemName.endsWith("grenade i")) {
-                    baseItemName = baseItemName.replace("grenade i", "grenade 1");
-                } else if (baseItemName.endsWith("grenade ii")) {
-                    baseItemName = baseItemName.replace("grenade ii", "grenade 2");
-                } else if (baseItemName.endsWith("grenade iii")) {
-                    baseItemName = baseItemName.replace("grenade iii", "grenade 3");
-                } else if (baseItemName.endsWith("grenade iv")) {
-                    baseItemName = baseItemName.replace(" iv", "grenade 4");
-                } else if (baseItemName.endsWith("grenade v")) {
-                    baseItemName = baseItemName.replace("grenade v", "grenade 5");
+                if (baseItemElements.length > 1 && !Number.isNaN(Number(baseItemElements[1])) && !baseItemAmountName[1]) {
+                    baseItemAmount = Number(baseItemElements[1]);
                 }
                 
                 //SBUtils.log("Parsed gear item: " + baseItemAmount + "x " + baseItemName);
@@ -519,27 +507,15 @@ class SBGearParser extends SBParserBase {
                 
                 if (withItems.length > 1) {
                     let withItem = withItems[1].trim();
-                    if (withItem.endsWith(")")) {
-                        withItem = withItem.substring(0, withItem.length - 1).trim();
-                    }
 
                     let withItemElements = SBParsing.parseSubtext(withItem);
                     let withItemAmountName = withItemElements[0].split(/(\d*)?[\s]?(.*)/i);
                     let withItemAmount = withItemAmountName[1] ? withItemAmountName[1] : 1;
                     let withItemName = withItemAmountName[2];
 
-                    // More common substitutions
-                if (withItemName.endsWith("grenade i")) {
-                    withItemName = withItemName.replace("grenade i", "grenade 1");
-                } else if (withItemName.endsWith("grenade ii")) {
-                    withItemName = withItemName.replace("grenade ii", "grenade 2");
-                } else if (withItemName.endsWith("grenade iii")) {
-                    withItemName = withItemName.replace("grenade iii", "grenade 3");
-                } else if (withItemName.endsWith("grenade iv")) {
-                    withItemName = withItemName.replace(" iv", "grenade 4");
-                } else if (withItemName.endsWith("grenade v")) {
-                    withItemName = withItemName.replace("grenade v", "grenade 5");
-                }
+                    if (withItemElements.length > 1 && !Number.isNaN(Number(withItemElements[1])) && !withItemAmountName[1]) {
+                        withItemAmount = Number(withItemElements[1]);
+                    }
 
                     //SBUtils.log("Parsed gear item: " + withItemAmount + "x " + withItemName);
                     itemsToAdd.push({item: withItemName, amount: withItemAmount, subText: withItemElements[1], source: withItem});
@@ -553,13 +529,13 @@ class SBGearParser extends SBParserBase {
             try {
                 let itemData = await SBUtils.fuzzyFindItemAsync(itemToAdd.item);
                 //SBUtils.log("> " + itemToAdd.item + " found: " + JSON.stringify(itemData));
-                if (itemData == null) {
+                if (!itemData) {
                     itemData = {};
+                    itemData["name"] = SBUtils.camelize(itemToAdd.source ? itemToAdd.source : itemToAdd.item);
                 } else {
-                    itemData["sourceId"] = itemData["_id"];
+                    itemData["source"] = { compendium: "Equipment", id: itemData["_id"] };
                     delete itemData["_id"];
                 }
-                itemData["name"] = SBUtils.camelize(itemToAdd.source ? itemToAdd.source : itemToAdd.item);
                 itemData["data.quantity"] = itemToAdd.amount;
                 if (!itemData["type"]) {
                     itemData["type"] = "goods";
