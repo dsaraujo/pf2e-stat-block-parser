@@ -157,6 +157,27 @@ export class SBUtils {
     }
 
     static async fuzzyFindItemAsync(statBlockItemName) {
+        // Common substitutions
+        if (statBlockItemName.endsWith("grenade 1")) {
+            statBlockItemName = statBlockItemName.replace("grenade 1", "grenade i");
+        } else if (statBlockItemName.endsWith("grenade 2")) {
+            statBlockItemName = statBlockItemName.replace("grenade 2", "grenade ii");
+        } else if (statBlockItemName.endsWith("grenade 3")) {
+            statBlockItemName = statBlockItemName.replace("grenade 3", "grenade iii");
+        } else if (statBlockItemName.endsWith("grenade 4")) {
+            statBlockItemName = statBlockItemName.replace(" 4", "grenade iv");
+        } else if (statBlockItemName.endsWith("grenade 5")) {
+            statBlockItemName = statBlockItemName.replace("grenade 5", "grenade v");
+        }
+
+        statBlockItemName = statBlockItemName.replace("grenades", "grenade");
+        statBlockItemName = statBlockItemName.replace("batteries", "battery");
+
+        if (SBUtils.stringContains(statBlockItemName, "battery")) {
+            if (!SBUtils.stringContains(statBlockItemName, "capacity")) {
+                statBlockItemName += ", standard";
+            }
+        }
         return this.fuzzyFindCompendiumAsync("Equipment", statBlockItemName);
     }
 
@@ -176,7 +197,12 @@ export class SBUtils {
         }
     }
 
-    static splitEntries(baseString) {
+    static splitEntries(baseString, additionalEntrySplitters = null) {
+        let textualEntrySplitters = ["or", "and"];
+        if (additionalEntrySplitters) {
+            textualEntrySplitters = textualEntrySplitters.concat(additionalEntrySplitters);
+        }
+
         let results = null;
         let stack = [];
         let entry = "";
@@ -202,22 +228,17 @@ export class SBUtils {
                 }
             } else {
                 entry += character;
-                if (entry.toLowerCase().endsWith(" or") && stack.length == 0 && baseString[i+1] == ' ') {
-                    entry = entry.substring(0, entry.length - 2);
-                    if (!results) {
-                        results = [entry.trim()];
-                    } else {
-                        results.push(entry.trim());
+                for (let splitter of textualEntrySplitters) {
+                    let ending = " " + splitter;
+                    if (entry.toLowerCase().endsWith(ending) && stack.length == 0 && baseString[i+1] == ' ') {
+                        entry = entry.substring(0, entry.length - splitter.length);
+                        if (!results) {
+                            results = [entry.trim()];
+                        } else {
+                            results.push(entry.trim());
+                        }
+                        entry = "";
                     }
-                    entry = "";
-                } else if (entry.toLowerCase().endsWith(" and") && stack.length == 0 && baseString[i+1] == ' ') {
-                    entry = entry.substring(0, entry.length - 3);
-                    if (!results) {
-                        results = [entry.trim()];
-                    } else {
-                        results.push(entry.trim());
-                    }
-                    entry = "";
                 }
             }
         }
