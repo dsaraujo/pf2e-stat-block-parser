@@ -158,6 +158,7 @@ export class SBUtils {
 
     static async fuzzyFindItemAsync(statBlockItemName) {
         // Common substitutions
+        statBlockItemName = statBlockItemName.replace("grenades", "grenade");
         if (statBlockItemName.endsWith("grenade 1")) {
             statBlockItemName = statBlockItemName.replace("grenade 1", "grenade i");
         } else if (statBlockItemName.endsWith("grenade 2")) {
@@ -170,9 +171,7 @@ export class SBUtils {
             statBlockItemName = statBlockItemName.replace("grenade 5", "grenade v");
         }
 
-        statBlockItemName = statBlockItemName.replace("grenades", "grenade");
         statBlockItemName = statBlockItemName.replace("batteries", "battery");
-
         if (SBUtils.stringContains(statBlockItemName, "battery")) {
             if (!SBUtils.stringContains(statBlockItemName, "capacity")) {
                 statBlockItemName += ", standard";
