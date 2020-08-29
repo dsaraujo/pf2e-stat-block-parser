@@ -22,6 +22,7 @@ SBConfig.weaponDamageTypes = {
     "b & so": "bludgeoning+sonic",
     "p": "piercing",
     "p & s": "piercing+sonic",
+    "p & c": "cold+piercing",
     "s": "slashing",
     "s & p": "slashing+piercing",
     "s & so": "slashing+sonic"
@@ -114,14 +115,17 @@ export class SBUtils {
             SBUtils.log("Could not find compendium named " + compendium + ".");
             return null;
         }
+
+        let rawString = this.parseSubtext(searchString)[0];
         
         // Let the compendium load
         await compendium.getIndex();
         
-        let terms = searchString.toLowerCase().replace(/[,;()\[\]'"]/g,"").split(' ');
+        let terms = rawString.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim().replace(/[*,;()\[\]'"]/g,"").split(' ');
         let entryWeWant = null;
         for (let entry of compendium.index) {
-            let entryName = entry.name.toLowerCase();
+            let rawEntryName = this.parseSubtext(entry.name)[0];
+            let entryName = rawEntryName.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim();
             let entryTerms = entryName.replace(/[,;()\[\]'"]/g,"").split(' ');
 
             if (terms.length !== entryTerms.length) {
@@ -153,14 +157,53 @@ export class SBUtils {
     }
 
     static async fuzzyFindItemAsync(statBlockItemName) {
+        // Common substitutions
+        statBlockItemName = statBlockItemName.replace("grenades", "grenade");
+        if (statBlockItemName.endsWith("grenade 1")) {
+            statBlockItemName = statBlockItemName.replace("grenade 1", "grenade i");
+        } else if (statBlockItemName.endsWith("grenade 2")) {
+            statBlockItemName = statBlockItemName.replace("grenade 2", "grenade ii");
+        } else if (statBlockItemName.endsWith("grenade 3")) {
+            statBlockItemName = statBlockItemName.replace("grenade 3", "grenade iii");
+        } else if (statBlockItemName.endsWith("grenade 4")) {
+            statBlockItemName = statBlockItemName.replace(" 4", "grenade iv");
+        } else if (statBlockItemName.endsWith("grenade 5")) {
+            statBlockItemName = statBlockItemName.replace("grenade 5", "grenade v");
+        }
+
+        statBlockItemName = statBlockItemName.replace("batteries", "battery");
+        if (SBUtils.stringContains(statBlockItemName, "battery", false)) {
+            if (!SBUtils.stringContains(statBlockItemName, "capacity", false)) {
+                statBlockItemName += ", standard";
+            }
+        }
         return this.fuzzyFindCompendiumAsync("Equipment", statBlockItemName);
     }
 
     static async fuzzyFindSpellAsync(statBlockSpellName) {
+        statBlockSpellName = statBlockSpellName.replace("/ ", "/");
+        statBlockSpellName = statBlockSpellName.replace(" /", "/");
         return this.fuzzyFindCompendiumAsync("Spells", statBlockSpellName);
     }
 
-    static splitEntries(baseString) {
+    static parseSubtext = (value) => {
+        let startSubtextIndex = value.indexOf('(');
+        let endSubtextIndex = value.indexOf(')');
+        if (startSubtextIndex > -1 && endSubtextIndex > startSubtextIndex) {
+            let baseValue = value.substring(0, startSubtextIndex).trim();
+            let subValue = value.substring(startSubtextIndex+1, endSubtextIndex).trim();
+            return [baseValue, subValue];
+        } else {
+            return [value];
+        }
+    }
+
+    static splitEntries(baseString, additionalEntrySplitters = null) {
+        let textualEntrySplitters = ["or", "and"];
+        if (additionalEntrySplitters) {
+            textualEntrySplitters = textualEntrySplitters.concat(additionalEntrySplitters);
+        }
+
         let results = null;
         let stack = [];
         let entry = "";
@@ -181,25 +224,22 @@ export class SBUtils {
                         results.push(entry.trim());
                     }
                     entry = "";
+                } else {
+                    entry += character;
                 }
             } else {
                 entry += character;
-                if (entry.toLowerCase().endsWith(" or") && stack.length == 0 && baseString[i+1] == ' ') {
-                    entry = entry.substring(0, entry.length - 2);
-                    if (!results) {
-                        results = [entry.trim()];
-                    } else {
-                        results.push(entry.trim());
+                for (let splitter of textualEntrySplitters) {
+                    let ending = " " + splitter;
+                    if (entry.toLowerCase().endsWith(ending) && stack.length == 0 && baseString[i+1] == ' ') {
+                        entry = entry.substring(0, entry.length - splitter.length);
+                        if (!results) {
+                            results = [entry.trim()];
+                        } else {
+                            results.push(entry.trim());
+                        }
+                        entry = "";
                     }
-                    entry = "";
-                } else if (entry.toLowerCase().endsWith(" and") && stack.length == 0 && baseString[i+1] == ' ') {
-                    entry = entry.substring(0, entry.length - 3);
-                    if (!results) {
-                        results = [entry.trim()];
-                    } else {
-                        results.push(entry.trim());
-                    }
-                    entry = "";
                 }
             }
         }

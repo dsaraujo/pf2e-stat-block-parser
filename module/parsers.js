@@ -1,5 +1,4 @@
 import { SBUtils, SBConfig } from "./utils.js";
-import { SBUniversalMonsterRules } from "./umg.js";
 
 export class SBParserMapping {}
 export class SBParsing {}
@@ -8,17 +7,7 @@ export class SBParsing {}
 SBParsing.parseInteger = (value) => {let p = parseInt(value); return isNaN(p) ? 0 : p;};
 
 /** Convenience helper, returns an array with the base text and the sub text if found. Format: base text (sub text) */
-SBParsing.parseSubtext = (value) => {
-    let startSubtextIndex = value.indexOf('(');
-    let endSubtextIndex = value.indexOf(')');
-    if (startSubtextIndex > -1 && endSubtextIndex > startSubtextIndex) {
-        let baseValue = value.substring(0, startSubtextIndex).trim();
-        let subValue = value.substring(startSubtextIndex+1, endSubtextIndex).trim();
-        return [baseValue, subValue];
-    } else {
-        return [value];
-    }
-}
+SBParsing.parseSubtext = (value) => { return SBUtils.parseSubtext(value); }
 
 export class SBParserBase {
     constructor() {
@@ -64,23 +53,28 @@ class SBSingleValueParser extends SBParserBase {
 }
 
 class SBSplitValueParser extends SBParserBase {
-    constructor(targetFields, delimiter) {
+    constructor(targetFields, delimiter, oneToOne = true) {
         super();
         this.targetFields = targetFields;
         this.delimiter = delimiter;
+        this.oneToOne = oneToOne;
     }
 
     async parse(key, value) {
         let parsedData = {};
 
         let splitValue = value.split(this.delimiter);
-        if (splitValue.length != this.targetFields.length) {
-            SBUtils.log("Mismatching number of fields for " + key);
+        if (splitValue.length != this.targetFields.length && this.oneToOne) {
+            throw "Mismatching number of fields for " + key;
         }
 
         let max = Math.min(splitValue.length, this.targetFields.length);
         for(let i = 0; i<max; i++) {
-            parsedData[this.targetFields[i]] = splitValue[i];
+            let targetIndex = i;
+            if (i >= this.targetFields.length) {
+                targetIndex = this.targetFields.length - 1;
+            }
+            parsedData[this.targetFields[targetIndex]] = splitValue[i];
         }
 
         return {actorData: parsedData};
@@ -193,7 +187,7 @@ class SBAttackParser extends SBParserBase {
             let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
             attackDamageRoll = attackDamageData[1];
             attackDamageType = attackDamageData[2].toLowerCase();
-            if (SBConfig.weaponDamageTypes[attackDamageType] != undefined) {
+            if (SBConfig.weaponDamageTypes[attackDamageType]) {
                 attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
             } else {
                 attackDamageType = "slashing";
@@ -208,20 +202,16 @@ class SBAttackParser extends SBParserBase {
         }
         
         let matchingItem = await SBUtils.fuzzyFindItemAsync(attackName);
-        if (matchingItem == null) {
+        if (!matchingItem) {
             matchingItem = await SBUtils.fuzzyFindSpellAsync(attackName);
+            if (!matchingItem) {
+                matchingItem = await SBUtils.fuzzyFindCompendiumAsync("Universal Creature Rules", attackName);
+            }
         }
 
         //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
         let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
-
-        if (matchingItem == null) {
-            let matchingRule = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == attackName);
-            if (matchingRule.length > 0) {
-                itemData["data.description.value"] = `<p>${matchingRule[0].description}</p>`;
-            }
-        }
 
         if (this.bIsMulti) {
             itemData["name"] = "[MultiATK] " + itemData["name"];
@@ -447,38 +437,31 @@ class SBAbilityParser extends SBParserBase {
             let abilityValue = SBParsing.parseSubtext(ability);
             ability = SBUtils.camelize(abilityValue[0]);
 
-            let matchingGraft = SBUniversalMonsterRules.specialAbilities.filter((x) => x.name == ability);
-            if (matchingGraft.length > 0) {
-                matchingGraft = matchingGraft[0];
-            } else {
-                matchingGraft = null;
+            let existingItemData = await SBUtils.fuzzyFindCompendiumAsync("Class Features", ability);
+            if (!existingItemData) {
+                existingItemData = await SBUtils.fuzzyFindCompendiumAsync("Feats", ability);
+                if (!existingItemData) {
+                    existingItemData = await SBUtils.fuzzyFindCompendiumAsync("Universal Creature Rules", ability);
+                }
             }
 
             if (abilityValue.length > 1) {
-                let itemData = {};
-                itemData["name"] = ability + " - " + SBUtils.camelize(abilityValue[1]);
-                itemData["type"] = "feat";
-
-                if (matchingGraft) {
-                    itemData["data.source"] = matchingGraft.source;
-                    itemData["data.description.value"] = matchingGraft.description;
-                    if (matchingGraft.guidelines) {
-                        itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
-                    }
+                let itemData = existingItemData || {};
+                if (!("name" in itemData)) {
+                    itemData["name"] = ability + " - " + SBUtils.camelize(abilityValue[1]);
+                }
+                if (!("type" in itemData)) {
+                    itemData["type"] = "feat";
                 }
 
                 items.push(itemData);
             } else {
-                let itemData = {};
-                itemData["name"] = ability;
-                itemData["type"] = "feat";
-
-                if (matchingGraft) {
-                    itemData["data.source"] = matchingGraft.source;
-                    itemData["data.description.value"] = matchingGraft.description;
-                    if (matchingGraft.guidelines) {
-                        itemData["data.description.value"] += "<br/>Guidelines: " + matchingGraft.guidelines;
-                    }
+                let itemData = existingItemData || {};
+                if (!("name" in itemData)) {
+                    itemData["name"] = ability;
+                }
+                if (!("type" in itemData)) {
+                    itemData["type"] = "feat";
                 }
 
                 items.push(itemData);
@@ -503,9 +486,6 @@ class SBGearParser extends SBParserBase {
 
         let splitValues = SBUtils.splitEntries(value);
         for (let rawItem of splitValues) {
-            // Common substitutions
-            //rawItem = rawItem.toLowerCase().replace("batteries", "battery standard");
-
             try {
                 let withItems = rawItem.trim().split("with");
                 let baseItem = withItems[0].trim();
@@ -518,48 +498,27 @@ class SBGearParser extends SBParserBase {
                 let baseItemAmount = baseItemAmountName[1] ? baseItemAmountName[1] : 1;
                 let baseItemName = baseItemAmountName[2];
 
-                // More common substitutions
-                if (baseItemName.endsWith("grenade i")) {
-                    baseItemName = baseItemName.replace("grenade i", "grenade 1");
-                } else if (baseItemName.endsWith("grenade ii")) {
-                    baseItemName = baseItemName.replace("grenade ii", "grenade 2");
-                } else if (baseItemName.endsWith("grenade iii")) {
-                    baseItemName = baseItemName.replace("grenade iii", "grenade 3");
-                } else if (baseItemName.endsWith("grenade iv")) {
-                    baseItemName = baseItemName.replace(" iv", "grenade 4");
-                } else if (baseItemName.endsWith("grenade v")) {
-                    baseItemName = baseItemName.replace("grenade v", "grenade 5");
+                if (baseItemElements.length > 1 && !Number.isNaN(Number(baseItemElements[1])) && !baseItemAmountName[1]) {
+                    baseItemAmount = Number(baseItemElements[1]);
                 }
                 
                 //SBUtils.log("Parsed gear item: " + baseItemAmount + "x " + baseItemName);
-                itemsToAdd.push({item: baseItemName, amount: baseItemAmount, subText: baseItemElements[1], source: baseItem});
+                itemsToAdd.push({item: baseItemName, amount: baseItemAmount, subText: baseItemElements[1], source: baseItem, subText: baseItemElements[1]});
                 
                 if (withItems.length > 1) {
                     let withItem = withItems[1].trim();
-                    if (withItem.endsWith(")")) {
-                        withItem = withItem.substring(0, withItem.length - 1).trim();
-                    }
 
                     let withItemElements = SBParsing.parseSubtext(withItem);
                     let withItemAmountName = withItemElements[0].split(/(\d*)?[\s]?(.*)/i);
                     let withItemAmount = withItemAmountName[1] ? withItemAmountName[1] : 1;
                     let withItemName = withItemAmountName[2];
 
-                    // More common substitutions
-                if (withItemName.endsWith("grenade i")) {
-                    withItemName = withItemName.replace("grenade i", "grenade 1");
-                } else if (withItemName.endsWith("grenade ii")) {
-                    withItemName = withItemName.replace("grenade ii", "grenade 2");
-                } else if (withItemName.endsWith("grenade iii")) {
-                    withItemName = withItemName.replace("grenade iii", "grenade 3");
-                } else if (withItemName.endsWith("grenade iv")) {
-                    withItemName = withItemName.replace(" iv", "grenade 4");
-                } else if (withItemName.endsWith("grenade v")) {
-                    withItemName = withItemName.replace("grenade v", "grenade 5");
-                }
+                    if (withItemElements.length > 1 && !Number.isNaN(Number(withItemElements[1])) && !withItemAmountName[1]) {
+                        withItemAmount = Number(withItemElements[1]);
+                    }
 
                     //SBUtils.log("Parsed gear item: " + withItemAmount + "x " + withItemName);
-                    itemsToAdd.push({item: withItemName, amount: withItemAmount, subText: withItemElements[1], source: withItem});
+                    itemsToAdd.push({item: withItemName, amount: withItemAmount, subText: withItemElements[1], source: withItem, subText: withItemElements[1]});
                 }
             } catch (err) {
                 errors.push([`${key} -> ${rawItem}`, err]);
@@ -570,17 +529,26 @@ class SBGearParser extends SBParserBase {
             try {
                 let itemData = await SBUtils.fuzzyFindItemAsync(itemToAdd.item);
                 //SBUtils.log("> " + itemToAdd.item + " found: " + JSON.stringify(itemData));
-                if (itemData == null) {
+                if (!itemData) {
                     itemData = {};
+                    itemData["name"] = SBUtils.camelize(itemToAdd.source ? itemToAdd.source : itemToAdd.item);
                 } else {
-                    itemData["sourceId"] = itemData["_id"];
+                    itemData["source"] = { compendium: "Equipment", id: itemData["_id"] };
                     delete itemData["_id"];
                 }
-                itemData["name"] = SBUtils.camelize(itemToAdd.source ? itemToAdd.source : itemToAdd.item);
                 itemData["data.quantity"] = itemToAdd.amount;
                 if (!itemData["type"]) {
                     itemData["type"] = "goods";
                 }
+
+                if (SBUtils.stringContains(itemData["name"], "credstick", false)) {
+                    if (itemToAdd.subText) {
+                        let textSplit = itemToAdd.subText.split(' ');
+                        itemData["data.price"] = Number(textSplit[0].trim());
+                        itemData["name"] = `Credstick (${itemData["data.price"]} credits)`;
+                    }
+                }
+
                 items.push(itemData);
             } catch (err) {
                 errors.push([`${key} -> ${itemToAdd.item}`, err]);
@@ -692,11 +660,23 @@ class SBSpellsParser extends SBParserBase {
 
         //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));
 
+        let actorData = {};
+        actorData["data.spells"] = {};
+
         // Next up, for each spell level, split up into spells, which we can pull from the compendium using fuzzy search.
         for (let spellBlock of splitSpellblocks) {
             let splitSpells = SBUtils.splitEntries(spellBlock.spells);
             let castTimes = SBParsing.parseSubtext(spellBlock.level);
             castTimes = SBUtils.camelize(castTimes[castTimes.length - 1]);
+            
+            let isNormalSpell = false;
+            if (!Number.isNaN(Number(spellBlock.level[0])) && !Number.isNaN(Number(castTimes[0]))) {
+                actorData["data.spells.spell" + spellBlock.level[0]] = {
+                    value: castTimes[0],
+                    max: castTimes[0]
+                };
+                isNormalSpell = true;
+            }
             
             for (let rawSpell of splitSpells) {
                 let parsedSpellData = SBParsing.parseSubtext(rawSpell);
@@ -704,13 +684,20 @@ class SBSpellsParser extends SBParserBase {
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
                     foundSpell["sourceId"] = foundSpell["_id"];
-                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + castTimes + ")";
+                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+                    if (!isNormalSpell) {
+                        foundSpell["name"] += " (" + castTimes + ")";
+                    }
 
                     spells.push(foundSpell);
                 } else {
                     //SBUtils.log(">> Unknown spell: " + rawSpell);
                     foundSpell = {};
-                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + castTimes + ")";
+                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+                    if (!isNormalSpell) {
+                        foundSpell["name"] += " (" + castTimes + ")";
+                    }
+
                     foundSpell["type"] = "spell";
                     foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
 
@@ -719,7 +706,7 @@ class SBSpellsParser extends SBParserBase {
             }
         }
 
-        return {spells: spells, errors: errors};
+        return {actorData: actorData, spells: spells, errors: errors};
     }
 }
 
@@ -813,7 +800,7 @@ export function initParsers() {
             "defensive abilities": new SBAbilityParser()
         },
         "offense": {
-            "speed": new SBSingleValueParser(["data.attributes.speed.value"]),
+            "speed": new SBSplitValueParser(["data.attributes.speed.value", "data.attributes.speed.special"], ",", false),
             "melee": new SBAttackParser(true),
             "ranged": new SBAttackParser(false),
             "multiattack": new SBAttackParser(true, true),

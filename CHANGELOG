@@ -1,3 +1,19 @@
+0.3.6:
+- General updates:
+--- Improved item matching, it should now find batteries and frag grenades.
+- PAIZO Block updates:
+--- Fixed "P & C" damage type not parsed correctly.
+--- Fixed ; getting parsed out of attack damage sections, confusing the damage type parsing.
+--- Fixed speed special values not getting parsed properly.
+--- Abilities being parsed may now pull from the class features and feats compendiums too.
+--- Refactored usage of built-in Universal Creature Rules to SFRPG system Universal Creature Rules.
+--- Tweaked item parsing logic to prevent duplicate item parsing.
+--- Improved credstick parsing.
+--- Spells now parse their casting times into the appropriate fields, except for spell-like abilities, and at will spells.
+- VTTES support updates:
+--- Fixing a parsing error when engagement_range was missing from attacks.
+--- Fixing a parsing error when attacks didn't have damage_total specified. For example, smoke and stickybomb grenades.
+
 0.3.5:
 - VTTES support has been updated:
 --- Added support for parsing bio into Biography.
