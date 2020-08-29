@@ -121,7 +121,7 @@ export class SBUtils {
         // Let the compendium load
         await compendium.getIndex();
         
-        let terms = rawString.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim().replace(/[,;()\[\]'"]/g,"").split(' ');
+        let terms = rawString.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim().replace(/[*,;()\[\]'"]/g,"").split(' ');
         let entryWeWant = null;
         for (let entry of compendium.index) {
             let rawEntryName = this.parseSubtext(entry.name)[0];
@@ -181,6 +181,8 @@ export class SBUtils {
     }
 
     static async fuzzyFindSpellAsync(statBlockSpellName) {
+        statBlockSpellName = statBlockSpellName.replace("/ ", "/");
+        statBlockSpellName = statBlockSpellName.replace(" /", "/");
         return this.fuzzyFindCompendiumAsync("Spells", statBlockSpellName);
     }
 

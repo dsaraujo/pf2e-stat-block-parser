@@ -660,11 +660,23 @@ class SBSpellsParser extends SBParserBase {
 
         //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));
 
+        let actorData = {};
+        actorData["data.spells"] = {};
+
         // Next up, for each spell level, split up into spells, which we can pull from the compendium using fuzzy search.
         for (let spellBlock of splitSpellblocks) {
             let splitSpells = SBUtils.splitEntries(spellBlock.spells);
             let castTimes = SBParsing.parseSubtext(spellBlock.level);
             castTimes = SBUtils.camelize(castTimes[castTimes.length - 1]);
+            
+            let isNormalSpell = false;
+            if (!Number.isNaN(Number(spellBlock.level[0])) && !Number.isNaN(Number(castTimes[0]))) {
+                actorData["data.spells.spell" + spellBlock.level[0]] = {
+                    value: castTimes[0],
+                    max: castTimes[0]
+                };
+                isNormalSpell = true;
+            }
             
             for (let rawSpell of splitSpells) {
                 let parsedSpellData = SBParsing.parseSubtext(rawSpell);
@@ -672,13 +684,20 @@ class SBSpellsParser extends SBParserBase {
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
                     foundSpell["sourceId"] = foundSpell["_id"];
-                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + castTimes + ")";
+                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+                    if (!isNormalSpell) {
+                        foundSpell["name"] += " (" + castTimes + ")";
+                    }
 
                     spells.push(foundSpell);
                 } else {
                     //SBUtils.log(">> Unknown spell: " + rawSpell);
                     foundSpell = {};
-                    foundSpell["name"] = SBUtils.camelize(rawSpell) + " (" + castTimes + ")";
+                    foundSpell["name"] = SBUtils.camelize(rawSpell);
+                    if (!isNormalSpell) {
+                        foundSpell["name"] += " (" + castTimes + ")";
+                    }
+
                     foundSpell["type"] = "spell";
                     foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
 
@@ -687,7 +706,7 @@ class SBSpellsParser extends SBParserBase {
             }
         }
 
-        return {spells: spells, errors: errors};
+        return {actorData: actorData, spells: spells, errors: errors};
     }
 }
 

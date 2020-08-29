@@ -9,6 +9,7 @@
 --- Refactored usage of built-in Universal Creature Rules to SFRPG system Universal Creature Rules.
 --- Tweaked item parsing logic to prevent duplicate item parsing.
 --- Improved credstick parsing.
+--- Spells now parse their casting times into the appropriate fields, except for spell-like abilities, and at will spells.
 - VTTES support updates:
 --- Fixing a parsing error when engagement_range was missing from attacks.
 --- Fixing a parsing error when attacks didn't have damage_total specified. For example, smoke and stickybomb grenades.
