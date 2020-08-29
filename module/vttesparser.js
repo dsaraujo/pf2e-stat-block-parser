@@ -362,7 +362,7 @@ export class SBVTTESParser {
                 if (damage) {
                     let firstPart = itemData["data.damage"].parts.len > 0 ? itemData["data.damage"].parts[0] : [0, "S"];
                     itemData["data.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
-                } else {
+                } else if (attack.damage_total) {
                     itemData["data.damage"] = {parts: [[attack.damage_total.current, "S"]]};
                 }
 
