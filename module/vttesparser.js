@@ -329,7 +329,7 @@ export class SBVTTESParser {
             let attackName = attack.name.current;
 
             try {
-                let bIsMeleeAttack = (attack.engagement_range.current === "melee");
+                let bIsMeleeAttack = ((attack.engagement_range?.current ?? "melee") === "melee");
 
                 let matchingItem = await SBUtils.fuzzyFindItemAsync(attackName);
                 if (matchingItem == null) {
