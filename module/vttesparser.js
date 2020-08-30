@@ -84,6 +84,16 @@ export class SBVTTESParser {
         "stealth": (dict, val) => { this.parseSkill(dict, "ste", val); },
         "survival": (dict, val) => { this.parseSkill(dict, "sur", val); },
 
+        "dr": (dict, val) => {
+            let drParts = val.current.split('/');
+            let damageReduction = {
+                value: drParts[0],
+                negatedBy: drParts[1]
+            }
+            dict["data.traits.damageReduction"] = damageReduction;
+        },
+        "sr": (dict,val) => { dict["data.traits.sr"] = val.current; },
+
         "resistances": (dict,val) => {
             let recognizedResistances = Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase());
             let parsedValues = {"value": [], "custom": ""};

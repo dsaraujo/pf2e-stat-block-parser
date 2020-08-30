@@ -3,6 +3,8 @@
 --- Added support to parse out resistances.
 --- Added support to parse out immunities.
 --- Added support to parse out weaknesses.
+--- Added support to parse out damage reduction.
+--- Added support to parse out spell resistance.
 
 0.3.8:
 - Marked compatibility with FoundryVTT v0.6.6.
