@@ -1,4 +1,6 @@
 0.3.9:
+- General updates:
+--- Improved item matching, it no longer cares for case sensitivity while trying to find compendium entries.
 - VTTES support updates:
 --- Added support to parse out resistances.
 --- Added support to parse out immunities.

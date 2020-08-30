@@ -157,6 +157,8 @@ export class SBUtils {
     }
 
     static async fuzzyFindItemAsync(statBlockItemName) {
+        statBlockItemName = statBlockItemName.toLowerCase();
+        
         // Common substitutions
         statBlockItemName = statBlockItemName.replace("grenades", "grenade");
         if (statBlockItemName.endsWith("grenade 1")) {
