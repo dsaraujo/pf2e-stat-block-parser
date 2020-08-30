@@ -60,7 +60,6 @@ export class SBVTTESParser {
         "fort_base": (dict,val) => { dict["data.attributes.fort.bonus"] = val.current; },
         "ref_base": (dict,val) => { dict["data.attributes.reflex.bonus"] = val.current; },
         "will_base": (dict,val) => { dict["data.attributes.will.bonus"] = val.current; },
-        "resistances": (dict,val) => { SBUtils.log("> TODO: Implement resistances") }, // "Electricity 5, fire 5"
         "speed": (dict,val) => { dict["data.attributes.speed.value"] = val.current; },
         "space": (dict,val) => { dict["data.attributes.space"] = val.current; },
         "reach": (dict,val) => { dict["data.attributes.reach"] = val.current; },
@@ -84,6 +83,75 @@ export class SBVTTESParser {
         "sleight_of_hand": (dict, val) => { this.parseSkill(dict, "sle", val); },
         "stealth": (dict, val) => { this.parseSkill(dict, "ste", val); },
         "survival": (dict, val) => { this.parseSkill(dict, "sur", val); },
+
+        "resistances": (dict,val) => {
+            let recognizedResistances = Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase());
+            let parsedValues = {"value": [], "custom": ""};
+
+            let entries = SBUtils.splitEntries(val.current);
+            for (let entry of entries) {
+                let values = entry.trim().toLowerCase().split(' ');
+                let name = values[0];
+                let amount = values[1];
+
+                if (recognizedResistances.includes(name)) {
+                    parsedValues.value[name] = amount;
+                } else {
+                    if (parsedValues.custom) {
+                        parsedValues.custom += ", ";
+                    }
+                    parsedValues.custom += SBUtils.camelize(entry.trim());
+                }
+            }
+
+            dict["data.traits.dr"] = parsedValues;
+        },
+
+        "weaknesses": (dict,val) => {
+            let recognizedResistances = Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase());
+            let parsedValues = {"value": [], "custom": ""};
+
+            let entries = SBUtils.splitEntries(val.current);
+            for (let entry of entries) {
+                if (entry.toLowerCase().startsWith("vulnerable to ")) {
+                    entry = entry.substring("vulnerable to ".length);
+                }
+
+                let name = entry.trim().toLowerCase();
+
+                if (recognizedResistances.includes(name)) {
+                    parsedValues.value.push(name);
+                } else {
+                    if (parsedValues.custom) {
+                        parsedValues.custom += ", ";
+                    }
+                    parsedValues.custom += SBUtils.camelize(entry.trim());
+                }
+            }
+
+            dict["data.traits.dv"] = parsedValues;
+        },
+
+        "immunities": (dict,val) => {
+            let recognizedResistances = Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase());
+            let parsedValues = {"value": [], "custom": ""};
+
+            let entries = SBUtils.splitEntries(val.current);
+            for (let entry of entries) {
+                let name = entry.trim().toLowerCase();
+
+                if (recognizedResistances.includes(name)) {
+                    parsedValues.value.push(name);
+                } else {
+                    if (parsedValues.custom) {
+                        parsedValues.custom += ", ";
+                    }
+                    parsedValues.custom += SBUtils.camelize(entry.trim());
+                }
+            }
+
+            dict["data.traits.di"] = parsedValues;
+        },
 
         "size": (dict, val) => {
             let sizes = Object.keys(CONFIG["SFRPG"].actorSizes);
