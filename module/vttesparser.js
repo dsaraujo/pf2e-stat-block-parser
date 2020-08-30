@@ -436,12 +436,41 @@ export class SBVTTESParser {
                 itemData["data.ability"] = "";
                 itemData["data.attackBonus"] = attack.total.current;
 
-                let damage = itemData["data.damage"];
-                if (damage) {
-                    let firstPart = itemData["data.damage"].parts.len > 0 ? itemData["data.damage"].parts[0] : [0, "S"];
+                let damageType = "s";
+                if (attack.type) {
+                    let attackDamageTypes = attack.type.current.toLowerCase().split('+');
+                    let partA = attackDamageTypes[0].trim()[0];
+                    let partB = undefined;
+                    if (attackDamageTypes.length > 1) {
+                        partB = attackDamageTypes[1].trim()[0];
+                    }
+
+                    let combo = partA;
+                    if (partB) {
+                        combo += " & " + partB;
+                        if (!(combo in SBConfig.weaponDamageTypes)) {
+                            combo = partB + " & " + partA;
+                        }
+                    }
+
+                    if (combo in SBConfig.weaponDamageTypes) {
+                        damageType = combo;
+                    } else if (partA in SBConfig.weaponDamageTypes) {
+                        damageType = partA;
+                    }
+                }
+
+                if (damageType in SBConfig.weaponDamageTypes) {
+                    damageType = SBConfig.weaponDamageTypes[damageType];
+                } else {
+                    damageType = SBConfig.weaponDamageTypes["s"];
+                }
+
+                if (itemData.data.damage?.parts) {
+                    let firstPart = itemData.data.damage.parts.len > 0 ? itemData.data.damage.parts[0] : [0, damageType];
                     itemData["data.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
                 } else if (attack.damage_total) {
-                    itemData["data.damage"] = {parts: [[attack.damage_total.current, "S"]]};
+                    itemData["data.damage"] = {parts: [[attack.damage_total.current, damageType]]};
                 }
 
                 if (attack.description && attack.description.current) {
