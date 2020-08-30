@@ -126,7 +126,7 @@ export class SBUtils {
         for (let entry of compendium.index) {
             let rawEntryName = this.parseSubtext(entry.name)[0];
             let entryName = rawEntryName.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim();
-            let entryTerms = entryName.replace(/[,;()\[\]'"]/g,"").split(' ');
+            let entryTerms = entryName.replace(/[*,;()\[\]'"]/g,"").split(' ');
 
             if (terms.length !== entryTerms.length) {
                 continue;
@@ -157,6 +157,8 @@ export class SBUtils {
     }
 
     static async fuzzyFindItemAsync(statBlockItemName) {
+        statBlockItemName = statBlockItemName.toLowerCase();
+
         // Common substitutions
         statBlockItemName = statBlockItemName.replace("grenades", "grenade");
         if (statBlockItemName.endsWith("grenade 1")) {

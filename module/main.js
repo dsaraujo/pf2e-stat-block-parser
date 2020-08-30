@@ -23,22 +23,22 @@ class SBProgram {
 
             statblockParseButton = document.createElement("button");
             statblockParseButton.innerHTML = `<i id="SFSBP-button" class="fas fa-list"></i>Parse Statblock`;
-            statblockParseButton.onclick = SBProgram.openSFSBP;
+            statblockParseButton.onclick = ev => SBProgram.openSFSBP();
 
             const createEntityButton = actorFooter.getElementsByClassName("create-entity")[0];
             actorFooter.insertBefore(statblockParseButton, createEntityButton);
         }
     }
 
-    static async openSFSBP() {
-        SBUtils.log("Opening Statblock Parser.");
+    static async openSFSBP(folderId = null) {
+        SBUtils.log("Opening Statblock Parser. Target folder is: " + folderId);
 
         let textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
             // Create actor
             let dataFormat = textResult.dataFormat;
             let characterData = {
-                actorData: {name: "Generated Actor", type: "npc"},
+                actorData: {name: "Generated Actor", type: "npc", folder: folderId},
                 items: [],
                 spells: [],
                 abilityDescriptions: [],
@@ -250,6 +250,19 @@ Hooks.on("renderSidebarTab", async (app, html) => {
     if (app.options.id == "actors") {
         SBProgram.ensureParseStatblockVisible();
     }
+});
+
+Hooks.on("getActorDirectoryFolderContext", async(html, folderOptions) => {
+    folderOptions = folderOptions.push(
+        {
+          name: "Parse Statblock",
+          icon: '<i class="fas fa-list"></i>',
+          condition: game.user.isGM,
+          callback: header => {
+            const li = header.parent();
+            SBProgram.openSFSBP(li.data("folderId"));
+          }
+        });
 });
 
 Hooks.on("ready", function() {

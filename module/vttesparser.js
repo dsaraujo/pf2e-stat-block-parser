@@ -60,7 +60,6 @@ export class SBVTTESParser {
         "fort_base": (dict,val) => { dict["data.attributes.fort.bonus"] = val.current; },
         "ref_base": (dict,val) => { dict["data.attributes.reflex.bonus"] = val.current; },
         "will_base": (dict,val) => { dict["data.attributes.will.bonus"] = val.current; },
-        "resistances": (dict,val) => { SBUtils.log("> TODO: Implement resistances") }, // "Electricity 5, fire 5"
         "speed": (dict,val) => { dict["data.attributes.speed.value"] = val.current; },
         "space": (dict,val) => { dict["data.attributes.space"] = val.current; },
         "reach": (dict,val) => { dict["data.attributes.reach"] = val.current; },
@@ -84,6 +83,88 @@ export class SBVTTESParser {
         "sleight_of_hand": (dict, val) => { this.parseSkill(dict, "sle", val); },
         "stealth": (dict, val) => { this.parseSkill(dict, "ste", val); },
         "survival": (dict, val) => { this.parseSkill(dict, "sur", val); },
+
+        "melee_spell_attack": (dict, val) => { dict["data.attributes.spellcasting.melee"] = val.current; },
+        "ranged_spell_attack": (dict, val) => { dict["data.attributes.spellcasting.ranged"] = val.current; },
+
+        "dr": (dict, val) => {
+            let drParts = val.current.split('/');
+            let damageReduction = {
+                value: drParts[0],
+                negatedBy: drParts[1]
+            }
+            dict["data.traits.damageReduction"] = damageReduction;
+        },
+        "sr": (dict,val) => { dict["data.traits.sr"] = val.current; },
+
+        "resistances": (dict,val) => {
+            let recognizedResistances = Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase());
+            let parsedValues = {"value": [], "custom": ""};
+
+            let entries = SBUtils.splitEntries(val.current);
+            for (let entry of entries) {
+                let values = entry.trim().toLowerCase().split(' ');
+                let name = values[0];
+                let amount = values[1];
+
+                if (recognizedResistances.includes(name)) {
+                    parsedValues.value[name] = amount;
+                } else {
+                    if (parsedValues.custom) {
+                        parsedValues.custom += ", ";
+                    }
+                    parsedValues.custom += SBUtils.camelize(entry.trim());
+                }
+            }
+
+            dict["data.traits.dr"] = parsedValues;
+        },
+
+        "weaknesses": (dict,val) => {
+            let recognizedResistances = Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase());
+            let parsedValues = {"value": [], "custom": ""};
+
+            let entries = SBUtils.splitEntries(val.current);
+            for (let entry of entries) {
+                if (entry.toLowerCase().startsWith("vulnerable to ")) {
+                    entry = entry.substring("vulnerable to ".length);
+                }
+
+                let name = entry.trim().toLowerCase();
+
+                if (recognizedResistances.includes(name)) {
+                    parsedValues.value.push(name);
+                } else {
+                    if (parsedValues.custom) {
+                        parsedValues.custom += ", ";
+                    }
+                    parsedValues.custom += SBUtils.camelize(entry.trim());
+                }
+            }
+
+            dict["data.traits.dv"] = parsedValues;
+        },
+
+        "immunities": (dict,val) => {
+            let recognizedResistances = Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase());
+            let parsedValues = {"value": [], "custom": ""};
+
+            let entries = SBUtils.splitEntries(val.current);
+            for (let entry of entries) {
+                let name = entry.trim().toLowerCase();
+
+                if (recognizedResistances.includes(name)) {
+                    parsedValues.value.push(name);
+                } else {
+                    if (parsedValues.custom) {
+                        parsedValues.custom += ", ";
+                    }
+                    parsedValues.custom += SBUtils.camelize(entry.trim());
+                }
+            }
+
+            dict["data.traits.di"] = parsedValues;
+        },
 
         "size": (dict, val) => {
             let sizes = Object.keys(CONFIG["SFRPG"].actorSizes);
@@ -265,6 +346,9 @@ export class SBVTTESParser {
             }
         }
 
+        //=====================================================================
+        // Abilities
+        //=====================================================================
         for (let key of Object.keys(repeatingAbilities)) {
             let ability = repeatingAbilities[key];
             if (!ability.name) {
@@ -320,6 +404,9 @@ export class SBVTTESParser {
             }
         }
 
+        //=====================================================================
+        // Attacks
+        //=====================================================================
         for (let key of Object.keys(repeatingAttacks)) {
             let attack = repeatingAttacks[key];
             if (!attack.name) {
@@ -358,12 +445,41 @@ export class SBVTTESParser {
                 itemData["data.ability"] = "";
                 itemData["data.attackBonus"] = attack.total.current;
 
-                let damage = itemData["data.damage"];
-                if (damage) {
-                    let firstPart = itemData["data.damage"].parts.len > 0 ? itemData["data.damage"].parts[0] : [0, "S"];
+                let damageType = "s";
+                if (attack.type) {
+                    let attackDamageTypes = attack.type.current.toLowerCase().split('+');
+                    let partA = attackDamageTypes[0].trim()[0];
+                    let partB = undefined;
+                    if (attackDamageTypes.length > 1) {
+                        partB = attackDamageTypes[1].trim()[0];
+                    }
+
+                    let combo = partA;
+                    if (partB) {
+                        combo += " & " + partB;
+                        if (!(combo in SBConfig.weaponDamageTypes)) {
+                            combo = partB + " & " + partA;
+                        }
+                    }
+
+                    if (combo in SBConfig.weaponDamageTypes) {
+                        damageType = combo;
+                    } else if (partA in SBConfig.weaponDamageTypes) {
+                        damageType = partA;
+                    }
+                }
+
+                if (damageType in SBConfig.weaponDamageTypes) {
+                    damageType = SBConfig.weaponDamageTypes[damageType];
+                } else {
+                    damageType = SBConfig.weaponDamageTypes["s"];
+                }
+
+                if (itemData.data.damage?.parts) {
+                    let firstPart = itemData.data.damage.parts.len > 0 ? itemData.data.damage.parts[0] : [0, damageType];
                     itemData["data.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
                 } else if (attack.damage_total) {
-                    itemData["data.damage"] = {parts: [[attack.damage_total.current, "S"]]};
+                    itemData["data.damage"] = {parts: [[attack.damage_total.current, damageType]]};
                 }
 
                 if (attack.description && attack.description.current) {
@@ -380,6 +496,9 @@ export class SBVTTESParser {
             }
         }
 
+        //=====================================================================
+        // Spells
+        //=====================================================================
         for (let key of Object.keys(repeatingSpells)) {
             let spell = repeatingSpells[key];
             if (!spell.name) {
@@ -426,6 +545,16 @@ export class SBVTTESParser {
                 }
 
                 itemData["data.preparation"] = { prepared: true };
+
+                let attackBonus = "";
+                if (itemData?.data?.actionType === "msak") {
+                    attackBonus = characterData.actorData["data.attributes.spellcasting.melee"] || "";
+                } else if (itemData?.data?.actionType === "rsak") {
+                    attackBonus = characterData.actorData["data.attributes.spellcasting.ranged"] || "";
+                }
+                if (attackBonus) {
+                    itemData["data.attackBonus"] = attackBonus;
+                }
 
                 characterData.items.push(itemData);
             } catch (err) {

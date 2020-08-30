@@ -1,4 +1,18 @@
-0.3.8:"
+0.3.9:
+- General updates:
+--- Added "Parse Statblock" button to the right-click context menu of an actor folder. The parsed NPC will appear in this folder.
+--- Improved item matching, it no longer cares for case sensitivity while trying to find compendium entries.
+--- Improved spell parsing by ignoring * in the names.
+- VTTES support updates:
+--- Added support to parse out resistances.
+--- Added support to parse out immunities.
+--- Added support to parse out weaknesses.
+--- Added support to parse out damage reduction.
+--- Added support to parse out spell resistance.
+--- Added support to parse out ranged_spell_attack and melee_spell_attack bonuses and assigning them to the spells.
+--- Improved weapon damage type parsing.
+
+0.3.8:
 - Marked compatibility with FoundryVTT v0.6.6.
 
 0.3.7:
