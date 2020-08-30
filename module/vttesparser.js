@@ -84,6 +84,9 @@ export class SBVTTESParser {
         "stealth": (dict, val) => { this.parseSkill(dict, "ste", val); },
         "survival": (dict, val) => { this.parseSkill(dict, "sur", val); },
 
+        "melee_spell_attack": (dict, val) => { dict["data.attributes.spellcasting.melee"] = val.current; },
+        "ranged_spell_attack": (dict, val) => { dict["data.attributes.spellcasting.ranged"] = val.current; },
+
         "dr": (dict, val) => {
             let drParts = val.current.split('/');
             let damageReduction = {
@@ -343,6 +346,9 @@ export class SBVTTESParser {
             }
         }
 
+        //=====================================================================
+        // Abilities
+        //=====================================================================
         for (let key of Object.keys(repeatingAbilities)) {
             let ability = repeatingAbilities[key];
             if (!ability.name) {
@@ -398,6 +404,9 @@ export class SBVTTESParser {
             }
         }
 
+        //=====================================================================
+        // Attacks
+        //=====================================================================
         for (let key of Object.keys(repeatingAttacks)) {
             let attack = repeatingAttacks[key];
             if (!attack.name) {
@@ -487,6 +496,9 @@ export class SBVTTESParser {
             }
         }
 
+        //=====================================================================
+        // Spells
+        //=====================================================================
         for (let key of Object.keys(repeatingSpells)) {
             let spell = repeatingSpells[key];
             if (!spell.name) {
@@ -533,6 +545,16 @@ export class SBVTTESParser {
                 }
 
                 itemData["data.preparation"] = { prepared: true };
+
+                let attackBonus = "";
+                if (itemData?.data?.actionType === "msak") {
+                    attackBonus = characterData.actorData["data.attributes.spellcasting.melee"] || "";
+                } else if (itemData?.data?.actionType === "rsak") {
+                    attackBonus = characterData.actorData["data.attributes.spellcasting.ranged"] || "";
+                }
+                if (attackBonus) {
+                    itemData["data.attackBonus"] = attackBonus;
+                }
 
                 characterData.items.push(itemData);
             } catch (err) {
