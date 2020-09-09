@@ -362,7 +362,7 @@ export class SBStatblockParser {
                 if (existingItem) {
                     // If it already exists, it's likely a weapon that was parsed during the earlier passes.
                     // Reduce quantity by 1 to prevent duplicate items.
-                    existingItem.data.quantity += item.data.quantity - 1;
+                    existingItem["data.quantity"] += item["data.quantity"] - 1;
                 } else {
                     characterData.items.push(item);
                 }

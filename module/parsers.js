@@ -233,6 +233,9 @@ class SBAttackParser extends SBParserBase {
         if (!itemData.data.weaponType) {
             itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
         }
+        if (!itemData.data.quantity) {
+            itemData["data.quantity"] = 1;
+        }
 
         itemData["data.ability"] = "";
         itemData["data.attackBonus"] = SBParsing.parseInteger(attackModifier);
