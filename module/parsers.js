@@ -233,6 +233,9 @@ class SBAttackParser extends SBParserBase {
         if (!itemData.data.weaponType) {
             itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
         }
+        if (!itemData.data.quantity) {
+            itemData["data.quantity"] = 1;
+        }
 
         itemData["data.ability"] = "";
         itemData["data.attackBonus"] = SBParsing.parseInteger(attackModifier);
@@ -570,7 +573,7 @@ class SBSpellLikeParser extends SBParserBase {
         // First, split up the spell blocks by level
         let splitSpellblocks = [];
         let spellsSection = value.substring(value.indexOf(')') + 1).trim();
-        let regex = /(((\d*)\/day)|at will|atwill)\s*-\s*(.*)/gim;
+        let regex = /(((\d*)\/day)|at will|atwill|constant)\s*-\s*(.*)/gim;
         let block = spellsSection.split(regex);
         let spellHeader = block[1];
         let currentText = block[4];
@@ -610,12 +613,13 @@ class SBSpellLikeParser extends SBParserBase {
                     foundSpell["name"] = SBUtils.camelize(rawSpell);
                     foundSpell["data.preparation"] = { prepared: true, mode: "innate" };
 
-                    if (spellActivation.length == 2) {
-                        foundSpell["data.activation"] = {};
-                        foundSpell["data.activation.cost"] = spellActivation[0];
-                        foundSpell["data.activation.type"] = spellActivation[1];
-                    } else {
+                    if (["atwill", "at will", "constant"].includes(spellBlock.level.toLowerCase())) {
+                        foundSpell["data.preparation"] = { prepared: true, mode: "always" };
                         foundSpell["name"] += " (" + SBUtils.camelize(spellBlock.level) + ")";
+                    }
+
+                    if (spellActivation.length == 2) {
+                        foundSpell["name"] += ` [${spellActivation[0]} / ${spellActivation[1]}]`;
                     }
 
                     spells.push(foundSpell);
@@ -627,12 +631,13 @@ class SBSpellLikeParser extends SBParserBase {
                     foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
                     foundSpell["data.preparation"] = { prepared: true, mode: "innate" };
 
-                    if (spellActivation.length == 2) {
-                        foundSpell["data.activation"] = {};
-                        foundSpell["data.activation.cost"] = spellActivation[0];
-                        foundSpell["data.activation.type"] = spellActivation[1];
-                    } else {
+                    if (["atwill", "at will", "constant"].includes(spellBlock.level.toLowerCase())) {
+                        foundSpell["data.preparation"] = { prepared: true, mode: "always" };
                         foundSpell["name"] += " (" + SBUtils.camelize(spellBlock.level) + ")";
+                    }
+
+                    if (spellActivation.length == 2) {
+                        foundSpell["name"] += ` [${spellActivation[0]} / ${spellActivation[1]}]`;
                     }
 
                     spells.push(foundSpell);
