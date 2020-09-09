@@ -1,4 +1,9 @@
 0.3.10:
+- PAIZO Block updates:
+--- Added 'constant' as a supported keyword for spell-like abilities.
+--- Spell-like abilities no longer overwrite the spell activation cost, and instead mark in the spell name how many times per day it is allowed.
+--- Fixing an item merging issue when the quantity is not defined.
+
 
 0.3.9:
 - General updates:
