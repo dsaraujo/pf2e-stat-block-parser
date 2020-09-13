@@ -619,7 +619,20 @@ class SBSpellLikeParser extends SBParserBase {
                     }
 
                     if (spellActivation.length == 2) {
-                        foundSpell["name"] += ` [${spellActivation[0]} / ${spellActivation[1]}]`;
+                        if (!foundSpell.data.activation) {
+                            foundSpell["data.activation"] = {
+                                cost: 0,
+                                type: "none"
+                            };
+                        } else if (!foundSpell.data.activation.type) {
+                            foundSpell["data.activation.type"] = "none";
+                        }
+
+                        foundSpell["data.uses"] = {
+                            value: Number(spellActivation[0]),
+                            max: Number(spellActivation[0]),
+                            per: "day"
+                        };
                     }
 
                     spells.push(foundSpell);
@@ -637,7 +650,16 @@ class SBSpellLikeParser extends SBParserBase {
                     }
 
                     if (spellActivation.length == 2) {
-                        foundSpell["name"] += ` [${spellActivation[0]} / ${spellActivation[1]}]`;
+                        foundSpell["data.activation"] = {
+                            cost: 0,
+                            type: "none"
+                        };
+
+                        foundSpell["data.uses"] = {
+                            value: Number(spellActivation[0]),
+                            max: Number(spellActivation[0]),
+                            per: "day"
+                        };
                     }
 
                     spells.push(foundSpell);
