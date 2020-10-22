@@ -173,6 +173,10 @@ class SBProgram {
                         continue;
                     }
 
+                    if (["weapon", "equipment"].includes(itemData["type"])) {
+                        itemData["data.proficient"] = true;
+                    }
+
                     try {
                         //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
                         if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {
