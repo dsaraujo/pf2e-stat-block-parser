@@ -1,4 +1,6 @@
 0.3.11:
+- General updates:
+--- Weapons and equipment are now always proficient.
 - PAIZO Block updates:
 --- Added 'constant' as a supported keyword for spell-like abilities.
 --- Spell-like abilities no longer mark in the spell name how many times per day it is allowed, and instead fill it into the uses field.
