@@ -297,7 +297,7 @@ class SBTraitParser extends SBParserBase {
                 }
             } else {
                 if (parsedValues.custom.length > 0) {
-                    parsedValues.custom += ", ";
+                    parsedValues.custom += "; ";
                 }
                 parsedValues.custom += SBUtils.camelize(traitName);
             }
