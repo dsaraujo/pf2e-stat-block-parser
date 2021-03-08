@@ -200,10 +200,10 @@ export class SBUtils {
         }
     }
 
-    static splitEntries(baseString, additionalEntrySplitters = null) {
+    static splitEntries(baseString, options = {}) {
         let textualEntrySplitters = ["or", "and"];
-        if (additionalEntrySplitters) {
-            textualEntrySplitters = textualEntrySplitters.concat(additionalEntrySplitters);
+        if (options.additionalEntrySplitters) {
+            textualEntrySplitters = textualEntrySplitters.concat(options.additionalEntrySplitters);
         }
 
         let results = null;
@@ -218,7 +218,7 @@ export class SBUtils {
             } else if (stackTop && character == SBUtils.matchingClosingBrackets[stackTop]) {
                 entry += character;
                 stack.pop();
-            } else if (character === ',' || character === ';') {
+            } else if (character === ',' || character === ';' || (options.additionalDelimiters && options.additionalDelimiters.includes(character))) {
                 if (stack.length === 0 && entry.length > 0) {
                     if (!results) {
                         results = [entry.trim()];
