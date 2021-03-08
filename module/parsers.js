@@ -61,20 +61,29 @@ class SBSplitValueParser extends SBParserBase {
     }
 
     async parse(key, value) {
-        let parsedData = {};
+        const parsedData = {};
 
-        let splitValue = value.split(this.delimiter);
+        const splitValue = SBUtils.splitEntries(value, {additionalDelimiters: this.delimiter});
         if (splitValue.length != this.targetFields.length && this.oneToOne) {
             throw "Mismatching number of fields for " + key;
         }
 
-        let max = Math.min(splitValue.length, this.targetFields.length);
+        const max = Math.max(splitValue.length, this.targetFields.length);
         for(let i = 0; i<max; i++) {
             let targetIndex = i;
             if (i >= this.targetFields.length) {
                 targetIndex = this.targetFields.length - 1;
             }
-            parsedData[this.targetFields[targetIndex]] = splitValue[i];
+
+            if (i < splitValue.length) {
+                if (parsedData[this.targetFields[targetIndex]]) {
+                    parsedData[this.targetFields[targetIndex]] += ", " + splitValue[i];
+                } else {
+                    parsedData[this.targetFields[targetIndex]] = splitValue[i];
+                }
+            } else {
+                parsedData[this.targetFields[targetIndex]] = "";
+            }
         }
 
         return {actorData: parsedData};
