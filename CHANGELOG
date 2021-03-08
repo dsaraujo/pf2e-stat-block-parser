@@ -1,3 +1,10 @@
+0.3.13:
+- General updates:
+--- Marked compatible with Foundry v0.7.9
+- PAIZO Block updates:
+--- Languages (and other traits that have custom fields) now correctly separate their entries using semicolon instead of comma.
+--- Additional speed properties now parse correctly.
+
 0.3.12:
 - General updates:
 --- Marked compatible with Foundry v0.7.5
