@@ -52,6 +52,19 @@ class SBSingleValueParser extends SBParserBase {
     }
 }
 
+class SBCopyValueParser extends SBParserBase {
+    constructor(targetField) {
+        super();
+        this.targetField = targetField;
+    }
+
+    async parse(key, value) {
+        const parsedData = {};
+        parsedData[this.targetField] = value;
+        return {actorData: parsedData};
+    }
+}
+
 class SBSplitValueParser extends SBParserBase {
     constructor(targetFields, delimiter, oneToOne = true) {
         super();
@@ -897,8 +910,8 @@ export function initParsers() {
         },
         "special abilities": new SBSpecialAbilitiesParser(),
         "ecology": {
-            "environment": new SBDescriptionParser('ecology'),
-            "organization": new SBDescriptionParser('ecology')
+            "environment": new SBCopyValueParser("data.details.environment"),
+            "organization": new SBCopyValueParser("data.details.organization")
         },
         "description": new SBDescriptionParser('description', false),
         "hero lab": null // Hero Lab support
