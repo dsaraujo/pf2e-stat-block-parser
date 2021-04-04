@@ -182,16 +182,16 @@ class SBAttackParser extends SBParserBase {
     /** Will parse an attack using the attack format: attack name +attackRoll (damageRoll damageType ; critical effect) */
     async parseAttack(attack, bIsMeleeAttack) {
         //SBUtils.log("Parsing attack: " + attack);
-        let attackInfo = SBParsing.parseSubtext(attack);
+        const attackInfo = SBParsing.parseSubtext(attack);
 
-        let mainBlock = attackInfo[0].split(/(.*)\s([\+|-][\s]*\d*)/i);
+        const mainBlock = attackInfo[0].split(/(.*)\s([\+|-][\s]*\d*)/i);
         if (mainBlock.length < 2) {
             return null;
         }
 
-        let attackName = SBUtils.camelize(mainBlock[1]);
+        const attackName = SBUtils.camelize(mainBlock[1]);
         //SBUtils.log("Parsed attack: " + JSON.stringify(attackInfo));
-        let attackModifier = mainBlock[2];
+        const attackModifier = mainBlock[2];
         let additionalName = "";
         
         let attackDamageRoll = undefined;
@@ -199,16 +199,19 @@ class SBAttackParser extends SBParserBase {
         let criticalDamage = "";
 
         try {
-            let damageString = attackInfo[1].split(";");
-            let damageBlock = damageString[0].split("plus");
-            let normalDamage = damageBlock[0].trim();
+            const damageString = attackInfo[1].split(";");
+            const damageBlock = damageString[0].split("plus");
+            const normalDamage = damageBlock[0].trim();
             if (damageString.length > 1) {
                 criticalDamage = damageString[1];
             }
 
-            let attackDamageData = normalDamage.split(/(\d*d\d*\+\d*)\s(.*)/);
-            attackDamageRoll = attackDamageData[1];
-            attackDamageType = attackDamageData[2].toLowerCase();
+            const attackDamageData = normalDamage.split(/(\d+d\d+)\s*(\+\s?\S*\s*)?(\S*){1}/i);
+            attackDamageRoll = attackDamageData[1].trim();
+            if (attackDamageData[2]) {
+                attackDamageRoll += " " + attackDamageData[2].trim();
+            }
+            attackDamageType = attackDamageData[3].toLowerCase();
             if (SBConfig.weaponDamageTypes[attackDamageType]) {
                 attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
             } else {

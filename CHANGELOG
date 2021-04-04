@@ -1,6 +1,7 @@
 0.3.14:
 - PAIZO Block updates:
 --- Added support for the latest ecology changes in Starfinder v0.9.
+--- Fixed Issue #20: Parser ignored attack damage rolls if it had no additional damage on top of the roll.
 
 0.3.13:
 - General updates:
