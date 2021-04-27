@@ -94,6 +94,18 @@ export class SBUtils {
         }
     }
 
+    /** Similar method to string.indexOf, but takes regex as an argument. */
+    static regexIndexOf(string, regex, position = 0) {
+        var indexOf = string.substring(position || 0).search(regex);
+        return (indexOf >= 0) ? (indexOf + (position || 0)) : indexOf;
+    }
+
+    /** Update a character at a specific index in a string. */
+    static setCharacterAtIndex(string, character, index) {
+        if(index > string.length - 1) return string;
+        return string.substring(0, index) + character + string.substring(index + 1);
+    }
+
     static log(message) {
         console.log("SFSBP | " + message);
     }

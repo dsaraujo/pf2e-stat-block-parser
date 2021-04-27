@@ -39,6 +39,12 @@ export class SBStatblockParser {
         inputText = inputText.replace(/—/gi, '-');
         inputText = inputText.replace(/–/gi, '-');
 
+        // Name and CR on separate line issue 'hack'
+        const indexOfCRIssue = SBUtils.regexIndexOf(inputText, /\n\s*CR\s*\d/gi);
+        if (indexOfCRIssue != -1) {
+            inputText = SBUtils.setCharacterAtIndex(inputText, ' ', indexOfCRIssue);
+        }
+
         // Hero Lab support
         let bHeroLabFile = SBUtils.stringContains(inputText, "Hero Lab", false);
 
