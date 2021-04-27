@@ -200,8 +200,16 @@ export class SBUtils {
         }
     }
 
+    /** Supported options:
+     * preventDefaultSplitters: (Boolean) Prevents the usage of 'or' and 'and' as delimiters for string splitting, useful in cases where you explicitly want to split only on a specific delimiter.
+     * additionalEntrySplitters: (Array) Additional delimiters to use on top of the defaults.
+     */
     static splitEntries(baseString, options = {}) {
-        let textualEntrySplitters = ["or", "and"];
+        let textualEntrySplitters = [];
+        if (!options.preventDefaultSplitters) {
+            textualEntrySplitters = ["or", "and"];
+        }
+
         if (options.additionalEntrySplitters) {
             textualEntrySplitters = textualEntrySplitters.concat(options.additionalEntrySplitters);
         }

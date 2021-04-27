@@ -76,9 +76,11 @@ class SBSplitValueParser extends SBParserBase {
     async parse(key, value) {
         const parsedData = {};
 
-        const splitValue = SBUtils.splitEntries(value, {additionalDelimiters: this.delimiter});
+        const splitValue = SBUtils.splitEntries(value, {additionalDelimiters: this.delimiter, preventDefaultSplitters: true});
         if (splitValue.length != this.targetFields.length && this.oneToOne) {
             throw "Mismatching number of fields for " + key;
+            //console.log(['Mismatch field count', value, this.delimiter, splitValue]);
+            //throw `Mismatching number of fields for ${key}, expected ${this.targetFields.length}, found ${splitValue.length}. (Source: '${value}' with delim ${this.delimiter})`;
         }
 
         const max = Math.max(splitValue.length, this.targetFields.length);
