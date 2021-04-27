@@ -1,3 +1,9 @@
+0.3.15:
+- PAIZO Block updates:
+--- Implemented a simple mechanism for finding the name and CR of a creature if they are on separate lines.
+--- Sanitize input by getting rid of \r\n in favor of just \n for newline parsing. This should address cross-platform parsing surprises.
+--- Fixed the parsing of DR that was not a singular value, i.e. "5 / piercing or slashing" would throw a parsing error.
+
 0.3.14:
 - PAIZO Block updates:
 --- Added support for the latest ecology changes in Starfinder v0.9.

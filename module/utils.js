@@ -94,6 +94,18 @@ export class SBUtils {
         }
     }
 
+    /** Similar method to string.indexOf, but takes regex as an argument. */
+    static regexIndexOf(string, regex, position = 0) {
+        var indexOf = string.substring(position || 0).search(regex);
+        return (indexOf >= 0) ? (indexOf + (position || 0)) : indexOf;
+    }
+
+    /** Update a character at a specific index in a string. */
+    static setCharacterAtIndex(string, character, index) {
+        if(index > string.length - 1) return string;
+        return string.substring(0, index) + character + string.substring(index + 1);
+    }
+
     static log(message) {
         console.log("SFSBP | " + message);
     }
@@ -200,8 +212,16 @@ export class SBUtils {
         }
     }
 
+    /** Supported options:
+     * preventDefaultSplitters: (Boolean) Prevents the usage of 'or' and 'and' as delimiters for string splitting, useful in cases where you explicitly want to split only on a specific delimiter.
+     * additionalEntrySplitters: (Array) Additional delimiters to use on top of the defaults.
+     */
     static splitEntries(baseString, options = {}) {
-        let textualEntrySplitters = ["or", "and"];
+        let textualEntrySplitters = [];
+        if (!options.preventDefaultSplitters) {
+            textualEntrySplitters = ["or", "and"];
+        }
+
         if (options.additionalEntrySplitters) {
             textualEntrySplitters = textualEntrySplitters.concat(options.additionalEntrySplitters);
         }

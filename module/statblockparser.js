@@ -8,6 +8,9 @@ export class SBStatblockParser {
             return {success: false};
         }
 
+        // Sanitize input: Fix newlines to be of a single format
+        inputText = inputText.replace(/[\r\n]/g, "\n");
+
         let characterData = {
             actorData: actorData,
             items: [],
@@ -36,11 +39,17 @@ export class SBStatblockParser {
         inputText = inputText.replace(/—/gi, '-');
         inputText = inputText.replace(/–/gi, '-');
 
+        // Name and CR on separate line issue 'hack'
+        const indexOfCRIssue = SBUtils.regexIndexOf(inputText, /\n\s*CR\s*\d/gi);
+        if (indexOfCRIssue != -1) {
+            inputText = SBUtils.setCharacterAtIndex(inputText, ' ', indexOfCRIssue);
+        }
+
         // Hero Lab support
         let bHeroLabFile = SBUtils.stringContains(inputText, "Hero Lab", false);
 
         // Parse out name, certain key lines that we don't want to split by ;, and all elements ; deliminated
-        let splitNewlines = inputText.split(/[\r\n]+/);
+        let splitNewlines = inputText.split(/[\n]/g);
         let lineIndex = -1;
         splitNewlines.forEach(line => {
             lineIndex = lineIndex + 1;
