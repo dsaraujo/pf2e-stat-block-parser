@@ -128,17 +128,17 @@ export class SBUtils {
             return null;
         }
 
-        let rawString = this.parseSubtext(searchString)[0];
+        const rawString = this.parseSubtext(searchString)[0];
         
         // Let the compendium load
         await compendium.getIndex();
         
-        let terms = rawString.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim().replace(/[*,;()\[\]'"]/g,"").split(' ');
+        const terms = rawString.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim().replace(/[*,;()\[\]'"]/g,"").split(' ');
         let entryWeWant = null;
-        for (let entry of compendium.index) {
-            let rawEntryName = this.parseSubtext(entry.name)[0];
-            let entryName = rawEntryName.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim();
-            let entryTerms = entryName.replace(/[*,;()\[\]'"]/g,"").split(' ');
+        for (const entry of compendium.index) {
+            const rawEntryName = this.parseSubtext(entry.name)[0];
+            const entryName = rawEntryName.toLowerCase().replace("(ex)","").replace("(su)","").replace("(sp)","").trim();
+            const entryTerms = entryName.replace(/[*,;()\[\]'"]/g,"").split(' ');
 
             if (terms.length !== entryTerms.length) {
                 continue;
@@ -156,7 +156,8 @@ export class SBUtils {
                 continue;
             }
 
-            entryWeWant = compendium.getEntry(entry._id);
+            const document = await compendium.getDocument(entry._id);
+            entryWeWant = document.data;
             break;
         }
 

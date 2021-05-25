@@ -11,6 +11,6 @@
     "url": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser",
     "manifest": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/raw/develop/module.json",
     "download": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/archive/develop/sfrpg-statblock-parser-develop.zip",
-    "minimumCoreVersion": "0.6.4",
-    "compatibleCoreVersion": "0.7.9"
+    "minimumCoreVersion": "0.8.5",
+    "compatibleCoreVersion": "0.8.6"
 }
