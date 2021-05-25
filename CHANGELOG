@@ -1,6 +1,8 @@
 0.4.1:
 - General updates:
 --- Marked compatible with Foundry v0.8.6
+- PAIZO Block updates:
+--- Added support for non-combat abilities in the parsing.
 
 0.3.15:
 - PAIZO Block updates:
