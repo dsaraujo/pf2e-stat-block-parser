@@ -164,8 +164,8 @@ class SBProgram {
             
             if (characterData.items.length > 0) {
                 SBUtils.log(`> Adding ${characterData.items.length} item(s).`);
-                let addedItemIds = [];
-                for (let itemData of characterData.items) {
+                const addedItemIds = [];
+                for (const itemData of characterData.items) {
                     if (!itemData["name"]) {
                         errors.push([`Parser produced an item of type ${itemData.type} without a name.`, ""]);
                         SBUtils.log(`Parser produced an item without a name.`);
@@ -180,7 +180,7 @@ class SBProgram {
                     try {
                         //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
                         if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {
-                            await actor.createOwnedItem(itemData);
+                            await actor.createEmbeddedDocuments("Item", [itemData]);
                             if (itemData["sourceId"]) {
                                 addedItemIds.push(itemData["sourceId"]);
                             }
@@ -197,12 +197,12 @@ class SBProgram {
             
             if (characterData.spells.length > 0) {
                 SBUtils.log(`> Adding ${characterData.spells.length} spell(s).`);
-                let addedSpellIds = [];
-                for (let spellData of characterData.spells) {
+                const addedSpellIds = [];
+                for (const spellData of characterData.spells) {
                     try {
                         //SBUtils.log(">> Creating spell: " + JSON.stringify(itemData));
                         if (!spellData["sourceId"] || !addedSpellIds.includes(spellData["sourceId"])) {
-                            await actor.createOwnedItem(spellData);
+                            await actor.createEmbeddedDocuments("Item", [spellData]);
                             if (spellData["sourceId"]) {
                                 addedSpellIds.push(spellData["sourceId"]);
                             }
@@ -214,8 +214,8 @@ class SBProgram {
             }
             
             SBUtils.log("Actor created, opening sheet.");
-            let registeredSheet = Actors.registeredSheets.find(x => x.name === "ActorSheetSFRPGNPC");
-            let sheet = new registeredSheet(actor);
+            const registeredSheet = Actors.registeredSheets.find(x => x.name === "ActorSheetSFRPGNPC");
+            const sheet = new registeredSheet(actor);
             sheet.render(true);
 
             SBProgram.logErrors(errors);
