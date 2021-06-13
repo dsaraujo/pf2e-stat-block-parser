@@ -7,7 +7,7 @@ import { SBParsing, initParsers } from "./parsers.js";
 
 class SBProgram {
     static ensureParseStatblockVisible() {
-        if (!game.user.isGM && !Actor.can(game.user, "create")) {
+        if (!game.user.isGM && !Actor.canUserCreate(game.user)) {
             return;
         }
 

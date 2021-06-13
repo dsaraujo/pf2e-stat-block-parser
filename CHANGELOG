@@ -1,4 +1,6 @@
 0.4.2:
+- General updates:
+--- Fixed test for actor creation permissions for clients.
 
 0.4.1:
 - General updates:
