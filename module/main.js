@@ -7,7 +7,7 @@ import { SBParsing, initParsers } from "./parsers.js";
 
 class SBProgram {
     static ensureParseStatblockVisible() {
-        if (!game.user.isGM && !Actor.can(game.user, "create")) {
+        if (!game.user.isGM && !Actor.canUserCreate(game.user)) {
             return;
         }
 
@@ -162,6 +162,7 @@ class SBProgram {
                 }
             }
             
+            const embeddedItemsToCreate = [];
             if (characterData.items.length > 0) {
                 SBUtils.log(`> Adding ${characterData.items.length} item(s).`);
                 const addedItemIds = [];
@@ -173,14 +174,19 @@ class SBProgram {
                         continue;
                     }
 
-                    if (["weapon", "equipment"].includes(itemData["type"])) {
-                        itemData["data.proficient"] = true;
-                    }
-
                     try {
                         //SBUtils.log(">> Creating item: " + JSON.stringify(itemData));
+                        // Clean up data we don't care about.
+                        delete itemData.id;
+                        delete itemData._id;
+                        delete itemData.effects;
+                        delete itemData.flags;
+                        delete itemData.permission;
+                        delete itemData.sort;
+                        delete itemData.folder;
+
                         if (!itemData["sourceId"] || !addedItemIds.includes(itemData["sourceId"])) {
-                            await actor.createEmbeddedDocuments("Item", [itemData]);
+                            embeddedItemsToCreate.push(itemData);
                             if (itemData["sourceId"]) {
                                 addedItemIds.push(itemData["sourceId"]);
                             }
@@ -200,9 +206,18 @@ class SBProgram {
                 const addedSpellIds = [];
                 for (const spellData of characterData.spells) {
                     try {
-                        //SBUtils.log(">> Creating spell: " + JSON.stringify(itemData));
+                        //SBUtils.log(">> Creating spell: " + JSON.stringify(spellData));
+                        // Clean up data we don't care about.
+                        delete spellData.id;
+                        delete spellData._id;
+                        delete spellData.effects;
+                        delete spellData.flags;
+                        delete spellData.permission;
+                        delete spellData.sort;
+                        delete spellData.folder;
+
                         if (!spellData["sourceId"] || !addedSpellIds.includes(spellData["sourceId"])) {
-                            await actor.createEmbeddedDocuments("Item", [spellData]);
+                            embeddedItemsToCreate.push(spellData);
                             if (spellData["sourceId"]) {
                                 addedSpellIds.push(spellData["sourceId"]);
                             }
@@ -212,6 +227,18 @@ class SBProgram {
                     }
                 }
             }
+
+            await actor.createEmbeddedDocuments("Item", embeddedItemsToCreate).then((createdItems) => {
+                const bulkUpdates = [];
+                for (const createdItem of createdItems) {
+                    if (["weapon", "equipment"].includes(createdItem.type)) {
+                        bulkUpdates.push({_id: createdItem.id, "data.proficient": true, "data.equippable": true, "data.equipped": true});
+                    }
+                }
+                if (bulkUpdates.length > 0) {
+                    actor.updateEmbeddedDocuments("Item", bulkUpdates);
+                }
+            });
             
             SBUtils.log("Actor created, opening sheet.");
             const registeredSheet = Actors.registeredSheets.find(x => x.name === "ActorSheetSFRPGNPC");
