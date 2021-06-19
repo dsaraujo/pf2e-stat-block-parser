@@ -2,6 +2,7 @@
 - General updates:
 --- Marked compatible with Foundry v0.8.7
 --- Fixed test for actor creation permissions for clients.
+--- Fixed item creation logic, should also more robustly equip and mark as proficient.
 
 0.4.1:
 - General updates:
