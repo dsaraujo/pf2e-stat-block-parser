@@ -1,5 +1,6 @@
 0.4.2:
 - General updates:
+--- Marked compatible with Foundry v0.8.7
 --- Fixed test for actor creation permissions for clients.
 
 0.4.1:
