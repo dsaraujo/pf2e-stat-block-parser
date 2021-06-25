@@ -4,7 +4,6 @@
     "description": "A module to convert Starfinder NPC statblocks into Actors",
     "version": "0.4.3",
     "author": "Deepflame",
-    "systems": ["sfrpg"],
     "system": ["sfrpg"],
     "esmodules": ["./module/main.js", "./module/text-input.js"],
     "styles": [],
