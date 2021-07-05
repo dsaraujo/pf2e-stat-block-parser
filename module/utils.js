@@ -110,6 +110,10 @@ export class SBUtils {
         console.log("SFSBP | " + message);
     }
 
+    static warn(message) {
+        console.warn("SFSBP | " + message);
+    }
+
     /** Will try to find an entry in the specified compendium that matches all the terms, will return the first entry that does. */
     static async fuzzyFindCompendiumAsync(compendiumName, searchString) {
         if (!compendiumName) {
@@ -165,7 +169,7 @@ export class SBUtils {
             return duplicate(entryWeWant.document.data);
             //SBUtils.log("Item " + JSON.stringify(entryWeWant));
         } else {
-            //SBUtils.log("Item " + entryName + " not found.");
+            //SBUtils.warn("Item " + rawString + " not found.");
         }
     }
 
@@ -187,11 +191,6 @@ export class SBUtils {
         }
 
         statBlockItemName = statBlockItemName.replace("batteries", "battery");
-        if (SBUtils.stringContains(statBlockItemName, "battery", false)) {
-            if (!SBUtils.stringContains(statBlockItemName, "capacity", false)) {
-                statBlockItemName += ", standard";
-            }
-        }
         return this.fuzzyFindCompendiumAsync("Equipment", statBlockItemName);
     }
 

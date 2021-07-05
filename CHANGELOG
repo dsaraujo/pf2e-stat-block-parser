@@ -1,6 +1,7 @@
 0.4.4:
 - PAIZO Block updates:
 --- Fixed mistake in item data parsing causing attack roll bonus etc. to be set incorrectly.
+--- Fixed battery parsing to work with battery name change.
 
 0.4.3:
 - General updates:
