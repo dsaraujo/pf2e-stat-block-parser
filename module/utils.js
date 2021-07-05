@@ -161,12 +161,12 @@ export class SBUtils {
             break;
         }
 
-        if (entryWeWant != undefined) {
+        if (entryWeWant?.document?.data) {
+            return duplicate(entryWeWant.document.data);
             //SBUtils.log("Item " + JSON.stringify(entryWeWant));
         } else {
             //SBUtils.log("Item " + entryName + " not found.");
         }
-        return duplicate(entryWeWant.document.data);
     }
 
     static async fuzzyFindItemAsync(statBlockItemName) {
