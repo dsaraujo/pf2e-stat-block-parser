@@ -1,5 +1,6 @@
 0.4.4:
-- General updates:
+- PAIZO Block updates:
+--- Fixed mistake in item data parsing causing attack roll bonus etc. to be set incorrectly.
 
 0.4.3:
 - General updates:

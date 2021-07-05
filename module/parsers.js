@@ -255,35 +255,40 @@ class SBAttackParser extends SBParserBase {
             itemData["type"] = "weapon";
         }
         if (!itemData.data.actionType) {
-            itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
+            itemData = mergeObject(itemData, {data: {actionType: bIsMeleeAttack ? "mwak" : "rwak"}});
         }
         if (!itemData.data.weaponType) {
-            itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
+            itemData = mergeObject(itemData, {data: {weaponType: bIsMeleeAttack ? "basicM" : "smallA"}});
         }
         if (!itemData.data.quantity) {
-            itemData["data.quantity"] = 1;
+            itemData = mergeObject(itemData, {data: {quantity: 1}});
         }
 
-        itemData["data.ability"] = "";
-        itemData["data.attackBonus"] = SBParsing.parseInteger(attackModifier);
+        itemData = mergeObject(itemData, {data: {ability: ""}});
+        itemData = mergeObject(itemData, {data: {attackBonus: SBParsing.parseInteger(attackModifier)}});
         
         if (attackDamageRoll && attackDamageRoll) {
-            itemData["data.damage"] = {parts: [[attackDamageRoll, attackDamageType]]};
+            itemData = mergeObject(itemData, {data: {parts: [[attackDamageRoll, attackDamageType]]}});
         }
 
         if (criticalDamage != "") {
             let criticalDamageRegex = criticalDamage.split(/(critical|crit)\s(.*)\s(.*)/i);
             let criticalDamageEffect = criticalDamageRegex[2];
             let criticalDamageRoll = criticalDamageRegex[3];
-            
-            itemData["data.critical"] = {effect: "", parts: []};
+
+            const criticalObject = {
+                effect: "",
+                parts: []
+            };
 
             if (criticalDamageEffect != "") {
-                itemData["data.critical.effect"] = SBUtils.camelize(criticalDamageEffect);
+                criticalObject.effect = SBUtils.camelize(criticalDamageEffect);
             }
             if (criticalDamageRoll != "" && attackDamageType) {
-                itemData["data.critical.parts"] = [[criticalDamageRoll, attackDamageType]];
+                criticalObject.parts = [[criticalDamageRoll, attackDamageType]];
             }
+
+            itemData = mergeObject(itemData, {data: {critical: criticalObject}});
         }
 
         if (!itemData["name"]) {
@@ -367,8 +372,13 @@ class SBWeaknessesParser extends SBParserBase {
             }
         }
 
-        let parsedData = {};
-        parsedData["data.traits.dv"] = {"value": knownWeaknesses, "custom": customWeaknesses};
+        const parsedData = {
+            data: {
+                traits: {
+                    dv: {"value": knownWeaknesses, "custom": customWeaknesses}
+                }
+            }
+        };
         return {actorData: parsedData};
     }
 }
@@ -402,9 +412,15 @@ class SBImmunitiesParser extends SBParserBase {
             }
         }
 
-        let parsedData = {};
-        parsedData["data.traits.ci"] = {"value": knownConditionImmunities, "custom": customImmunities};
-        parsedData["data.traits.di"] = {"value": knownDamageImmunities, "custom": customImmunities};
+        const parsedData = {
+            data: {
+                traits: {
+                    ci: {"value": knownConditionImmunities, "custom": customImmunities},
+                    di: {"value": knownDamageImmunities, "custom": customImmunities}
+                }
+            }
+        };
+
         return {actorData: parsedData};
     }
 }
@@ -555,7 +571,7 @@ class SBGearParser extends SBParserBase {
             }
         }
 
-        for (let itemToAdd of itemsToAdd) {
+        for (const itemToAdd of itemsToAdd) {
             try {
                 let itemData = await SBUtils.fuzzyFindItemAsync(itemToAdd.item);
                 //SBUtils.log("> " + itemToAdd.item + " found: " + JSON.stringify(itemData));
@@ -566,7 +582,7 @@ class SBGearParser extends SBParserBase {
                     itemData["source"] = { compendium: "Equipment", id: itemData["_id"] };
                     delete itemData["_id"];
                 }
-                itemData["data.quantity"] = itemToAdd.amount;
+                itemData = mergeObject(itemData, {data: {quantity: itemToAdd.amount}});
                 if (!itemData["type"]) {
                     itemData["type"] = "goods";
                 }
@@ -574,8 +590,8 @@ class SBGearParser extends SBParserBase {
                 if (SBUtils.stringContains(itemData["name"], "credstick", false)) {
                     if (itemToAdd.subText) {
                         let textSplit = itemToAdd.subText.split(' ');
-                        itemData["data.price"] = Number(textSplit[0].trim());
-                        itemData["name"] = `Credstick (${itemData["data.price"]} credits)`;
+                        itemData = mergeObject(itemData, {data: {price: Number(textSplit[0].trim())}});
+                        itemData["name"] = `Credstick (${itemData.data.price} credits)`;
                     }
                 }
 
@@ -638,51 +654,51 @@ class SBSpellLikeParser extends SBParserBase {
                     //SBUtils.log(">> Known spell: " + rawSpell);
                     foundSpell["sourceId"] = foundSpell["_id"];
                     foundSpell["name"] = SBUtils.camelize(rawSpell);
-                    foundSpell["data.preparation"] = { prepared: true, mode: "innate" };
+                    foundSpell = mergeObject(foundSpell, {data: {preparation: { prepared: true, mode: "innate" }}});
 
                     if (["atwill", "at will", "constant"].includes(spellBlock.level.toLowerCase())) {
-                        foundSpell["data.preparation"] = { prepared: true, mode: "always" };
+                        foundSpell.data.preparation.mode = "always";
                         foundSpell["name"] += " (" + SBUtils.camelize(spellBlock.level) + ")";
                     }
 
                     if (spellActivation.length == 2) {
                         if (!foundSpell.data.activation) {
-                            foundSpell["data.activation"] = {
-                                cost: 0,
-                                type: "none"
-                            };
+                            foundSpell = mergeObject(foundSpell, {data: {activation: { cost: 0, type: "none" }}});
                         } else if (!foundSpell.data.activation.type) {
-                            foundSpell["data.activation.type"] = "none";
+                            foundSpell.data.activation.type = "none";
                         }
 
-                        foundSpell["data.uses"] = {
+                        foundSpell = mergeObject(foundSpell, {data: {uses: {
                             value: Number(spellActivation[0]),
                             max: Number(spellActivation[0]),
                             per: "day"
-                        };
+                        }}});
                     }
 
                     spells.push(foundSpell);
                 } else {
                     //SBUtils.log(">> Unknown spell: " + rawSpell);
-                    foundSpell = {};
-                    foundSpell["name"] = SBUtils.camelize(rawSpell);
-                    foundSpell["type"] = "spell";
-                    foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
-                    foundSpell["data.preparation"] = { prepared: true, mode: "innate" };
+                    foundSpell = {
+                        name: SBUtils.camelize(rawSpell),
+                        type: "spell",
+                        data: {
+                            level: SBParsing.parseInteger(spellBlock.level[0]),
+                            preparation: { prepared: true, mode: "innate" }
+                        }
+                    };
 
                     if (["atwill", "at will", "constant"].includes(spellBlock.level.toLowerCase())) {
-                        foundSpell["data.preparation"] = { prepared: true, mode: "always" };
-                        foundSpell["name"] += " (" + SBUtils.camelize(spellBlock.level) + ")";
+                        foundSpell.data.preparation = { prepared: true, mode: "always" };
+                        foundSpell.name += " (" + SBUtils.camelize(spellBlock.level) + ")";
                     }
 
                     if (spellActivation.length == 2) {
-                        foundSpell["data.activation"] = {
+                        foundSpell.data.activation = {
                             cost: 0,
                             type: "none"
                         };
 
-                        foundSpell["data.uses"] = {
+                        foundSpell.data.uses = {
                             value: Number(spellActivation[0]),
                             max: Number(spellActivation[0]),
                             per: "day"
@@ -768,7 +784,7 @@ class SBSpellsParser extends SBParserBase {
                         foundSpell["name"] += " (" + castTimes + ")";
                     }
 
-                    foundSpell["data.preparation"] = preparation;
+                    foundSpell.data.preparation = preparation;
                     spells.push(foundSpell);
                 } else {
                     //SBUtils.log(">> Unknown spell: " + rawSpell);
@@ -779,8 +795,8 @@ class SBSpellsParser extends SBParserBase {
                     }
 
                     foundSpell["type"] = "spell";
-                    foundSpell["data.preparation"] = preparation;
-                    foundSpell["data.level"] = SBParsing.parseInteger(spellBlock.level[0]);
+                    foundSpell.data.preparation = preparation;
+                    foundSpell.data.level = SBParsing.parseInteger(spellBlock.level[0]);
 
                     spells.push(foundSpell);
                 }

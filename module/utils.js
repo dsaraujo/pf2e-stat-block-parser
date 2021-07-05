@@ -166,7 +166,7 @@ export class SBUtils {
         } else {
             //SBUtils.log("Item " + entryName + " not found.");
         }
-        return entryWeWant;
+        return duplicate(entryWeWant.document.data);
     }
 
     static async fuzzyFindItemAsync(statBlockItemName) {
