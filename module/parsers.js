@@ -689,16 +689,14 @@ class SBGearParser extends SBParserBase {
 
 class SBSpellLikeParser extends SBParserBase {
     async parse(key, value) {
-        let spells = [];
-        let errors = [];
-
-        let clSection = value.substring(1, value.indexOf(')')).trim();
+        const spells = [];
+        const errors = [];
 
         // First, split up the spell blocks by level
-        let splitSpellblocks = [];
-        let spellsSection = value.substring(value.indexOf(')') + 1).trim();
-        let regex = /(((\d*)\/day)|at will|atwill|constant)\s*-\s*(.*)/gim;
-        let block = spellsSection.split(regex);
+        const splitSpellblocks = [];
+        const spellsSection = value.substring(value.indexOf(')') + 1).trim();
+        const regex = /(((\d*)\/day)|at will|atwill|constant)\s*[-—]\s*(.*)/gim;
+        const block = spellsSection.split(regex);
         let spellHeader = block[1];
         let currentText = block[4];
         while(currentText) {
@@ -800,13 +798,11 @@ class SBSpellsParser extends SBParserBase {
         let spells = [];
         let errors = [];
 
-        let clSection = value.substring(1, value.indexOf(')')).trim();
-
         // First, split up the spell blocks by level
-        let splitSpellblocks = [];
-        let spellsSection = value.substring(value.indexOf(')') + 1).trim();
-        let regex = /([0|1st|2nd|3rd|4th|5th|6th|1|2|3|4|5|6]*\s\((\S*|at will)*\))\s*-\s*(.*)/gim;
-        let block = spellsSection.split(regex);
+        const splitSpellblocks = [];
+        const spellsSection = value.substring(value.indexOf(')') + 1).trim();
+        const regex = /([0|1st|2nd|3rd|4th|5th|6th|1|2|3|4|5|6]*)\s\((\S*|at will)?\)\s*[-—]{1}\s*(.*)/gim;
+        const block = spellsSection.split(regex);
         let spellHeader = block[1];
         let currentText = block[3];
         while(currentText) {
