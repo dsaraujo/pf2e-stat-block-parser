@@ -1,4 +1,6 @@
 0.4.5:
+- PAIZO Block updates:
+--- Fixed a freeze when parsing spells with a particular formatting style, using a — instead of a -.
 
 0.4.4:
 - General updates:
