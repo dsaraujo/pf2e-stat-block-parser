@@ -195,7 +195,7 @@ export class SBStatblockParser {
                     let matched = line.match(regex);
                     if (matched != null) {
                         keyword = matched[0].trim();
-                        SBUtils.log("IONK: Keyword " + oldKeyword + " is now " + JSON.stringify(keyword));// + ", from line: " + line);
+                        //SBUtils.log("IONK: Keyword " + oldKeyword + " is now " + JSON.stringify(keyword));// + ", from line: " + line);
                     }
                 }
 
@@ -353,10 +353,41 @@ export class SBStatblockParser {
         return {success: true, characterData: characterData, errors: errors};
     }
 
+
+    _convertToObject(fullyQualifiedKey, value) {
+        if (fullyQualifiedKey.includes('.')) {
+            const splitKeys = fullyQualifiedKey.split('.');
+            const key = splitKeys[0];
+            const remainingKey = fullyQualifiedKey.substring(key.length + 1);
+            return {[key]: this._convertToObject(remainingKey, value)};
+        } else {
+            return {[fullyQualifiedKey]: value};
+        }
+    }
+
     processParsedData(parsedData, characterData, errors) {
 
+        //* Conversion for FoundryVTT v0.8's changed support for parsing data *//
+        if (parsedData.actorData) {
+            let actorData = {};
+            for(const [fullyQualifiedKey, entry] of Object.entries(parsedData.actorData)) {
+                const convertedObject = {};
+                if (fullyQualifiedKey.includes('.')) {
+                    var splitKeys = fullyQualifiedKey.split('.');
+                    const firstKey = splitKeys[0];
+                    const remainingKey = fullyQualifiedKey.substring(firstKey.length + 1);
+                    convertedObject[firstKey] = this._convertToObject(remainingKey, entry);
+                } else {
+                    convertedObject[fullyQualifiedKey] = entry;
+                }
+
+                actorData = mergeObject(actorData, convertedObject);
+            }
+            parsedData.actorData = actorData;
+        }
+
         if (parsedData.actorData != undefined) {
-            characterData.actorData = {...characterData.actorData, ...parsedData.actorData};
+            characterData.actorData = mergeObject(characterData.actorData, parsedData.actorData);
         }
 
         if (parsedData.items != undefined) {

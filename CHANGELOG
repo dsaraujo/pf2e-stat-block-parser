@@ -1,3 +1,12 @@
+0.4.4:
+- General updates:
+--- Added support for Starfinder v0.12.0's upcoming speed update. (Works backwards compatible with Starfinder v0.11.4)
+- PAIZO Block updates:
+--- Updated some more parsing behavior to work with Foundry v0.8 that was missed previously.
+--- Fixed mistake in item data parsing causing attack roll bonus etc. to be set incorrectly.
+--- Fixed battery parsing to work with battery name change.
+--- Fixed a rare problem with telepathic creatures.
+
 0.4.3:
 - General updates:
 --- Marked compatible with Foundry v0.8.8

@@ -60,7 +60,7 @@ export class SBVTTESParser {
         "fort_base": (dict,val) => { dict["data.attributes.fort.bonus"] = val.current; },
         "ref_base": (dict,val) => { dict["data.attributes.reflex.bonus"] = val.current; },
         "will_base": (dict,val) => { dict["data.attributes.will.bonus"] = val.current; },
-        "speed": (dict,val) => { dict["data.attributes.speed.value"] = val.current; },
+        "speed": (dict,val) => { dict[game.system.data.version.localeCompare("0.12.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0 ? "data.attributes.speed.land.base" : "data.attributes.speed.value"] = val.current; },
         "space": (dict,val) => { dict["data.attributes.space"] = val.current; },
         "reach": (dict,val) => { dict["data.attributes.reach"] = val.current; },
         "acrobatics": (dict, val) => { this.parseSkill(dict, "acr", val); },
