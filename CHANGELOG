@@ -1,4 +1,6 @@
 0.4.6:
+- PAIZO Block updates:
+--- Improved spellbook parsing, now assigns the proper spell level to the spell, and updates spells per day correctly again.
 
 0.4.5:
 - PAIZO Block updates:

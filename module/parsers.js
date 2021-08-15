@@ -795,8 +795,8 @@ class SBSpellLikeParser extends SBParserBase {
 
 class SBSpellsParser extends SBParserBase {
     async parse(key, value) {
-        let spells = [];
-        let errors = [];
+        const spells = [];
+        const errors = [];
 
         // First, split up the spell blocks by level
         const splitSpellblocks = [];
@@ -804,21 +804,31 @@ class SBSpellsParser extends SBParserBase {
         const regex = /([0|1st|2nd|3rd|4th|5th|6th|1|2|3|4|5|6]*)\s\((\S*|at will)?\)\s*[-—]{1}\s*(.*)/gim;
         const block = spellsSection.split(regex);
         let spellHeader = block[1];
+        let usage = block[2];
         let currentText = block[3];
         while(currentText) {
-            let nextSet = currentText.split(regex);
+            const nextSet = currentText.split(regex);
             if (nextSet.length > 1) {
-                let spellData = nextSet[0].trim();
+                const spellData = nextSet[0].trim();
                 if (spellHeader && spellData) {
-                    let spellObject = {level: spellHeader, spells: spellData};
+                    const spellObject = {
+                        level: spellHeader,
+                        usage: usage,
+                        spells: spellData
+                    };
                     splitSpellblocks.push(spellObject);
                 }
     
                 spellHeader = nextSet[1].trim();
+                usage = nextSet[2].trim();
                 currentText = nextSet[3];
             } else {
                 if (spellHeader) {
-                    let spellObject = {level: spellHeader, spells: currentText.trim()};
+                    const spellObject = {
+                        level: spellHeader,
+                        usage: usage,
+                        spells: currentText.trim()
+                    };
                     splitSpellblocks.push(spellObject);
                 }
                 currentText = null;
@@ -827,53 +837,62 @@ class SBSpellsParser extends SBParserBase {
 
         //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));
 
-        let actorData = {};
-        actorData["data.spells"] = {};
+        const actorData = {
+            data: {
+                spells: {}
+            }
+        };
 
         // Next up, for each spell level, split up into spells, which we can pull from the compendium using fuzzy search.
-        for (let spellBlock of splitSpellblocks) {
-            let splitSpells = SBUtils.splitEntries(spellBlock.spells);
-            let castTimes = SBParsing.parseSubtext(spellBlock.level);
-            castTimes = SBUtils.camelize(castTimes[castTimes.length - 1]);
-            
-            let isNormalSpell = false;
-            if (!Number.isNaN(Number(spellBlock.level[0])) && !Number.isNaN(Number(castTimes[0]))) {
-                actorData["data.spells.spell" + spellBlock.level[0]] = {
-                    value: castTimes[0],
-                    max: castTimes[0]
+        for (const spellBlock of splitSpellblocks) {
+            const splitSpells = SBUtils.splitEntries(spellBlock.spells);
+
+            const spellblockLevel = SBParsing.parseInteger(spellBlock.level);
+
+            const isAtWillSpell = SBUtils.stringContains(spellBlock.usage, "at will", false);
+            if (spellBlock.usage && !isAtWillSpell) {
+                const trimmedUsage = spellBlock.usage.trim();
+                const parsedUsage = trimmedUsage.split(/(\d*)/i);
+                
+                const spellKey = `spell${spellblockLevel}`;
+                const spellsData = {
+                    [spellKey]: {
+                        value: parsedUsage[1],
+                        max: parsedUsage[1]
+                    }
                 };
-                isNormalSpell = true;
-            } else if (SBUtils.stringContains(spellBlock.level, "at will", false)) {
-                isNormalSpell = true;
+                actorData.data.spells = mergeObject(actorData.data.spells, spellsData);
             }
             
-            for (let rawSpell of splitSpells) {
-                let parsedSpellData = SBParsing.parseSubtext(rawSpell);
-                let foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
+            for (const rawSpell of splitSpells) {
+                const parsedSpellData = SBParsing.parseSubtext(rawSpell);
+                const foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
 
-                let preparation = { prepared: true, mode: (SBUtils.stringContains(spellBlock.level, "at will", false)) ? "always" : null };
+                const preparation = { prepared: true, mode: isAtWillSpell ? "always" : null };
 
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
                     foundSpell["sourceId"] = foundSpell["_id"];
                     foundSpell["name"] = SBUtils.camelize(rawSpell);
-                    if (!isNormalSpell) {
-                        foundSpell["name"] += " (" + castTimes + ")";
+                    if (isAtWillSpell) {
+                        foundSpell["name"] += " (At will)";
                     }
 
                     foundSpell.data.preparation = preparation;
+                    foundSpell.data.level = spellblockLevel;
+
                     spells.push(foundSpell);
                 } else {
                     //SBUtils.log(">> Unknown spell: " + rawSpell);
                     foundSpell = {};
                     foundSpell["name"] = SBUtils.camelize(rawSpell);
-                    if (!isNormalSpell) {
-                        foundSpell["name"] += " (" + castTimes + ")";
+                    if (isAtWillSpell) {
+                        foundSpell["name"] += " (At will)";
                     }
 
                     foundSpell["type"] = "spell";
                     foundSpell.data.preparation = preparation;
-                    foundSpell.data.level = SBParsing.parseInteger(spellBlock.level[0]);
+                    foundSpell.data.level = spellblockLevel;
 
                     spells.push(foundSpell);
                 }
