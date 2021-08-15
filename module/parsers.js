@@ -348,8 +348,8 @@ class SBAttackParser extends SBParserBase {
         itemData = mergeObject(itemData, {data: {ability: ""}});
         itemData = mergeObject(itemData, {data: {attackBonus: SBParsing.parseInteger(attackModifier)}});
         
-        if (attackDamageRoll && attackDamageRoll) {
-            itemData = mergeObject(itemData, {data: {parts: [[attackDamageRoll, attackDamageType]]}});
+        if (attackDamageRoll) {
+            itemData = mergeObject(itemData, {data: {damage: {parts: [[attackDamageRoll, attackDamageType]]}}});
         }
 
         if (criticalDamage != "") {
