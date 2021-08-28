@@ -264,6 +264,8 @@ class SBAttackParser extends SBParserBase {
   
     /** Will parse an attack using the attack format: attack name +attackRoll (damageRoll damageType ; critical effect) */
     async parseAttack(attack, bIsMeleeAttack) {
+        const damageVersion = game.system.data.version.localeCompare("0.13.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+
         //SBUtils.log("Parsing attack: " + attack);
         const attackInfo = SBParsing.parseSubtext(attack);
 
@@ -295,10 +297,23 @@ class SBAttackParser extends SBParserBase {
                 attackDamageRoll += " " + attackDamageData[2].trim();
             }
             attackDamageType = attackDamageData[3].toLowerCase();
-            if (SBConfig.weaponDamageTypes[attackDamageType]) {
-                attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
+            if (attackDamageData[4]) {
+                attackDamageType += attackDamageData[4].toLowerCase();
+            }
+
+            if (damageVersion) {
+                const rawTypes = SBUtils.splitEntries(attackDamageType, {additionalEntrySplitters: ["&"]});
+                attackDamageType = {};
+                for (const rawType of rawTypes) {
+                    const parsedType = SBConfig.weaponDamageTypeNew[rawType.trim()];
+                    attackDamageType = mergeObject(attackDamageType, parsedType);
+                }
             } else {
-                attackDamageType = "slashing";
+                if (SBConfig.weaponDamageTypes[attackDamageType]) {
+                    attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
+                } else {
+                    attackDamageType = "slashing";
+                }
             }
 
             if (damageBlock.length > 1) {
@@ -349,7 +364,16 @@ class SBAttackParser extends SBParserBase {
         itemData = mergeObject(itemData, {data: {attackBonus: SBParsing.parseInteger(attackModifier)}});
         
         if (attackDamageRoll) {
-            itemData = mergeObject(itemData, {data: {damage: {parts: [[attackDamageRoll, attackDamageType]]}}});
+            if (damageVersion) {
+                const damagePart = {
+                    formula: attackDamageRoll,
+                    types: attackDamageType,
+                    operator: "and"
+                };
+                itemData = mergeObject(itemData, {data: {damage: {parts: [damagePart]}}});
+            } else {
+                itemData = mergeObject(itemData, {data: {damage: {parts: [[attackDamageRoll, attackDamageType]]}}});
+            }
         }
 
         if (criticalDamage != "") {
@@ -366,7 +390,16 @@ class SBAttackParser extends SBParserBase {
                 criticalObject.effect = SBUtils.camelize(criticalDamageEffect);
             }
             if (criticalDamageRoll != "" && attackDamageType) {
-                criticalObject.parts = [[criticalDamageRoll, attackDamageType]];
+                if (damageVersion) {
+                    const damagePart = {
+                        formula: criticalDamageRoll,
+                        types: attackDamageType,
+                        operator: "and"
+                    };
+                    criticalObject.parts = [damagePart];
+                } else {
+                    criticalObject.parts = [[criticalDamageRoll, attackDamageType]];
+                }
             }
 
             itemData = mergeObject(itemData, {data: {critical: criticalObject}});

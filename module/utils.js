@@ -28,6 +28,17 @@ SBConfig.weaponDamageTypes = {
     "s & so": "slashing+sonic"
 };
 
+SBConfig.weaponDamageTypeNew = {
+    "a": {"acid": true},
+    "c": {"cold": true},
+    "f": {"fire": true},
+    "e": {"electricity": true},
+    "so": {"sonic": true},
+    "b": {"bludgeoning": true},
+    "p": {"piercing": true},
+    "s": {"slashing": true}
+};
+
 SBConfig.skillMapping = {
     "acrobatics": "acr",
     "athletics": "ath",

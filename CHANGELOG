@@ -1,4 +1,6 @@
 0.4.7:
+- General updates:
+--- Implemented support for Starfinder v0.13.0's upcoming damage types update. (Works backwards compatible with Starfinder v0.12.1)
 
 0.4.6:
 - PAIZO Block updates:
