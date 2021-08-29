@@ -428,10 +428,11 @@ class SBAttackParser extends SBParserBase {
 }
 
 class SBTraitParser extends SBParserBase {
-    constructor(traitField, supportedValues) {
+    constructor(traitField, supportedValues, dontSplitTraits = false) {
         super();
         this.traitField = traitField;
         this.supportedValues = supportedValues;
+        this.dontSplitTraits = dontSplitTraits;
     }
 
     async parse(key, value) {
@@ -439,7 +440,12 @@ class SBTraitParser extends SBParserBase {
 
         const values = SBUtils.splitEntries(value);
         for (const traitValue of values) {
-            const splitTrait = traitValue.trim().toLowerCase().split(' ');
+            let splitTrait = [];
+            if (this.dontSplitTraits) {
+                splitTrait.push(traitValue);
+            } else {
+                splitTrait = traitValue.trim().toLowerCase().split(' ');
+            }
             
             const traitName = splitTrait[0]
             const traitModifier = splitTrait.length > 1 ? splitTrait[1] : null;
@@ -467,7 +473,7 @@ class SBTraitParser extends SBParserBase {
 
 class SBLanguagesParser extends SBTraitParser {
     constructor(traitField, supportedValues) {
-        super(traitField, supportedValues);
+        super(traitField, supportedValues, true);
     }
 
     async parse(key, value) {
