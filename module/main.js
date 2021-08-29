@@ -145,19 +145,34 @@ class SBProgram {
 
             if (characterData.abilityDescriptions.length > 0) {
                 SBUtils.log(`> Processing ${characterData.abilityDescriptions.length} ability description(s).`);
-                for (let abilityDescription of characterData.abilityDescriptions) {
+                for (const abilityDescription of characterData.abilityDescriptions) {
+                    let abilityItemFound = false;
                     for (let i = 0; i<characterData.items.length; i++) {
-                        let typeString = SBParsing.parseSubtext(abilityDescription.name)[0];
+                        const typeString = SBParsing.parseSubtext(abilityDescription.name)[0];
                         if (SBUtils.stringStartsWith(typeString, characterData.items[i]["name"], false)
                             || SBUtils.stringStartsWith(characterData.items[i]["name"], typeString, false)) {
-                            characterData.items[i]["name"] = abilityDescription.name;
-                            const originalDesc = characterData.items[i]["data.description.value"];
-                            if (originalDesc) {
-                                characterData.items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + originalDesc;
-                            } else {
-                                characterData.items[i]["data.description.value"] = abilityDescription.description;
-                            }
+                                abilityItemFound = true;
+                                characterData.items[i]["name"] = abilityDescription.name;
+                                const originalDesc = characterData.items[i]["data.description.value"];
+                                if (originalDesc) {
+                                    characterData.items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + originalDesc;
+                                } else {
+                                    characterData.items[i]["data.description.value"] = abilityDescription.description;
+                                }
                         }
+                    }
+
+                    if (!abilityItemFound) {
+                        const newItem = {
+                            name: abilityDescription.name,
+                            type: 'feat',
+                            data: {
+                                description: {
+                                    value: abilityDescription.description
+                                }
+                            }
+                        };
+                        characterData.items.push(newItem);
                     }
                 }
             }

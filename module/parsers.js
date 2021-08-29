@@ -970,17 +970,17 @@ class SBTelepathyParser extends SBParserBase {
 
 class SBSpecialAbilitiesParser extends SBCategoryParserBase {
     async parse(key, value) {
-        let errors = [];
-        let abilityDescriptions = [];
+        const errors = [];
+        const abilityDescriptions = [];
 
         // Iterate through the special abilities
         let currentAbilityKey = "";
         let currentAbilityText = "";
-        for (let line of value) {
-            let matched = line.match(/(.*\s\([Ex|Su|Sp]*\))\s(.*)/i);
+        for (const line of value) {
+            const matched = line.match(/(.*\s\([Ex|Su|Sp]*\))\s(.*)/i);
             if (matched && matched.length === 3) {
                 if (currentAbilityKey && currentAbilityText) {
-                    let newAbility = {name: currentAbilityKey, description: currentAbilityText};
+                    const newAbility = {name: currentAbilityKey, description: currentAbilityText};
                     abilityDescriptions.push(newAbility);
                     currentAbilityKey = "";
                     currentAbilityText = "";
@@ -994,7 +994,7 @@ class SBSpecialAbilitiesParser extends SBCategoryParserBase {
         }
 
         if (currentAbilityKey && currentAbilityText) {
-            let newAbility = {name: currentAbilityKey, description: currentAbilityText};
+            const newAbility = {name: currentAbilityKey, description: currentAbilityText};
             abilityDescriptions.push(newAbility);
         }
 
