@@ -128,11 +128,15 @@ class SBProgram {
                         fullDescription += "</section>\n";
                     }
 
+                    let bIsCategoryUpdated = false;
                     if (currentCategory != description.category) {
                         fullDescription += `<h2>${description.category}</h2>\n`;
                         currentCategory = description.category;
+                        bIsCategoryUpdated = true;
                     }
-                    fullDescription += `<h3>${description.title}</h3>\n`;
+                    if (!bIsCategoryUpdated) {
+                        fullDescription += `<h3>${description.title}</h3>\n`;
+                    }
                     fullDescription += `<p>${description.body}</p>\n`;
                     fullDescription += `<p>&nbsp;</p>\n`;
                 }
