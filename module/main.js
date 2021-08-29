@@ -95,8 +95,19 @@ class SBProgram {
                 ui.notifications.error("There were " + errors.length + " issue(s) parsing the provided statblock:<br/>" + errorMessage + "<br/><br/>Click to dismiss.", {permanent: true});
             }
 
+            SBUtils.log("> Setting up token defaults.");
+            characterData.actorData = mergeObject(characterData.actorData, {
+                token: {
+                    bar2: {
+                        attribute: "attributes.rp"
+                    },
+                    displayBars: CONST.TOKEN_DISPLAY_MODES.OWNER,
+                    displayName: CONST.TOKEN_DISPLAY_MODES.OWNER
+                }
+            });
+
             SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
-            let actor = await Actor.create(characterData.actorData);
+            const actor = await Actor.create(characterData.actorData);
             if (actor == null) {
                 SBUtils.log("Failed to create new actor.");
                 SBProgram.logErrors(errors);

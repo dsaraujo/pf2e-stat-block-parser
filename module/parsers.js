@@ -391,7 +391,6 @@ class SBAttackParser extends SBParserBase {
             let criticalDamageRoll = "";
             if (!SBUtils.stringContains(effectOnly, "dc", false)) {
                 const criticalDamageRegex = effectOnly.split(/(.*)\s(.*)/i);
-                console.log(['crit damage', criticalDamageRegex]);
                 criticalDamageEffect = criticalDamageRegex[1];
                 criticalDamageRoll = criticalDamageRegex[2];
             }

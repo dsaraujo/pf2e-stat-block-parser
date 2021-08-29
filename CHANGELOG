@@ -3,6 +3,7 @@
 --- Implemented support for Starfinder v0.13.0's upcoming damage types update. (Works backwards compatible with Starfinder v0.12.1)
 --- Marked VTTES plugin and PCGen XML as deprecated. These do not seem to be used (anymore), and aren't functional since the Foundry v0.8 update anyway.
 - PAIZO Block updates:
+--- Setting up token defaults, name and bars now always visible for owner, and stamina bar replaced with resolve.
 --- Updated description parsing to no longer double-print "Description" header.
 --- Updated special ability parsing to generate custom features for abilities that are not recognized by any compendia.
 --- Improved critical parsing, it can now differentiate between DCs and damages.
