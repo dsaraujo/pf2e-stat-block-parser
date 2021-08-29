@@ -745,7 +745,7 @@ class SBGearParser extends SBParserBase {
         }
 
 
-        return {items: items, errors: errors};
+        return {gear: items, errors: errors};
     }
 }
 

@@ -210,7 +210,6 @@ class SBProgram {
                         delete itemData.id;
                         delete itemData._id;
                         delete itemData.effects;
-                        delete itemData.flags;
                         delete itemData.permission;
                         delete itemData.sort;
                         delete itemData.folder;
@@ -260,13 +259,77 @@ class SBProgram {
 
             await actor.createEmbeddedDocuments("Item", embeddedItemsToCreate).then((createdItems) => {
                 const bulkUpdates = [];
+                const gearItemIds = [];
                 for (const createdItem of createdItems) {
-                    if (["weapon", "equipment"].includes(createdItem.type)) {
-                        bulkUpdates.push({_id: createdItem.id, "data.proficient": true, "data.equippable": true, "data.equipped": true});
+                    const isGear = createdItem?.data?.flags?.sbp?.isGear || false;
+
+                    if (!isGear) {
+                        if (["weapon", "equipment"].includes(createdItem.type)) {
+                            bulkUpdates.push({_id: createdItem.id, "data.proficient": true, "data.equippable": true, "data.equipped": true});
+                        }
+                    } else {
+                        gearItemIds.push(createdItem.id);
+                        bulkUpdates.push({_id: createdItem.id, "flags.-=sbp": null, "data.equipped": false});
                     }
                 }
-                if (bulkUpdates.length > 0) {
-                    actor.updateEmbeddedDocuments("Item", bulkUpdates);
+
+                if (gearItemIds.length > 0) {
+                    // Create loot container, then perform bulk updates
+
+                    const lootContainer = {
+                        "name": "Loot",
+                        "type": "container",
+                        "img": "icons/svg/item-bag.svg",
+                        "data": {
+                          "container": {
+                            "contents": [
+                            ],
+                            "storage": [
+                              {
+                                "type": "bulk",
+                                "subtype": "",
+                                "amount": 1000,
+                                "acceptsType": [
+                                  "weapon",
+                                  "shield",
+                                  "equipment",
+                                  "goods",
+                                  "consumable",
+                                  "container",
+                                  "technological",
+                                  "fusion",
+                                  "upgrade",
+                                  "augmentation",
+                                  "magic",
+                                  "hybrid",
+                                  "ammunition",
+                                  "weaponAccessory"
+                                ],
+                                "affectsEncumbrance": true,
+                                "weightProperty": "bulk"
+                              }
+                            ],
+                            "isOpen": true
+                          }
+                        }
+                    };
+
+                    for (const containedItem of gearItemIds) {
+                        lootContainer.data.container.contents.push({
+                            id: containedItem,
+                            index: 0
+                        });
+                    }
+
+                    actor.createEmbeddedDocuments("Item", [lootContainer]).then((createdItem) => {
+                        if (bulkUpdates.length > 0) {
+                            actor.updateEmbeddedDocuments("Item", bulkUpdates);
+                        }
+                    });
+                } else {
+                    if (bulkUpdates.length > 0) {
+                        actor.updateEmbeddedDocuments("Item", bulkUpdates);
+                    }
                 }
             });
             

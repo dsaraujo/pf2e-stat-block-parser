@@ -390,29 +390,39 @@ export class SBStatblockParser {
             characterData.actorData = mergeObject(characterData.actorData, parsedData.actorData);
         }
 
-        if (parsedData.items != undefined) {
-            for (let item of parsedData.items) {
-                if (!item["name"]) {
-                    SBUtils.log("Parser for " + category + "." + firstWord + " produced an invalid item.");
+        if (parsedData.items) {
+            for (const nonGearItem of parsedData.items) {
+                if (!nonGearItem.name) {
+                    SBUtils.log("Parser for non-gear produced an invalid item.");
+                    continue;
                 }
-            }
 
-            for (let item of parsedData.items) {
-                let existingItem = characterData.items.find(x => x.name === item.name);
-                if (existingItem) {
-                    // If it already exists, it's likely a weapon that was parsed during the earlier passes.
-                    // Reduce quantity by 1 to prevent duplicate items.
-                    existingItem["data.quantity"] += item["data.quantity"] - 1;
-                } else {
-                    characterData.items.push(item);
+                characterData.items.push(nonGearItem);
+            }
+        }
+
+        if (parsedData.gear && parsedData.gear.length > 0) {
+            // Create items
+            for (const gearItem of parsedData.gear) {
+                if (!gearItem.name) {
+                    SBUtils.log("Parser for gear produced an invalid item.");
+                    continue;
                 }
+
+                gearItem.flags = {
+                    sbp: {
+                        isGear: true
+                    }
+                };
+                
+                characterData.items.push(gearItem);
             }
         }
 
         if (parsedData.spells != undefined) {
             for (let spell of parsedData.spells) {
                 if (!spell["name"]) {
-                    SBUtils.log("Parser for " + category + " produced an invalid item.");
+                    SBUtils.log("Parser for produced an invalid item.");
                 }
             }
             characterData.spells = characterData.spells.concat(parsedData.spells);
