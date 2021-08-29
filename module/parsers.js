@@ -389,11 +389,14 @@ class SBAttackParser extends SBParserBase {
 
             let criticalDamageEffect = effectOnly;
             let criticalDamageRoll = "";
-            if (!SBUtils.stringContains(effectOnly, "dc", false)) {
+
+            // Disabling critical damage roll parsing. Apparently isn't used anywhere anyway.
+            // Leaving it here for myself, in case I ever need to re-enable it and I'm like, wtf was I doing here again?
+            /*if (!SBUtils.stringContains(effectOnly, "dc", false)) {
                 const criticalDamageRegex = effectOnly.split(/(.*)\s(.*)/i);
                 criticalDamageEffect = criticalDamageRegex[1];
                 criticalDamageRoll = criticalDamageRegex[2];
-            }
+            }*/
 
             const criticalObject = {
                 effect: "",

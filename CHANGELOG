@@ -6,7 +6,7 @@
 --- Setting up token defaults, name and bars now always visible for owner, and stamina bar replaced with resolve.
 --- Updated description parsing to no longer double-print "Description" header.
 --- Updated special ability parsing to generate custom features for abilities that are not recognized by any compendia.
---- Improved critical parsing, it can now differentiate between DCs and damages.
+--- Improved critical parsing, it now parses the whole critical effect into the critical effects field.
 --- Improved immunities parsing, it now separates unrecognized immunities with ; instead of ,.
 --- Improved language parsing, it can now handle '1 other language known in life' as a single entry.
 --- Improved weaknesses parsing, it now properly checks the appropriate weakness if it is a standard weakness, and multiple special weaknesses are now concatenated by ; instead.
