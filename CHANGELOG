@@ -2,6 +2,9 @@
 - General updates:
 --- Implemented support for Starfinder v0.13.0's upcoming damage types update. (Works backwards compatible with Starfinder v0.12.1)
 --- Marked VTTES plugin and PCGen XML as deprecated. These do not seem to be used (anymore), and aren't functional since the Foundry v0.8 update anyway.
+- PAIZO Block updates:
+--- Improved weaknesses parsing, it now properly checks the appropriate weakness if it is a standard weakness, and multiple special weaknesses are now concatenated by ; instead.
+--- Improved immunities parsing, it now separates unrecognized immunities with ; instead of ,.
 
 0.4.6:
 - PAIZO Block updates:

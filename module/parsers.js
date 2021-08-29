@@ -468,19 +468,25 @@ class SBLanguagesParser extends SBTraitParser {
 
 class SBWeaknessesParser extends SBParserBase {
     async parse(key, value) {
-        let recognizedWeaknesses = Object.keys(CONFIG["SFRPG"].damageTypes).map(x => x.toLowerCase());
+        const recognizedWeaknesses = Object.keys(CONFIG["SFRPG"].damageTypes).map(x => x.toLowerCase());
 
-        let knownWeaknesses = [];
+        const knownWeaknesses = [];
         let customWeaknesses = "";
 
-        let weaknesses = SBUtils.splitEntries(value);
-        for (let rawWeakness of weaknesses) {
-            let parsedWeakness = rawWeakness.split(/vulnerab.*\sto\s(.*)/i);
-            if (parsedWeakness[0].length == 0 && recognizedWeaknesses.includes(parsedWeakness[1].toLowerCase())) {
-                knownWeaknesses.push(parsedWeakness[1].toLowerCase());
+        const weaknesses = SBUtils.splitEntries(value);
+        for (const rawWeakness of weaknesses) {
+            const parsedWeakness = rawWeakness.split(/vulnerab.*\sto\s(.*)/i);
+
+            let weakness = parsedWeakness[0];
+            if (!weakness && parsedWeakness.length > 1) {
+                weakness = parsedWeakness[1].trim().toLowerCase();
+            }
+            
+            if (recognizedWeaknesses.includes(weakness)) {
+                knownWeaknesses.push(weakness);
             } else {
                 if (customWeaknesses) {
-                    customWeaknesses += ", ";
+                    customWeaknesses += "; ";
                 }
                 customWeaknesses += SBUtils.camelize(rawWeakness);
             }
@@ -520,7 +526,7 @@ class SBImmunitiesParser extends SBParserBase {
                 knownDamageImmunities.push(parsedImmunity);
             } else {
                 if (customImmunities) {
-                    customImmunities += ", ";
+                    customImmunities += "; ";
                 }
                 customImmunities += SBUtils.camelize(parsedImmunity);
             }
