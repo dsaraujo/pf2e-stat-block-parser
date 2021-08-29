@@ -5,6 +5,7 @@
 - PAIZO Block updates:
 --- Updated description parsing to no longer double-print "Description" header.
 --- Updated special ability parsing to generate custom features for abilities that are not recognized by any compendia.
+--- Improved critical parsing, it can now differentiate between DCs and damages.
 --- Improved weaknesses parsing, it now properly checks the appropriate weakness if it is a standard weakness, and multiple special weaknesses are now concatenated by ; instead.
 --- Improved immunities parsing, it now separates unrecognized immunities with ; instead of ,.
 

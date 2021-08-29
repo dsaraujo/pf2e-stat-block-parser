@@ -376,20 +376,35 @@ class SBAttackParser extends SBParserBase {
             }
         }
 
-        if (criticalDamage != "") {
-            let criticalDamageRegex = criticalDamage.split(/(critical|crit)\s(.*)\s(.*)/i);
-            let criticalDamageEffect = criticalDamageRegex[2];
-            let criticalDamageRoll = criticalDamageRegex[3];
+        if (criticalDamage) {
+            criticalDamage = criticalDamage.trim();
+
+            // First remove the crit(ical) text
+            let effectOnly = criticalDamage;
+            if (SBUtils.stringStartsWith(criticalDamage, "critical", false)) {
+                effectOnly = criticalDamage.substr(9);
+            } else if (SBUtils.stringStartsWith(criticalDamage, "crit", false)) {
+                effectOnly = criticalDamage.substr(5);
+            }
+
+            let criticalDamageEffect = effectOnly;
+            let criticalDamageRoll = "";
+            if (!SBUtils.stringContains(effectOnly, "dc", false)) {
+                const criticalDamageRegex = effectOnly.split(/(.*)\s(.*)/i);
+                console.log(['crit damage', criticalDamageRegex]);
+                criticalDamageEffect = criticalDamageRegex[1];
+                criticalDamageRoll = criticalDamageRegex[2];
+            }
 
             const criticalObject = {
                 effect: "",
                 parts: []
             };
 
-            if (criticalDamageEffect != "") {
+            if (criticalDamageEffect) {
                 criticalObject.effect = SBUtils.camelize(criticalDamageEffect);
             }
-            if (criticalDamageRoll != "" && attackDamageType) {
+            if (criticalDamageRoll && attackDamageType) {
                 if (damageVersion) {
                     const damagePart = {
                         formula: criticalDamageRoll,
