@@ -63,6 +63,18 @@ SBConfig.skillMapping = {
     "survival": "sur"
 };
 
+SBConfig.sizeMapping = {
+    "fine": 1,
+    "diminutive": 1,
+    "tiny": 1,
+    "small": 1,
+    "medium": 1,
+    "large": 2,
+    "huge": 3,
+    "gargantuan": 4,
+    "colossal": 6
+};
+
 export class SBUtils {
     static openingBrackets = ['(', '[', '{'];
     static closingBrackers = [')', ']', '}'];
@@ -287,5 +299,12 @@ export class SBUtils {
         }
 
         return results;
+    }
+
+    static actorSizeToTokenSize(actorSize) {
+        if (actorSize in SBConfig.sizeMapping) {
+            return SBConfig.sizeMapping[actorSize];
+        }
+        return 1;
     }
 }

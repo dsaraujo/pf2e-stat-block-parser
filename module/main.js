@@ -96,13 +96,16 @@ class SBProgram {
             }
 
             SBUtils.log("> Setting up token defaults.");
+            const tokenSize = SBUtils.actorSizeToTokenSize(characterData.actorData?.data?.traits?.size || "medium");
             characterData.actorData = mergeObject(characterData.actorData, {
                 token: {
                     bar2: {
                         attribute: "attributes.rp"
                     },
                     displayBars: CONST.TOKEN_DISPLAY_MODES.OWNER,
-                    displayName: CONST.TOKEN_DISPLAY_MODES.OWNER
+                    displayName: CONST.TOKEN_DISPLAY_MODES.OWNER,
+                    width: tokenSize,
+                    height: tokenSize
                 }
             });
 

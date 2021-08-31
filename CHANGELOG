@@ -4,7 +4,7 @@
 --- Marked VTTES plugin and PCGen XML as deprecated. These do not seem to be used (anymore), and aren't functional since the Foundry v0.8 update anyway.
 - PAIZO Block updates:
 --- Added loot container, including a duplicate copy of weapons, left intentionally unequipped, so you can just drag the loot container onto the world.
---- Setting up token defaults, name and bars now always visible for owner, and stamina bar replaced with resolve.
+--- Setting up token defaults, name and bars now always visible for owner, and stamina bar replaced with resolve, token size now follows NPC size.
 --- Updated description parsing to no longer double-print "Description" header.
 --- Updated special ability parsing to generate custom features for abilities that are not recognized by any compendia.
 --- Improved critical parsing, it now parses the whole critical effect into the critical effects field.
