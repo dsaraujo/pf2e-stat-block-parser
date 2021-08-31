@@ -1,4 +1,4 @@
-0.4.7:
+0.5.0:
 - General updates:
 --- Implemented support for Starfinder v0.13.0's upcoming damage types update. (Works backwards compatible with Starfinder v0.12.1)
 --- Marked VTTES plugin and PCGen XML as deprecated. These do not seem to be used (anymore), and aren't functional since the Foundry v0.8 update anyway.
