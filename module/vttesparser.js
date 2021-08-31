@@ -259,6 +259,8 @@ export class SBVTTESParser {
     };
 
     async parseInput(actorData, inputText) {
+        const damageVersion = game.system.data.version.localeCompare("0.13.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+
         if (actorData == null || !inputText) {
             return {success: false};
         }
@@ -454,32 +456,55 @@ export class SBVTTESParser {
                         partB = attackDamageTypes[1].trim()[0];
                     }
 
-                    let combo = partA;
-                    if (partB) {
-                        combo += " & " + partB;
-                        if (!(combo in SBConfig.weaponDamageTypes)) {
-                            combo = partB + " & " + partA;
+                    if (damageVersion) {
+                        damageType = [partA];
+                        if (partB) {
+                            damageType = [partA, partB];
+                        }
+                    } else {
+                        let combo = partA;
+                        if (partB) {
+                            combo += " & " + partB;
+                            if (!(combo in SBConfig.weaponDamageTypes)) {
+                                combo = partB + " & " + partA;
+                            }
+                        }
+    
+                        if (combo in SBConfig.weaponDamageTypes) {
+                            damageType = combo;
+                        } else if (partA in SBConfig.weaponDamageTypes) {
+                            damageType = partA;
                         }
                     }
+                }
 
-                    if (combo in SBConfig.weaponDamageTypes) {
-                        damageType = combo;
-                    } else if (partA in SBConfig.weaponDamageTypes) {
-                        damageType = partA;
+                if (damageVersion) {
+                    let attackDamageType = {};
+                    for (const rawType of damageType) {
+                        const parsedType = SBConfig.weaponDamageTypeNew[rawType.trim()];
+                        attackDamageType = mergeObject(attackDamageType, parsedType);
                     }
-                }
 
-                if (damageType in SBConfig.weaponDamageTypes) {
-                    damageType = SBConfig.weaponDamageTypes[damageType];
+                    const damagePart = {
+                        formula: attack.damage_total.current,
+                        types: attackDamageType,
+                        operator: "and"
+                    };
+
+                    itemData = mergeObject(itemData, {data: {damage: {parts: [damagePart]}}});
                 } else {
-                    damageType = SBConfig.weaponDamageTypes["s"];
-                }
+                    if (damageType in SBConfig.weaponDamageTypes) {
+                        damageType = SBConfig.weaponDamageTypes[damageType];
+                    } else {
+                        damageType = SBConfig.weaponDamageTypes["s"];
+                    }
 
-                if (itemData.data.damage?.parts) {
-                    let firstPart = itemData.data.damage.parts.len > 0 ? itemData.data.damage.parts[0] : [0, damageType];
-                    itemData["data.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
-                } else if (attack.damage_total) {
-                    itemData["data.damage"] = {parts: [[attack.damage_total.current, damageType]]};
+                    if (itemData.data.damage?.parts) {
+                        let firstPart = itemData.data.damage.parts.len > 0 ? itemData.data.damage.parts[0] : [0, damageType];
+                        itemData["data.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
+                    } else if (attack.damage_total) {
+                        itemData["data.damage"] = {parts: [[attack.damage_total.current, damageType]]};
+                    }
                 }
 
                 if (attack.description && attack.description.current) {

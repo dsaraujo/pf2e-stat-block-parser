@@ -95,8 +95,22 @@ class SBProgram {
                 ui.notifications.error("There were " + errors.length + " issue(s) parsing the provided statblock:<br/>" + errorMessage + "<br/><br/>Click to dismiss.", {permanent: true});
             }
 
+            SBUtils.log("> Setting up token defaults.");
+            const tokenSize = SBUtils.actorSizeToTokenSize(characterData.actorData?.data?.traits?.size || "medium");
+            characterData.actorData = mergeObject(characterData.actorData, {
+                token: {
+                    bar2: {
+                        attribute: "attributes.rp"
+                    },
+                    displayBars: CONST.TOKEN_DISPLAY_MODES.OWNER,
+                    displayName: CONST.TOKEN_DISPLAY_MODES.OWNER,
+                    width: tokenSize,
+                    height: tokenSize
+                }
+            });
+
             SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
-            let actor = await Actor.create(characterData.actorData);
+            const actor = await Actor.create(characterData.actorData);
             if (actor == null) {
                 SBUtils.log("Failed to create new actor.");
                 SBProgram.logErrors(errors);
@@ -128,11 +142,15 @@ class SBProgram {
                         fullDescription += "</section>\n";
                     }
 
+                    let bIsCategoryUpdated = false;
                     if (currentCategory != description.category) {
                         fullDescription += `<h2>${description.category}</h2>\n`;
                         currentCategory = description.category;
+                        bIsCategoryUpdated = true;
                     }
-                    fullDescription += `<h3>${description.title}</h3>\n`;
+                    if (!bIsCategoryUpdated) {
+                        fullDescription += `<h3>${description.title}</h3>\n`;
+                    }
                     fullDescription += `<p>${description.body}</p>\n`;
                     fullDescription += `<p>&nbsp;</p>\n`;
                 }
@@ -145,19 +163,34 @@ class SBProgram {
 
             if (characterData.abilityDescriptions.length > 0) {
                 SBUtils.log(`> Processing ${characterData.abilityDescriptions.length} ability description(s).`);
-                for (let abilityDescription of characterData.abilityDescriptions) {
+                for (const abilityDescription of characterData.abilityDescriptions) {
+                    let abilityItemFound = false;
                     for (let i = 0; i<characterData.items.length; i++) {
-                        let typeString = SBParsing.parseSubtext(abilityDescription.name)[0];
+                        const typeString = SBParsing.parseSubtext(abilityDescription.name)[0];
                         if (SBUtils.stringStartsWith(typeString, characterData.items[i]["name"], false)
                             || SBUtils.stringStartsWith(characterData.items[i]["name"], typeString, false)) {
-                            characterData.items[i]["name"] = abilityDescription.name;
-                            const originalDesc = characterData.items[i]["data.description.value"];
-                            if (originalDesc) {
-                                characterData.items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + originalDesc;
-                            } else {
-                                characterData.items[i]["data.description.value"] = abilityDescription.description;
-                            }
+                                abilityItemFound = true;
+                                characterData.items[i]["name"] = abilityDescription.name;
+                                const originalDesc = characterData.items[i]["data.description.value"];
+                                if (originalDesc) {
+                                    characterData.items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + originalDesc;
+                                } else {
+                                    characterData.items[i]["data.description.value"] = abilityDescription.description;
+                                }
                         }
+                    }
+
+                    if (!abilityItemFound) {
+                        const newItem = {
+                            name: abilityDescription.name,
+                            type: 'feat',
+                            data: {
+                                description: {
+                                    value: abilityDescription.description
+                                }
+                            }
+                        };
+                        characterData.items.push(newItem);
                     }
                 }
             }
@@ -180,7 +213,6 @@ class SBProgram {
                         delete itemData.id;
                         delete itemData._id;
                         delete itemData.effects;
-                        delete itemData.flags;
                         delete itemData.permission;
                         delete itemData.sort;
                         delete itemData.folder;
@@ -230,13 +262,77 @@ class SBProgram {
 
             await actor.createEmbeddedDocuments("Item", embeddedItemsToCreate).then((createdItems) => {
                 const bulkUpdates = [];
+                const gearItemIds = [];
                 for (const createdItem of createdItems) {
-                    if (["weapon", "equipment"].includes(createdItem.type)) {
-                        bulkUpdates.push({_id: createdItem.id, "data.proficient": true, "data.equippable": true, "data.equipped": true});
+                    const isGear = createdItem?.data?.flags?.sbp?.isGear || false;
+
+                    if (!isGear) {
+                        if (["weapon", "equipment"].includes(createdItem.type)) {
+                            bulkUpdates.push({_id: createdItem.id, "data.proficient": true, "data.equippable": true, "data.equipped": true});
+                        }
+                    } else {
+                        gearItemIds.push(createdItem.id);
+                        bulkUpdates.push({_id: createdItem.id, "flags.-=sbp": null, "data.equipped": false});
                     }
                 }
-                if (bulkUpdates.length > 0) {
-                    actor.updateEmbeddedDocuments("Item", bulkUpdates);
+
+                if (gearItemIds.length > 0) {
+                    // Create loot container, then perform bulk updates
+
+                    const lootContainer = {
+                        "name": "Loot",
+                        "type": "container",
+                        "img": "icons/svg/item-bag.svg",
+                        "data": {
+                          "container": {
+                            "contents": [
+                            ],
+                            "storage": [
+                              {
+                                "type": "bulk",
+                                "subtype": "",
+                                "amount": 1000,
+                                "acceptsType": [
+                                  "weapon",
+                                  "shield",
+                                  "equipment",
+                                  "goods",
+                                  "consumable",
+                                  "container",
+                                  "technological",
+                                  "fusion",
+                                  "upgrade",
+                                  "augmentation",
+                                  "magic",
+                                  "hybrid",
+                                  "ammunition",
+                                  "weaponAccessory"
+                                ],
+                                "affectsEncumbrance": true,
+                                "weightProperty": "bulk"
+                              }
+                            ],
+                            "isOpen": true
+                          }
+                        }
+                    };
+
+                    for (const containedItem of gearItemIds) {
+                        lootContainer.data.container.contents.push({
+                            id: containedItem,
+                            index: 0
+                        });
+                    }
+
+                    actor.createEmbeddedDocuments("Item", [lootContainer]).then((createdItem) => {
+                        if (bulkUpdates.length > 0) {
+                            actor.updateEmbeddedDocuments("Item", bulkUpdates);
+                        }
+                    });
+                } else {
+                    if (bulkUpdates.length > 0) {
+                        actor.updateEmbeddedDocuments("Item", bulkUpdates);
+                    }
                 }
             });
             

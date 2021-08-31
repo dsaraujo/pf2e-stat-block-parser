@@ -264,6 +264,8 @@ class SBAttackParser extends SBParserBase {
   
     /** Will parse an attack using the attack format: attack name +attackRoll (damageRoll damageType ; critical effect) */
     async parseAttack(attack, bIsMeleeAttack) {
+        const damageVersion = game.system.data.version.localeCompare("0.13.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+
         //SBUtils.log("Parsing attack: " + attack);
         const attackInfo = SBParsing.parseSubtext(attack);
 
@@ -295,10 +297,23 @@ class SBAttackParser extends SBParserBase {
                 attackDamageRoll += " " + attackDamageData[2].trim();
             }
             attackDamageType = attackDamageData[3].toLowerCase();
-            if (SBConfig.weaponDamageTypes[attackDamageType]) {
-                attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
+            if (attackDamageData[4]) {
+                attackDamageType += attackDamageData[4].toLowerCase();
+            }
+
+            if (damageVersion) {
+                const rawTypes = SBUtils.splitEntries(attackDamageType, {additionalEntrySplitters: ["&"]});
+                attackDamageType = {};
+                for (const rawType of rawTypes) {
+                    const parsedType = SBConfig.weaponDamageTypeNew[rawType.trim()];
+                    attackDamageType = mergeObject(attackDamageType, parsedType);
+                }
             } else {
-                attackDamageType = "slashing";
+                if (SBConfig.weaponDamageTypes[attackDamageType]) {
+                    attackDamageType = SBConfig.weaponDamageTypes[attackDamageType];
+                } else {
+                    attackDamageType = "slashing";
+                }
             }
 
             if (damageBlock.length > 1) {
@@ -349,24 +364,59 @@ class SBAttackParser extends SBParserBase {
         itemData = mergeObject(itemData, {data: {attackBonus: SBParsing.parseInteger(attackModifier)}});
         
         if (attackDamageRoll) {
-            itemData = mergeObject(itemData, {data: {damage: {parts: [[attackDamageRoll, attackDamageType]]}}});
+            if (damageVersion) {
+                const damagePart = {
+                    formula: attackDamageRoll,
+                    types: attackDamageType,
+                    operator: "and"
+                };
+                itemData = mergeObject(itemData, {data: {damage: {parts: [damagePart]}}});
+            } else {
+                itemData = mergeObject(itemData, {data: {damage: {parts: [[attackDamageRoll, attackDamageType]]}}});
+            }
         }
 
-        if (criticalDamage != "") {
-            let criticalDamageRegex = criticalDamage.split(/(critical|crit)\s(.*)\s(.*)/i);
-            let criticalDamageEffect = criticalDamageRegex[2];
-            let criticalDamageRoll = criticalDamageRegex[3];
+        if (criticalDamage) {
+            criticalDamage = criticalDamage.trim();
+
+            // First remove the crit(ical) text
+            let effectOnly = criticalDamage;
+            if (SBUtils.stringStartsWith(criticalDamage, "critical", false)) {
+                effectOnly = criticalDamage.substr(9);
+            } else if (SBUtils.stringStartsWith(criticalDamage, "crit", false)) {
+                effectOnly = criticalDamage.substr(5);
+            }
+
+            let criticalDamageEffect = effectOnly;
+            let criticalDamageRoll = "";
+
+            // Disabling critical damage roll parsing. Apparently isn't used anywhere anyway.
+            // Leaving it here for myself, in case I ever need to re-enable it and I'm like, wtf was I doing here again?
+            /*if (!SBUtils.stringContains(effectOnly, "dc", false)) {
+                const criticalDamageRegex = effectOnly.split(/(.*)\s(.*)/i);
+                criticalDamageEffect = criticalDamageRegex[1];
+                criticalDamageRoll = criticalDamageRegex[2];
+            }*/
 
             const criticalObject = {
                 effect: "",
                 parts: []
             };
 
-            if (criticalDamageEffect != "") {
+            if (criticalDamageEffect) {
                 criticalObject.effect = SBUtils.camelize(criticalDamageEffect);
             }
-            if (criticalDamageRoll != "" && attackDamageType) {
-                criticalObject.parts = [[criticalDamageRoll, attackDamageType]];
+            if (criticalDamageRoll && attackDamageType) {
+                if (damageVersion) {
+                    const damagePart = {
+                        formula: criticalDamageRoll,
+                        types: attackDamageType,
+                        operator: "and"
+                    };
+                    criticalObject.parts = [damagePart];
+                } else {
+                    criticalObject.parts = [[criticalDamageRoll, attackDamageType]];
+                }
             }
 
             itemData = mergeObject(itemData, {data: {critical: criticalObject}});
@@ -381,10 +431,11 @@ class SBAttackParser extends SBParserBase {
 }
 
 class SBTraitParser extends SBParserBase {
-    constructor(traitField, supportedValues) {
+    constructor(traitField, supportedValues, dontSplitTraits = false) {
         super();
         this.traitField = traitField;
         this.supportedValues = supportedValues;
+        this.dontSplitTraits = dontSplitTraits;
     }
 
     async parse(key, value) {
@@ -392,7 +443,12 @@ class SBTraitParser extends SBParserBase {
 
         const values = SBUtils.splitEntries(value);
         for (const traitValue of values) {
-            const splitTrait = traitValue.trim().toLowerCase().split(' ');
+            let splitTrait = [];
+            if (this.dontSplitTraits) {
+                splitTrait.push(traitValue);
+            } else {
+                splitTrait = traitValue.trim().toLowerCase().split(' ');
+            }
             
             const traitName = splitTrait[0]
             const traitModifier = splitTrait.length > 1 ? splitTrait[1] : null;
@@ -420,7 +476,7 @@ class SBTraitParser extends SBParserBase {
 
 class SBLanguagesParser extends SBTraitParser {
     constructor(traitField, supportedValues) {
-        super(traitField, supportedValues);
+        super(traitField, supportedValues, true);
     }
 
     async parse(key, value) {
@@ -435,19 +491,25 @@ class SBLanguagesParser extends SBTraitParser {
 
 class SBWeaknessesParser extends SBParserBase {
     async parse(key, value) {
-        let recognizedWeaknesses = Object.keys(CONFIG["SFRPG"].damageTypes).map(x => x.toLowerCase());
+        const recognizedWeaknesses = Object.keys(CONFIG["SFRPG"].damageTypes).map(x => x.toLowerCase());
 
-        let knownWeaknesses = [];
+        const knownWeaknesses = [];
         let customWeaknesses = "";
 
-        let weaknesses = SBUtils.splitEntries(value);
-        for (let rawWeakness of weaknesses) {
-            let parsedWeakness = rawWeakness.split(/vulnerab.*\sto\s(.*)/i);
-            if (parsedWeakness[0].length == 0 && recognizedWeaknesses.includes(parsedWeakness[1].toLowerCase())) {
-                knownWeaknesses.push(parsedWeakness[1].toLowerCase());
+        const weaknesses = SBUtils.splitEntries(value);
+        for (const rawWeakness of weaknesses) {
+            const parsedWeakness = rawWeakness.split(/vulnerab.*\sto\s(.*)/i);
+
+            let weakness = parsedWeakness[0];
+            if (!weakness && parsedWeakness.length > 1) {
+                weakness = parsedWeakness[1].trim().toLowerCase();
+            }
+            
+            if (recognizedWeaknesses.includes(weakness)) {
+                knownWeaknesses.push(weakness);
             } else {
                 if (customWeaknesses) {
-                    customWeaknesses += ", ";
+                    customWeaknesses += "; ";
                 }
                 customWeaknesses += SBUtils.camelize(rawWeakness);
             }
@@ -487,7 +549,7 @@ class SBImmunitiesParser extends SBParserBase {
                 knownDamageImmunities.push(parsedImmunity);
             } else {
                 if (customImmunities) {
-                    customImmunities += ", ";
+                    customImmunities += "; ";
                 }
                 customImmunities += SBUtils.camelize(parsedImmunity);
             }
@@ -683,7 +745,7 @@ class SBGearParser extends SBParserBase {
         }
 
 
-        return {items: items, errors: errors};
+        return {gear: items, errors: errors};
     }
 }
 
@@ -931,17 +993,17 @@ class SBTelepathyParser extends SBParserBase {
 
 class SBSpecialAbilitiesParser extends SBCategoryParserBase {
     async parse(key, value) {
-        let errors = [];
-        let abilityDescriptions = [];
+        const errors = [];
+        const abilityDescriptions = [];
 
         // Iterate through the special abilities
         let currentAbilityKey = "";
         let currentAbilityText = "";
-        for (let line of value) {
-            let matched = line.match(/(.*\s\([Ex|Su|Sp]*\))\s(.*)/i);
+        for (const line of value) {
+            const matched = line.match(/(.*\s\([Ex|Su|Sp]*\))\s(.*)/i);
             if (matched && matched.length === 3) {
                 if (currentAbilityKey && currentAbilityText) {
-                    let newAbility = {name: currentAbilityKey, description: currentAbilityText};
+                    const newAbility = {name: currentAbilityKey, description: currentAbilityText};
                     abilityDescriptions.push(newAbility);
                     currentAbilityKey = "";
                     currentAbilityText = "";
@@ -955,7 +1017,7 @@ class SBSpecialAbilitiesParser extends SBCategoryParserBase {
         }
 
         if (currentAbilityKey && currentAbilityText) {
-            let newAbility = {name: currentAbilityKey, description: currentAbilityText};
+            const newAbility = {name: currentAbilityKey, description: currentAbilityText};
             abilityDescriptions.push(newAbility);
         }
 

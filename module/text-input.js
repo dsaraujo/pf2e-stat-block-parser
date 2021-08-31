@@ -1,4 +1,14 @@
 export class SBTextInputDialog extends Dialog {
+
+    static get defaultOptions() {
+        const options = super.defaultOptions;
+        mergeObject(options, {
+            width: 462
+        });
+
+        return options;
+    }
+
     constructor(actor, dialogData={}, options={}) {
         super(dialogData, options);
         this.options.classes = ["sfrpg", "dialog"];
