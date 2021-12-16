@@ -1,4 +1,6 @@
 0.5.2:
+- PAIZO Block updates:
+--- Now parsing the spell save DC value into the save DC field.
 
 0.5.1:
 - General updates:

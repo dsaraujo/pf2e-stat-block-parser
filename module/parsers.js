@@ -930,6 +930,15 @@ class SBSpellsParser extends SBParserBase {
                 const parsedSpellData = SBParsing.parseSubtext(rawSpell);
                 const foundSpell = await SBUtils.fuzzyFindSpellAsync(parsedSpellData[0]);
 
+                let dc = "";
+                if (parsedSpellData.length > 1) {
+                    if (SBUtils.stringContains(parsedSpellData[1], "DC", false)) {
+                        const dcString = parsedSpellData[1];
+                        const dcTokens = dcString.split(' ');
+                        dc = SBParsing.parseInteger(dcTokens[1]);
+                    }
+                }
+
                 const preparation = { prepared: true, mode: isAtWillSpell ? "always" : null };
 
                 if (foundSpell) {
@@ -942,6 +951,9 @@ class SBSpellsParser extends SBParserBase {
 
                     foundSpell.data.preparation = preparation;
                     foundSpell.data.level = spellblockLevel;
+                    if (dc) {
+                        foundSpell.data = mergeObject(foundSpell.data, {save: { dc: dc}});
+                    }
 
                     spells.push(foundSpell);
                 } else {
@@ -955,6 +967,9 @@ class SBSpellsParser extends SBParserBase {
                     foundSpell["type"] = "spell";
                     foundSpell.data.preparation = preparation;
                     foundSpell.data.level = spellblockLevel;
+                    if (dc) {
+                        foundSpell.data = mergeObject(foundSpell.data, {save: { dc: dc}});
+                    }
 
                     spells.push(foundSpell);
                 }
