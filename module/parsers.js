@@ -112,11 +112,17 @@ class SBSkillParser extends SBParserBase {
             skillName = key.toLowerCase().substring(0, 3);
         }
 
-        let values = value.split(' ');
+        const npc2Version = game.system.data.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
 
-        let parsedData = {};
+        const values = value.split(' ');
+
+        const parsedData = {};
         parsedData["data.skills." + skillName + ".enabled"] = true;
-        parsedData["data.skills." + skillName + ".mod"] = values[0];
+        if (npc2Version) {
+            parsedData["data.skills." + skillName + ".ranks"] = SBParsing.parseInteger(values[0]);
+        } else {
+            parsedData["data.skills." + skillName + ".mod"] = values[0];
+        }
         return {actorData: parsedData};
     }
 }
@@ -1045,11 +1051,11 @@ export function initParsers() {
         return;
     }
 
-    const speedVersion = game.system.data.version.localeCompare("0.12.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
-    
+    const npc2Version = game.system.data.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+
     SBParserMapping.parsers = {
         "base": {
-            "init": new SBSingleValueParser(["data.attributes.init.total"]),
+            "init": npc2Version ? new SBSingleValueParser(["data.attributes.init.value"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.init.total"]),
             "senses": new SBSingleValueParser(["data.traits.senses"], false),
             "perception": new SBSkillParser(),
             "aura": new SBAbilityParser("data.details.aura")
@@ -1058,11 +1064,11 @@ export function initParsers() {
             "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
             "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
             "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
-            "eac": new SBSingleValueParser(["data.attributes.eac.value"]),
-            "kac": new SBSingleValueParser(["data.attributes.kac.value"]),
-            "fort": new SBSingleValueParser(["data.attributes.fort.bonus"]),
-            "ref": new SBSingleValueParser(["data.attributes.reflex.bonus"]),
-            "will": new SBSingleValueParser(["data.attributes.will.bonus"]),
+            "eac": npc2Version ? new SBSingleValueParser(["data.attributes.eac.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.eac.value"]),
+            "kac": npc2Version ? new SBSingleValueParser(["data.attributes.kac.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.kac.value"]),
+            "fort": npc2Version ? new SBSingleValueParser(["data.attributes.fort.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.fort.bonus"]),
+            "ref": npc2Version ? new SBSingleValueParser(["data.attributes.reflex.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.reflex.bonus"]),
+            "will": npc2Version ? new SBSingleValueParser(["data.attributes.will.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.will.bonus"]),
             "sr": new SBSingleValueParser(["data.traits.sr"], false),
             "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/", false),
             "resistances": new SBTraitParser("data.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())),
@@ -1072,7 +1078,7 @@ export function initParsers() {
             "defensive abilities": new SBAbilityParser()
         },
         "offense": {
-            "speed": speedVersion ? new SBSpeedParser() : new SBSplitValueParser(["data.attributes.speed.value", "data.attributes.speed.special"], ",", false),
+            "speed": new SBSpeedParser(),
             "melee": new SBAttackParser(true),
             "ranged": new SBAttackParser(false),
             "multiattack": new SBAttackParser(true, true),
@@ -1085,12 +1091,12 @@ export function initParsers() {
             "reach": new SBSingleValueParser(["data.attributes.reach"], false)
         },
         "statistics": {
-            "str": new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
-            "dex": new SBSingleValueParser(["data.abilities.dex.mod"], false, SBParsing.parseInteger),
-            "con": new SBSingleValueParser(["data.abilities.con.mod"], false, SBParsing.parseInteger),
-            "int": new SBSingleValueParser(["data.abilities.int.mod"], false, SBParsing.parseInteger),
-            "wis": new SBSingleValueParser(["data.abilities.wis.mod"], false, SBParsing.parseInteger),
-            "cha": new SBSingleValueParser(["data.abilities.cha.mod"], false, SBParsing.parseInteger),
+            "str": npc2Version ? new SBSingleValueParser(["data.abilities.str.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
+            "dex": npc2Version ? new SBSingleValueParser(["data.abilities.dex.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.dex.mod"], false, SBParsing.parseInteger),
+            "con": npc2Version ? new SBSingleValueParser(["data.abilities.con.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.con.mod"], false, SBParsing.parseInteger),
+            "int": npc2Version ? new SBSingleValueParser(["data.abilities.int.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.int.mod"], false, SBParsing.parseInteger),
+            "wis": npc2Version ? new SBSingleValueParser(["data.abilities.wis.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.wis.mod"], false, SBParsing.parseInteger),
+            "cha": npc2Version ? new SBSingleValueParser(["data.abilities.cha.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.cha.mod"], false, SBParsing.parseInteger),
             "skills": new SBSkillsParser(),
             "languages": new SBLanguagesParser("data.traits.languages", Object.keys(CONFIG["SFRPG"].languages).map(x => x.toLowerCase())),
             "other abilities": new SBAbilityParser(),

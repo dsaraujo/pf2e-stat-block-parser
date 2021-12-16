@@ -33,12 +33,22 @@ class SBProgram {
     static async openSFSBP(folderId = null) {
         SBUtils.log("Opening Statblock Parser. Target folder is: " + folderId);
 
-        let textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
+        const minimumVersion = "0.12.0";
+        const hasMinimumVersion = game.system.data.version.localeCompare(minimumVersion, undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        if (!hasMinimumVersion) {
+            const errorMessage = `Starfinder Statblock Parser requires at least Starfinder v${minimumVersion} to function. Please update your system!<br/><br/>Click to dismiss.`;
+            console.error(`Starfinder Statblock Parser requires at least Starfinder v${minimumVersion} to function. Please update your system!<br/><br/>Click to dismiss.`);
+            ui.notifications.error(errorMessage, {permanent: true});
+            return;
+        }
+
+        const hasNPC2Version = game.system.data.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
             // Create actor
             let dataFormat = textResult.dataFormat;
             let characterData = {
-                actorData: {name: "Generated Actor", type: "npc", folder: folderId},
+                actorData: {name: "Generated Actor", type: hasNPC2Version ? "npc2" : "npc", folder: folderId},
                 items: [],
                 spells: [],
                 abilityDescriptions: [],
