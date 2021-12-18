@@ -1,3 +1,10 @@
+0.5.2:
+- General updates:
+--- Now outputting NPCs as the new NPC type if combined with Starfinder v0.16.
+--- Minimum supported system version is now Starfinder v0.12.
+- PAIZO Block updates:
+--- Now parsing the spell save DC value into the save DC field.
+
 0.5.1:
 - General updates:
 --- Marking support for FoundryVTT 0.8.9
