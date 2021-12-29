@@ -1,3 +1,7 @@
+0.5.3:
+- General updates:
+--- Tested and confirmed Foundry v9 compatibility.
+
 0.5.2:
 - General updates:
 --- Now outputting NPCs as the new NPC type if combined with Starfinder v0.16.
