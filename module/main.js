@@ -43,6 +43,7 @@ class SBProgram {
         }
 
         const hasNPC2Version = game.system.data.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const hasDRERVersion = game.system.data.version.localeCompare("0.18.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
         const textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
             // Create actor
@@ -118,6 +119,11 @@ class SBProgram {
                     height: tokenSize
                 }
             });
+
+            // Migrate DR/ER properties
+            if (hasDRERVersion) {
+                this.postProcessDamageMitigation(characterData.actorData.data);
+            }
 
             SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
             const actor = await Actor.create(characterData.actorData);
@@ -378,6 +384,106 @@ class SBProgram {
             }
 
             ui.notifications.error("There were " + errors.length + " issue(s) parsing the provided statblock:<br/>" + errorMessage + "<br/><br/>Click to dismiss.", {permanent: true});
+        }
+    }
+
+    static postProcessDamageMitigation(actorData) {
+        actorData.modifiers = actorData.modifiers ?? [];
+
+        // Process old damage reduction
+        if (actorData.traits?.damageReduction) {
+            const oldDamageReduction = duplicate(actorData.traits.damageReduction);
+            const oldDamageReductionValue = Number(oldDamageReduction.value);
+            if (!Number.isNaN(oldDamageReductionValue) && oldDamageReductionValue > 0) {
+                let notes = "";
+                if (!oldDamageReduction.negatedBy || oldDamageReduction.negatedBy != "-") {
+                    notes = oldDamageReduction.negatedBy;
+                }
+
+                const damageReductionModifier = new game.sfrpg.SFRPGModifier({
+                    name: "Damage Reduction",
+                    modifier: oldDamageReductionValue,
+                    type: game.sfrpg.SFRPGModifierTypes.UNTYPED,
+                    modifierType: game.sfrpg.SFRPGModifierType.CONSTANT, 
+                    effectType: game.sfrpg.SFRPGEffectType.DAMAGE_REDUCTION,
+                    valueAffected: "",
+                    enabled: true,
+                    source: "Migration",
+                    notes: notes,
+                    subtab: "permanent",
+                    condition: "",
+                    id: null // Auto-generate
+                });
+
+                actorData.modifiers.push(damageReductionModifier);
+
+                actorData.traits.damageReduction = {value: 0, negatedBy: ""};
+            }
+        }
+
+        // Process old energy resistances
+        const customEnergyResistances = actorData.traits?.dr?.custom;
+        const oldEnergyResistances = Object.entries(actorData.traits?.dr?.value ?? []);
+        if (oldEnergyResistances.length > 0 || customEnergyResistances) {
+            if (oldEnergyResistances.length > 0) {
+                for (const [index, entries] of oldEnergyResistances) {
+                    for (const [key, value] of Object.entries(entries)) {
+                        const resistanceValue = Number(value);
+                        if (Number.isNaN(resistanceValue)) {
+                            continue;
+                        }
+
+                        const energyResistanceModifier = new game.sfrpg.SFRPGModifier({
+                            name: "Energy Resistance",
+                            modifier: resistanceValue,
+                            type: game.sfrpg.SFRPGModifierTypes.UNTYPED,
+                            modifierType: game.sfrpg.SFRPGModifierType.CONSTANT, 
+                            effectType: game.sfrpg.SFRPGEffectType.ENERGY_RESISTANCE,
+                            valueAffected: key,
+                            enabled: true,
+                            source: "Migration",
+                            notes: "",
+                            subtab: "permanent",
+                            condition: "",
+                            id: null // Auto-generate
+                        });
+                        actorData.modifiers.push(energyResistanceModifier);
+                    }
+                }
+            }
+
+            if (customEnergyResistances) {
+                const customResistances = customEnergyResistances.trim().split(';');
+                for (const customResistance of customResistances) {
+                    const customSplit = customResistance.trim().split(' ');
+                    if (customSplit.length == 2) {
+                        const notes = customSplit[0];
+                        const resistanceValue = Number(customSplit[1]);
+
+                        if (Number.isNaN(resistanceValue)) {
+                            continue;
+                        }
+
+                        const energyResistanceModifier = new game.sfrpg.SFRPGModifier({
+                            name: "Energy Resistance",
+                            modifier: resistanceValue,
+                            type: game.sfrpg.SFRPGModifierTypes.UNTYPED,
+                            modifierType: game.sfrpg.SFRPGModifierType.CONSTANT, 
+                            effectType: game.sfrpg.SFRPGEffectType.ENERGY_RESISTANCE,
+                            valueAffected: "custom",
+                            enabled: true,
+                            source: "Migration",
+                            notes: notes,
+                            subtab: "permanent",
+                            condition: "",
+                            id: null // Auto-generate
+                        });
+                        actorData.modifiers.push(energyResistanceModifier);
+                    }
+                }
+            }
+
+            actorData.traits.dr = {value: [], custom: ""};
         }
     }
 }
