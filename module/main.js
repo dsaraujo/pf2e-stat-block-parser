@@ -34,7 +34,7 @@ class SBProgram {
         SBUtils.log("Opening Statblock Parser. Target folder is: " + folderId);
 
         const minimumVersion = "0.12.0";
-        const hasMinimumVersion = game.system.data.version.localeCompare(minimumVersion, undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const hasMinimumVersion = game.system.version.localeCompare(minimumVersion, undefined, { numeric: true, sensitivity: 'base' }) >= 0;
         if (!hasMinimumVersion) {
             const errorMessage = `Starfinder Statblock Parser requires at least Starfinder v${minimumVersion} to function. Please update your system!<br/><br/>Click to dismiss.`;
             console.error(`Starfinder Statblock Parser requires at least Starfinder v${minimumVersion} to function. Please update your system!<br/><br/>Click to dismiss.`);
@@ -42,8 +42,8 @@ class SBProgram {
             return;
         }
 
-        const hasNPC2Version = game.system.data.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
-        const hasDRERVersion = game.system.data.version.localeCompare("0.18.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const hasNPC2Version = game.system.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const hasDRERVersion = game.system.version.localeCompare("0.18.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
         const textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
             // Create actor
@@ -107,7 +107,7 @@ class SBProgram {
             }
 
             SBUtils.log("> Setting up token defaults.");
-            const tokenSize = SBUtils.actorSizeToTokenSize(characterData.actorData?.data?.traits?.size || "medium");
+            const tokenSize = SBUtils.actorSizeToTokenSize(characterData.actorData?.system?.traits?.size || "medium");
             characterData.actorData = mergeObject(characterData.actorData, {
                 token: {
                     bar2: {
@@ -122,7 +122,7 @@ class SBProgram {
 
             // Migrate DR/ER properties
             if (hasDRERVersion) {
-                this.postProcessDamageMitigation(characterData.actorData.data);
+                this.postProcessDamageMitigation(characterData.actorData.system);
             }
 
             SBUtils.log("> Creating actor.");//: " + JSON.stringify(actorData));
@@ -172,7 +172,7 @@ class SBProgram {
                 }
                 if (fullDescription) {
                     let actorDescription = {};
-                    actorDescription["data.details.biography.value"] = fullDescription;
+                    actorDescription["system.details.biography.value"] = fullDescription;
                     await actor.update(actorDescription);
                 }
             }
@@ -187,11 +187,11 @@ class SBProgram {
                             || SBUtils.stringStartsWith(characterData.items[i]["name"], typeString, false)) {
                                 abilityItemFound = true;
                                 characterData.items[i]["name"] = abilityDescription.name;
-                                const originalDesc = characterData.items[i]["data.description.value"];
+                                const originalDesc = characterData.items[i]["system.description.value"];
                                 if (originalDesc) {
-                                    characterData.items[i]["data.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + originalDesc;
+                                    characterData.items[i]["system.description.value"] = abilityDescription.description + "<br/><br/>Original description:<br/>" + originalDesc;
                                 } else {
-                                    characterData.items[i]["data.description.value"] = abilityDescription.description;
+                                    characterData.items[i]["system.description.value"] = abilityDescription.description;
                                 }
                         }
                     }
@@ -200,7 +200,7 @@ class SBProgram {
                         const newItem = {
                             name: abilityDescription.name,
                             type: 'feat',
-                            data: {
+                            system: {
                                 description: {
                                     value: abilityDescription.description
                                 }
@@ -280,15 +280,15 @@ class SBProgram {
                 const bulkUpdates = [];
                 const gearItemIds = [];
                 for (const createdItem of createdItems) {
-                    const isGear = createdItem?.data?.flags?.sbp?.isGear || false;
+                    const isGear = createdItem?.flags?.sbp?.isGear || false;
 
                     if (!isGear) {
                         if (["weapon", "equipment"].includes(createdItem.type)) {
-                            bulkUpdates.push({_id: createdItem.id, "data.proficient": true, "data.equippable": true, "data.equipped": true});
+                            bulkUpdates.push({_id: createdItem.id, "system.proficient": true, "system.equippable": true, "system.equipped": true});
                         }
                     } else {
                         gearItemIds.push(createdItem.id);
-                        bulkUpdates.push({_id: createdItem.id, "flags.-=sbp": null, "data.equipped": false});
+                        bulkUpdates.push({_id: createdItem.id, "flags.-=sbp": null, "system.equipped": false});
                     }
                 }
 
@@ -299,7 +299,7 @@ class SBProgram {
                         "name": "Loot",
                         "type": "container",
                         "img": "icons/svg/item-bag.svg",
-                        "data": {
+                        "system": {
                           "container": {
                             "contents": [
                             ],
@@ -334,7 +334,7 @@ class SBProgram {
                     };
 
                     for (const containedItem of gearItemIds) {
-                        lootContainer.data.container.contents.push({
+                        lootContainer.system.container.contents.push({
                             id: containedItem,
                             index: 0
                         });

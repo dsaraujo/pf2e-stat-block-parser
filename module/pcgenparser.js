@@ -109,8 +109,8 @@ class SBSkillParser {
                     skillName = skillName.toLowerCase().substring(0, 3);
                 }
 
-                characterData.actorData["data.skills." + skillName + ".enabled"] = true;
-                characterData.actorData["data.skills." + skillName + ".mod"] = skillTotal;
+                characterData.actorData["system.skills." + skillName + ".enabled"] = true;
+                characterData.actorData["system.skills." + skillName + ".mod"] = skillTotal;
             } catch (err) {
                 if (skillName) {
                     SBUtils.log("Error occurred parsing skill: " + skillName + ", err: " + err);
@@ -181,7 +181,7 @@ class SBFeatParser {
                     let item = {};
                     item["name"] = featName;
                     item["type"] = "feat";
-                    item["data.description.value"] = description;
+                    item["system.description.value"] = description;
 
                     //SBUtils.log("Parsed feat: " + JSON.stringify(item));
 
@@ -200,19 +200,19 @@ class SBFeatParser {
 export class SBPCGenParser {
     attributeMapping = {
         "root.character.name": new SBDirectFieldParser(["name"]),
-        "root.character.alignment": new SBDirectFieldParser(["data.details.alignment"]),
-        "root.character.speed": new SBDirectFieldParser(["data.attributes.speed.value"]),
-        "root.character.size": new SBDirectFieldParser(["data.traits.size"], SBDirectFieldAssignmentMode.LowerCase),
-        "root.character.race": new SBDirectFieldParser(["data.details.race"], SBDirectFieldAssignmentMode.Camelized),
-        "root.character.hp.total": new SBDirectFieldParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
-        "root.character.sp.total": new SBDirectFieldParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
-        "root.character.rp.total": new SBDirectFieldParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
-        "root.character.abilities.strength.bonus": new SBDirectFieldParser(["data.abilities.str.mod"], SBDirectFieldAssignmentMode.Integer),
-        "root.character.abilities.dexterity.bonus": new SBDirectFieldParser(["data.abilities.dex.mod"], SBDirectFieldAssignmentMode.Integer),
-        "root.character.abilities.constitution.bonus": new SBDirectFieldParser(["data.abilities.con.mod"], SBDirectFieldAssignmentMode.Integer),
-        "root.character.abilities.intelligence.bonus": new SBDirectFieldParser(["data.abilities.int.mod"], SBDirectFieldAssignmentMode.Integer),
-        "root.character.abilities.wisdom.bonus": new SBDirectFieldParser(["data.abilities.wis.mod"], SBDirectFieldAssignmentMode.Integer),
-        "root.character.abilities.charisma.bonus": new SBDirectFieldParser(["data.abilities.cha.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.alignment": new SBDirectFieldParser(["system.details.alignment"]),
+        "root.character.speed": new SBDirectFieldParser(["system.attributes.speed.value"]),
+        "root.character.size": new SBDirectFieldParser(["system.traits.size"], SBDirectFieldAssignmentMode.LowerCase),
+        "root.character.race": new SBDirectFieldParser(["system.details.race"], SBDirectFieldAssignmentMode.Camelized),
+        "root.character.hp.total": new SBDirectFieldParser(["system.attributes.hp.value", "system.attributes.hp.max"]),
+        "root.character.sp.total": new SBDirectFieldParser(["system.attributes.sp.value", "system.attributes.sp.max"]),
+        "root.character.rp.total": new SBDirectFieldParser(["system.attributes.rp.value", "system.attributes.rp.max"]),
+        "root.character.abilities.strength.bonus": new SBDirectFieldParser(["system.abilities.str.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.dexterity.bonus": new SBDirectFieldParser(["system.abilities.dex.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.constitution.bonus": new SBDirectFieldParser(["system.abilities.con.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.intelligence.bonus": new SBDirectFieldParser(["system.abilities.int.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.wisdom.bonus": new SBDirectFieldParser(["system.abilities.wis.mod"], SBDirectFieldAssignmentMode.Integer),
+        "root.character.abilities.charisma.bonus": new SBDirectFieldParser(["system.abilities.cha.mod"], SBDirectFieldAssignmentMode.Integer),
         "root.character.skilllist": new SBSkillParser(),
         "root.character.featlist": new SBFeatParser()
     };
@@ -231,8 +231,8 @@ export class SBPCGenParser {
         }
 
         // NPCs by default have no SP or RP
-        characterData.actorData["data.attributes.sp.max"] = 0;
-        characterData.actorData["data.attributes.rp.max"] = 0;
+        characterData.actorData["system.attributes.sp.max"] = 0;
+        characterData.actorData["system.attributes.rp.max"] = 0;
 
         let errors = [];
 

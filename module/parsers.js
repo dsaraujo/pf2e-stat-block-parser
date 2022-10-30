@@ -112,16 +112,16 @@ class SBSkillParser extends SBParserBase {
             skillName = key.toLowerCase().substring(0, 3);
         }
 
-        const npc2Version = game.system.data.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const npc2Version = game.system.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
 
         const values = value.split(' ');
 
         const parsedData = {};
-        parsedData["data.skills." + skillName + ".enabled"] = true;
+        parsedData["system.skills." + skillName + ".enabled"] = true;
         if (npc2Version) {
-            parsedData["data.skills." + skillName + ".ranks"] = SBParsing.parseInteger(values[0]);
+            parsedData["system.skills." + skillName + ".ranks"] = SBParsing.parseInteger(values[0]);
         } else {
-            parsedData["data.skills." + skillName + ".mod"] = values[0];
+            parsedData["system.skills." + skillName + ".mod"] = values[0];
         }
         return {actorData: parsedData};
     }
@@ -203,7 +203,7 @@ class SBSpeedParser extends SBParserBase {
         }
 
         const parsedData = {};
-        parsedData["data.attributes.speed"] = speedData;
+        parsedData["system.attributes.speed"] = speedData;
         return {actorData: parsedData};
     }
 }
@@ -270,7 +270,7 @@ class SBAttackParser extends SBParserBase {
   
     /** Will parse an attack using the attack format: attack name +attackRoll (damageRoll damageType ; critical effect) */
     async parseAttack(attack, bIsMeleeAttack) {
-        const damageVersion = game.system.data.version.localeCompare("0.13.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const damageVersion = game.system.version.localeCompare("0.13.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
 
         //SBUtils.log("Parsing attack: " + attack);
         const attackInfo = SBParsing.parseSubtext(attack);
@@ -340,7 +340,7 @@ class SBAttackParser extends SBParserBase {
 
         //SBUtils.log("(W) > " + attackName + " found: " + JSON.stringify(matchingItem));
 
-        let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
+        let itemData = matchingItem != null ? matchingItem : {"name": attackName, system: {}};
 
         if (this.bIsMulti) {
             itemData["name"] = "[MultiATK] " + itemData["name"];
@@ -356,18 +356,18 @@ class SBAttackParser extends SBParserBase {
         if (!itemData.type) {
             itemData["type"] = "weapon";
         }
-        if (!itemData.data.actionType) {
-            itemData = mergeObject(itemData, {data: {actionType: bIsMeleeAttack ? "mwak" : "rwak"}});
+        if (!itemData.actionType) {
+            itemData = mergeObject(itemData, {system: {actionType: bIsMeleeAttack ? "mwak" : "rwak"}});
         }
-        if (!itemData.data.weaponType) {
-            itemData = mergeObject(itemData, {data: {weaponType: bIsMeleeAttack ? "basicM" : "smallA"}});
+        if (!itemData.weaponType) {
+            itemData = mergeObject(itemData, {system: {weaponType: bIsMeleeAttack ? "basicM" : "smallA"}});
         }
-        if (!itemData.data.quantity) {
-            itemData = mergeObject(itemData, {data: {quantity: 1}});
+        if (!itemData.quantity) {
+            itemData = mergeObject(itemData, {system: {quantity: 1}});
         }
 
-        itemData = mergeObject(itemData, {data: {ability: ""}});
-        itemData = mergeObject(itemData, {data: {attackBonus: SBParsing.parseInteger(attackModifier)}});
+        itemData = mergeObject(itemData, {system: {ability: ""}});
+        itemData = mergeObject(itemData, {system: {attackBonus: SBParsing.parseInteger(attackModifier)}});
         
         if (attackDamageRoll) {
             if (damageVersion) {
@@ -376,9 +376,9 @@ class SBAttackParser extends SBParserBase {
                     types: attackDamageType,
                     operator: "and"
                 };
-                itemData = mergeObject(itemData, {data: {damage: {parts: [damagePart]}}});
+                itemData = mergeObject(itemData, {system: {damage: {parts: [damagePart]}}});
             } else {
-                itemData = mergeObject(itemData, {data: {damage: {parts: [[attackDamageRoll, attackDamageType]]}}});
+                itemData = mergeObject(itemData, {system: {damage: {parts: [[attackDamageRoll, attackDamageType]]}}});
             }
         }
 
@@ -425,7 +425,7 @@ class SBAttackParser extends SBParserBase {
                 }
             }
 
-            itemData = mergeObject(itemData, {data: {critical: criticalObject}});
+            itemData = mergeObject(itemData, {system: {critical: criticalObject}});
         }
 
         if (!itemData["name"]) {
@@ -562,7 +562,7 @@ class SBImmunitiesParser extends SBParserBase {
         }
 
         const parsedData = {
-            data: {
+            system: {
                 traits: {
                     ci: {"value": knownConditionImmunities, "custom": customImmunities},
                     di: {"value": knownDamageImmunities, "custom": customImmunities}
@@ -740,7 +740,7 @@ class SBGearParser extends SBParserBase {
                     if (itemToAdd.subText) {
                         let textSplit = itemToAdd.subText.split(' ');
                         itemData = mergeObject(itemData, {data: {price: Number(textSplit[0].trim())}});
-                        itemData["name"] = `Credstick (${itemData.data.price} credits)`;
+                        itemData["name"] = `Credstick (${itemData.system.price} credits)`;
                     }
                 }
 
@@ -800,22 +800,22 @@ class SBSpellLikeParser extends SBParserBase {
                 if (foundSpell) {
                     //SBUtils.log(">> Known spell: " + rawSpell);
                     foundSpell["sourceId"] = foundSpell["_id"];
-                    foundSpell["name"] = SBUtils.camelize(rawSpell);
-                    foundSpell = mergeObject(foundSpell, {data: {preparation: { prepared: true, mode: "innate" }}});
+                    foundSpell.system["name"] = SBUtils.camelize(rawSpell);
+                    foundSpell = mergeObject(foundSpell, {system: {preparation: { prepared: true, mode: "innate" }}});
 
                     if (["atwill", "at will", "constant"].includes(spellBlock.level.toLowerCase())) {
-                        foundSpell.data.preparation.mode = "always";
+                        foundSpell.system.preparation.mode = "always";
                         foundSpell["name"] += " (" + SBUtils.camelize(spellBlock.level) + ")";
                     }
 
                     if (spellActivation.length == 2) {
-                        if (!foundSpell.data.activation) {
-                            foundSpell = mergeObject(foundSpell, {data: {activation: { cost: 0, type: "none" }}});
-                        } else if (!foundSpell.data.activation.type) {
-                            foundSpell.data.activation.type = "none";
+                        if (!foundSpell.system.activation) {
+                            foundSpell = mergeObject(foundSpell, {system: {activation: { cost: 0, type: "none" }}});
+                        } else if (!foundSpell.system.activation.type) {
+                            foundSpell.system.activation.type = "none";
                         }
 
-                        foundSpell = mergeObject(foundSpell, {data: {uses: {
+                        foundSpell = mergeObject(foundSpell, {system: {uses: {
                             value: Number(spellActivation[0]),
                             max: Number(spellActivation[0]),
                             per: "day"
@@ -828,24 +828,24 @@ class SBSpellLikeParser extends SBParserBase {
                     foundSpell = {
                         name: SBUtils.camelize(rawSpell),
                         type: "spell",
-                        data: {
+                        system: {
                             level: SBParsing.parseInteger(spellBlock.level[0]),
                             preparation: { prepared: true, mode: "innate" }
                         }
                     };
 
                     if (["atwill", "at will", "constant"].includes(spellBlock.level.toLowerCase())) {
-                        foundSpell.data.preparation = { prepared: true, mode: "always" };
-                        foundSpell.name += " (" + SBUtils.camelize(spellBlock.level) + ")";
+                        foundSpell.system.preparation = { prepared: true, mode: "always" };
+                        foundSpell.system.name += " (" + SBUtils.camelize(spellBlock.level) + ")";
                     }
 
                     if (spellActivation.length == 2) {
-                        foundSpell.data.activation = {
+                        foundSpell.system.activation = {
                             cost: 0,
                             type: "none"
                         };
 
-                        foundSpell.data.uses = {
+                        foundSpell.system.uses = {
                             value: Number(spellActivation[0]),
                             max: Number(spellActivation[0]),
                             per: "day"
@@ -906,8 +906,15 @@ class SBSpellsParser extends SBParserBase {
         //SBUtils.log("Parsed result: " + JSON.stringify(splitSpellblocks));
 
         const actorData = {
-            data: {
-                spells: {}
+            system: {
+                spells: {
+                    spell1: {},
+                    spell2: {},
+                    spell3: {},
+                    spell4: {},
+                    spell5: {},
+                    spell6: {}
+                }
             }
         };
 
@@ -929,7 +936,8 @@ class SBSpellsParser extends SBParserBase {
                         max: parsedUsage[1]
                     }
                 };
-                actorData.data.spells = mergeObject(actorData.data.spells, spellsData);
+
+                actorData.system.spells = mergeObject(actorData.system.spells, spellsData);
             }
             
             for (const rawSpell of splitSpells) {
@@ -955,10 +963,10 @@ class SBSpellsParser extends SBParserBase {
                         foundSpell["name"] += " (At will)";
                     }
 
-                    foundSpell.data.preparation = preparation;
-                    foundSpell.data.level = spellblockLevel;
+                    foundSpell.system.preparation = preparation;
+                    foundSpell.system.level = spellblockLevel;
                     if (dc) {
-                        foundSpell.data = mergeObject(foundSpell.data, {save: { dc: dc}});
+                        foundSpell.system = mergeObject(foundSpell.system, {save: { dc: dc}});
                     }
 
                     spells.push(foundSpell);
@@ -971,10 +979,10 @@ class SBSpellsParser extends SBParserBase {
                     }
 
                     foundSpell["type"] = "spell";
-                    foundSpell.data.preparation = preparation;
-                    foundSpell.data.level = spellblockLevel;
+                    foundSpell.system.preparation = preparation;
+                    foundSpell.system.level = spellblockLevel;
                     if (dc) {
-                        foundSpell.data = mergeObject(foundSpell.data, {save: { dc: dc}});
+                        foundSpell.system = mergeObject(foundSpell.system, {save: { dc: dc}});
                     }
 
                     spells.push(foundSpell);
@@ -1007,7 +1015,7 @@ class SBDescriptionParser extends SBCategoryParserBase {
 class SBTelepathyParser extends SBParserBase {
     async parse(key, value) {
         let actorData = {};
-        actorData["data.traits.languages.custom"] = SBUtils.camelize(key) + " " + value;
+        actorData["system.traits.languages.custom"] = SBUtils.camelize(key) + " " + value;
         return {actorData: actorData};
     }
 }
@@ -1051,28 +1059,28 @@ export function initParsers() {
         return;
     }
 
-    const npc2Version = game.system.data.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+    const npc2Version = game.system.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
 
     SBParserMapping.parsers = {
         "base": {
-            "init": npc2Version ? new SBSingleValueParser(["data.attributes.init.value"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.init.total"]),
-            "senses": new SBSingleValueParser(["data.traits.senses"], false),
+            "init": npc2Version ? new SBSingleValueParser(["system.attributes.init.value"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.init.total"]),
+            "senses": new SBSingleValueParser(["system.traits.senses"], false),
             "perception": new SBSkillParser(),
-            "aura": new SBAbilityParser("data.details.aura")
+            "aura": new SBAbilityParser("system.details.aura")
         },
         "defense": {
-            "hp": new SBSingleValueParser(["data.attributes.hp.value", "data.attributes.hp.max"]),
-            "sp": new SBSingleValueParser(["data.attributes.sp.value", "data.attributes.sp.max"]),
-            "rp": new SBSingleValueParser(["data.attributes.rp.value", "data.attributes.rp.max"]),
-            "eac": npc2Version ? new SBSingleValueParser(["data.attributes.eac.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.eac.value"]),
-            "kac": npc2Version ? new SBSingleValueParser(["data.attributes.kac.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.kac.value"]),
-            "fort": npc2Version ? new SBSingleValueParser(["data.attributes.fort.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.fort.bonus"]),
-            "ref": npc2Version ? new SBSingleValueParser(["data.attributes.reflex.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.reflex.bonus"]),
-            "will": npc2Version ? new SBSingleValueParser(["data.attributes.will.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["data.attributes.will.bonus"]),
-            "sr": new SBSingleValueParser(["data.traits.sr"], false),
-            "dr": new SBSplitValueParser(["data.traits.damageReduction.value", "data.traits.damageReduction.negatedBy"], "/", false),
-            "resistances": new SBTraitParser("data.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())),
-            "resist": new SBTraitParser("data.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())), // Hero Lab support
+            "hp": new SBSingleValueParser(["system.attributes.hp.value", "system.attributes.hp.max"]),
+            "sp": new SBSingleValueParser(["system.attributes.sp.value", "system.attributes.sp.max"]),
+            "rp": new SBSingleValueParser(["system.attributes.rp.value", "system.attributes.rp.max"]),
+            "eac": npc2Version ? new SBSingleValueParser(["system.attributes.eac.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.eac.value"]),
+            "kac": npc2Version ? new SBSingleValueParser(["system.attributes.kac.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.kac.value"]),
+            "fort": npc2Version ? new SBSingleValueParser(["system.attributes.fort.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.fort.bonus"]),
+            "ref": npc2Version ? new SBSingleValueParser(["system.attributes.reflex.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.reflex.bonus"]),
+            "will": npc2Version ? new SBSingleValueParser(["system.attributes.will.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.will.bonus"]),
+            "sr": new SBSingleValueParser(["system.traits.sr"], false),
+            "dr": new SBSplitValueParser(["system.traits.damageReduction.value", "system.traits.damageReduction.negatedBy"], "/", false),
+            "resistances": new SBTraitParser("system.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())),
+            "resist": new SBTraitParser("system.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())), // Hero Lab support
             "weaknesses": new SBWeaknessesParser(),
             "immunities": new SBImmunitiesParser(),
             "defensive abilities": new SBAbilityParser()
@@ -1087,18 +1095,18 @@ export function initParsers() {
             "* spell-like abilities": new SBSpellLikeParser(),
             "* spells known": new SBSpellsParser(),
             "connection": new SBDescriptionParser('offense'),
-            "space": new SBSingleValueParser(["data.attributes.space"], false),
-            "reach": new SBSingleValueParser(["data.attributes.reach"], false)
+            "space": new SBSingleValueParser(["system.attributes.space"], false),
+            "reach": new SBSingleValueParser(["system.attributes.reach"], false)
         },
         "statistics": {
-            "str": npc2Version ? new SBSingleValueParser(["data.abilities.str.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.str.mod"], false, SBParsing.parseInteger),
-            "dex": npc2Version ? new SBSingleValueParser(["data.abilities.dex.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.dex.mod"], false, SBParsing.parseInteger),
-            "con": npc2Version ? new SBSingleValueParser(["data.abilities.con.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.con.mod"], false, SBParsing.parseInteger),
-            "int": npc2Version ? new SBSingleValueParser(["data.abilities.int.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.int.mod"], false, SBParsing.parseInteger),
-            "wis": npc2Version ? new SBSingleValueParser(["data.abilities.wis.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.wis.mod"], false, SBParsing.parseInteger),
-            "cha": npc2Version ? new SBSingleValueParser(["data.abilities.cha.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["data.abilities.cha.mod"], false, SBParsing.parseInteger),
+            "str": npc2Version ? new SBSingleValueParser(["system.abilities.str.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["system.abilities.str.mod"], false, SBParsing.parseInteger),
+            "dex": npc2Version ? new SBSingleValueParser(["system.abilities.dex.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["system.abilities.dex.mod"], false, SBParsing.parseInteger),
+            "con": npc2Version ? new SBSingleValueParser(["system.abilities.con.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["system.abilities.con.mod"], false, SBParsing.parseInteger),
+            "int": npc2Version ? new SBSingleValueParser(["system.abilities.int.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["system.abilities.int.mod"], false, SBParsing.parseInteger),
+            "wis": npc2Version ? new SBSingleValueParser(["system.abilities.wis.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["system.abilities.wis.mod"], false, SBParsing.parseInteger),
+            "cha": npc2Version ? new SBSingleValueParser(["system.abilities.cha.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["system.abilities.cha.mod"], false, SBParsing.parseInteger),
             "skills": new SBSkillsParser(),
-            "languages": new SBLanguagesParser("data.traits.languages", Object.keys(CONFIG["SFRPG"].languages).map(x => x.toLowerCase())),
+            "languages": new SBLanguagesParser("system.traits.languages", Object.keys(CONFIG["SFRPG"].languages).map(x => x.toLowerCase())),
             "other abilities": new SBAbilityParser(),
             "noncombat abilities": new SBAbilityParser(),
             "feats": new SBAbilityParser(),
@@ -1113,8 +1121,8 @@ export function initParsers() {
         },
         "special abilities": new SBSpecialAbilitiesParser(),
         "ecology": {
-            "environment": new SBCopyValueParser("data.details.environment"),
-            "organization": new SBCopyValueParser("data.details.organization")
+            "environment": new SBCopyValueParser("system.details.environment"),
+            "organization": new SBCopyValueParser("system.details.organization")
         },
         "description": new SBDescriptionParser('description', false),
         "hero lab": null // Hero Lab support
