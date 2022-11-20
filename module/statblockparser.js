@@ -20,8 +20,8 @@ export class SBStatblockParser {
         }
 
         // NPCs by default have no SP or RP
-        characterData.actorData["data.attributes.sp.max"] = 0;
-        characterData.actorData["data.attributes.rp.max"] = 0;
+        characterData.actorData["system.attributes.sp.max"] = 0;
+        characterData.actorData["system.attributes.rp.max"] = 0;
 
         let bNameHandled = false;
         let bSizeHandled = false;
@@ -89,7 +89,7 @@ export class SBStatblockParser {
                         
                         bNameHandled = true;
                         characterData.actorData['name'] = npcName;
-                        characterData.actorData['data.details.cr'] = npcCR;
+                        characterData.actorData['system.details.cr'] = npcCR;
                         return;
                     }
                 }
@@ -102,9 +102,9 @@ export class SBStatblockParser {
                         let npcClass = genderRaceClassBlock[3];
 
                         bRaceHandled = true;
-                        characterData.actorData['data.details.gender'] = SBUtils.camelize(gender);
-                        characterData.actorData['data.details.race'] = SBUtils.camelize(race);
-                        characterData.actorData['data.details.class'] = SBUtils.camelize(npcClass);
+                        characterData.actorData['system.details.gender'] = SBUtils.camelize(gender);
+                        characterData.actorData['system.details.race'] = SBUtils.camelize(race);
+                        characterData.actorData['system.details.class'] = SBUtils.camelize(npcClass);
                         return;
                     }
                 }
@@ -125,12 +125,12 @@ export class SBStatblockParser {
                         size = size.toLowerCase();
                         
                         bSizeHandled = true;
-                        characterData.actorData['data.details.type'] = SBUtils.camelize(type);
+                        characterData.actorData['system.details.type'] = SBUtils.camelize(type);
                         if (subType) {
-                            characterData.actorData['data.details.subtype'] = SBUtils.camelize(subType);
+                            characterData.actorData['system.details.subtype'] = SBUtils.camelize(subType);
                         }
-                        characterData.actorData['data.details.alignment'] = alignment;
-                        characterData.actorData['data.traits.size'] = size;
+                        characterData.actorData['system.details.alignment'] = alignment;
+                        characterData.actorData['system.traits.size'] = size;
                         return;
                     }
                 }

@@ -9,8 +9,8 @@ export class SBVTTESParser {
 
     parseSkill(dict, skill, value) {
         if (value.current != 0) {
-            dict["data.skills." + skill + ".enabled"] = true;
-            dict["data.skills." + skill + ".mod"] = value.current;
+            dict["system.skills." + skill + ".enabled"] = true;
+            dict["system.skills." + skill + ".mod"] = value.current;
         }
     }
 
@@ -29,40 +29,40 @@ export class SBVTTESParser {
             sectionData += "</section>";
         }
         
-        let oldDesc = dict["data.details.biography.value"];
+        let oldDesc = dict["system.details.biography.value"];
         if (oldDesc) {
-            dict["data.details.biography.value"] = oldDesc + "<br />" + sectionData;
+            dict["system.details.biography.value"] = oldDesc + "<br />" + sectionData;
         } else {
-            dict["data.details.biography.value"] = sectionData;
+            dict["system.details.biography.value"] = sectionData;
         }
     }
 
     attributeMapping = {
-        "character_level": (dict,val) => dict["data.details.cr"] = val.current,
-        "strength_mod": (dict,val) => dict["data.abilities.str.mod"] = val.current,
-        "dexterity_mod": (dict,val) => dict["data.abilities.dex.mod"] = val.current,
-        "constitution_mod": (dict,val) => dict["data.abilities.con.mod"] = val.current,
-        "intelligence_mod": (dict,val) => dict["data.abilities.int.mod"] = val.current,
-        "wisdom_mod": (dict,val) => dict["data.abilities.wis.mod"] = val.current,
-        "charisma_mod": (dict,val) => dict["data.abilities.cha.mod"] = val.current,
-        "race": (dict,val) => dict['data.details.raceAndGrafts'] = SBUtils.camelize(val.current),
-        "alignment": (dict,val) => dict["data.details.alignment"] = val.current,
-        "type_subtype": (dict,val) => dict['data.details.type'] = SBUtils.camelize(val.current),
-        "initiative_base": (dict,val) => dict["data.attributes.init.total"] = val.current,
-        "senses": (dict,val) => dict["data.traits.senses"] = val.current,
-        "perception_base": (dict,val) => { dict["data.skills.per.mod"] = val.current; dict["data.skills.per.enabled"] = true; },
-        "hp": (dict,val) => { dict["data.attributes.hp.value"] = val.current; dict["data.attributes.hp.max"] = val.max; },
-        "sp": (dict,val) => { dict["data.attributes.sp.value"] = val.current; dict["data.attributes.sp.max"] = val.max; },
-        "rp": (dict,val) => { dict["data.attributes.rp.value"] = val.current; dict["data.attributes.rp.max"] = val.max; },
-        "eac_base": (dict,val) => { dict["data.attributes.eac.value"] = val.current; },
-        "kac_base": (dict,val) => { dict["data.attributes.kac.value"] = val.current; },
-        "cmd_base": (dict,val) => { dict["data.attributes.cmd.value"] = val.current; },
-        "fort_base": (dict,val) => { dict["data.attributes.fort.bonus"] = val.current; },
-        "ref_base": (dict,val) => { dict["data.attributes.reflex.bonus"] = val.current; },
-        "will_base": (dict,val) => { dict["data.attributes.will.bonus"] = val.current; },
-        "speed": (dict,val) => { dict[game.system.data.version.localeCompare("0.12.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0 ? "data.attributes.speed.land.base" : "data.attributes.speed.value"] = val.current; },
-        "space": (dict,val) => { dict["data.attributes.space"] = val.current; },
-        "reach": (dict,val) => { dict["data.attributes.reach"] = val.current; },
+        "character_level": (dict,val) => dict["system.details.cr"] = val.current,
+        "strength_mod": (dict,val) => dict["system.abilities.str.mod"] = val.current,
+        "dexterity_mod": (dict,val) => dict["system.abilities.dex.mod"] = val.current,
+        "constitution_mod": (dict,val) => dict["system.abilities.con.mod"] = val.current,
+        "intelligence_mod": (dict,val) => dict["system.abilities.int.mod"] = val.current,
+        "wisdom_mod": (dict,val) => dict["system.abilities.wis.mod"] = val.current,
+        "charisma_mod": (dict,val) => dict["system.abilities.cha.mod"] = val.current,
+        "race": (dict,val) => dict['system.details.raceAndGrafts'] = SBUtils.camelize(val.current),
+        "alignment": (dict,val) => dict["system.details.alignment"] = val.current,
+        "type_subtype": (dict,val) => dict['system.details.type'] = SBUtils.camelize(val.current),
+        "initiative_base": (dict,val) => dict["system.attributes.init.total"] = val.current,
+        "senses": (dict,val) => dict["system.traits.senses"] = val.current,
+        "perception_base": (dict,val) => { dict["system.skills.per.mod"] = val.current; dict["system.skills.per.enabled"] = true; },
+        "hp": (dict,val) => { dict["system.attributes.hp.value"] = val.current; dict["system.attributes.hp.max"] = val.max; },
+        "sp": (dict,val) => { dict["system.attributes.sp.value"] = val.current; dict["system.attributes.sp.max"] = val.max; },
+        "rp": (dict,val) => { dict["system.attributes.rp.value"] = val.current; dict["system.attributes.rp.max"] = val.max; },
+        "eac_base": (dict,val) => { dict["system.attributes.eac.value"] = val.current; },
+        "kac_base": (dict,val) => { dict["system.attributes.kac.value"] = val.current; },
+        "cmd_base": (dict,val) => { dict["system.attributes.cmd.value"] = val.current; },
+        "fort_base": (dict,val) => { dict["system.attributes.fort.bonus"] = val.current; },
+        "ref_base": (dict,val) => { dict["system.attributes.reflex.bonus"] = val.current; },
+        "will_base": (dict,val) => { dict["system.attributes.will.bonus"] = val.current; },
+        "speed": (dict,val) => { dict[game.system.version.localeCompare("0.12.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0 ? "system.attributes.speed.land.base" : "system.attributes.speed.value"] = val.current; },
+        "space": (dict,val) => { dict["system.attributes.space"] = val.current; },
+        "reach": (dict,val) => { dict["system.attributes.reach"] = val.current; },
         "acrobatics": (dict, val) => { this.parseSkill(dict, "acr", val); },
         "athletics": (dict, val) => { this.parseSkill(dict, "ath", val); },
         "bluff": (dict, val) => { this.parseSkill(dict, "blu", val); },
@@ -84,8 +84,8 @@ export class SBVTTESParser {
         "stealth": (dict, val) => { this.parseSkill(dict, "ste", val); },
         "survival": (dict, val) => { this.parseSkill(dict, "sur", val); },
 
-        "melee_spell_attack": (dict, val) => { dict["data.attributes.spellcasting.melee"] = val.current; },
-        "ranged_spell_attack": (dict, val) => { dict["data.attributes.spellcasting.ranged"] = val.current; },
+        "melee_spell_attack": (dict, val) => { dict["system.attributes.spellcasting.melee"] = val.current; },
+        "ranged_spell_attack": (dict, val) => { dict["system.attributes.spellcasting.ranged"] = val.current; },
 
         "dr": (dict, val) => {
             let drParts = val.current.split('/');
@@ -93,9 +93,9 @@ export class SBVTTESParser {
                 value: drParts[0],
                 negatedBy: drParts[1]
             }
-            dict["data.traits.damageReduction"] = damageReduction;
+            dict["system.traits.damageReduction"] = damageReduction;
         },
-        "sr": (dict,val) => { dict["data.traits.sr"] = val.current; },
+        "sr": (dict,val) => { dict["system.traits.sr"] = val.current; },
 
         "resistances": (dict,val) => {
             let recognizedResistances = Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase());
@@ -117,7 +117,7 @@ export class SBVTTESParser {
                 }
             }
 
-            dict["data.traits.dr"] = parsedValues;
+            dict["system.traits.dr"] = parsedValues;
         },
 
         "weaknesses": (dict,val) => {
@@ -142,7 +142,7 @@ export class SBVTTESParser {
                 }
             }
 
-            dict["data.traits.dv"] = parsedValues;
+            dict["system.traits.dv"] = parsedValues;
         },
 
         "immunities": (dict,val) => {
@@ -163,7 +163,7 @@ export class SBVTTESParser {
                 }
             }
 
-            dict["data.traits.di"] = parsedValues;
+            dict["system.traits.di"] = parsedValues;
         },
 
         "size": (dict, val) => {
@@ -171,17 +171,17 @@ export class SBVTTESParser {
             let indexOfMedium = sizes.indexOf("medium");
             let desiredIndex = indexOfMedium + Number(val.current);
             let size = sizes[desiredIndex];
-            dict["data.traits.size"] = size;
+            dict["system.traits.size"] = size;
         },
 
         "bio": (dict, val) => {
             let biography = "<strong>Biography</strong><br />";
             biography += unescape(val);
 
-            let oldDesc = dict["data.details.biography.value"];
-            dict["data.details.biography.value"] = biography;
+            let oldDesc = dict["system.details.biography.value"];
+            dict["system.details.biography.value"] = biography;
             if (oldDesc) {
-                dict["data.details.biography.value"] += "<br />" + oldDesc;
+                dict["system.details.biography.value"] += "<br />" + oldDesc;
             }
         },
 
@@ -191,12 +191,12 @@ export class SBVTTESParser {
             gmNotes += unescape(val);
             gmNotes += "</section>";
 
-            let oldDesc = dict["data.details.biography.value"];
+            let oldDesc = dict["system.details.biography.value"];
             if (oldDesc) {
-                dict["data.details.biography.value"] += "<br />";
-                dict["data.details.biography.value"] += gmNotes;
+                dict["system.details.biography.value"] += "<br />";
+                dict["system.details.biography.value"] += gmNotes;
             } else {
-                dict["data.details.biography.value"] = gmNotes;
+                dict["system.details.biography.value"] = gmNotes;
             }
         },
 
@@ -225,7 +225,7 @@ export class SBVTTESParser {
                 }
             }
 
-            dict["data.traits.languages"] = { value: officialLanguages, custom: customLanguages };
+            dict["system.traits.languages"] = { value: officialLanguages, custom: customLanguages };
         },
 
         "resistances": (dict, val) => {
@@ -254,19 +254,19 @@ export class SBVTTESParser {
                 }
             }
 
-            dict["data.traits.dr"] = { value: officialResists, custom: customResists };
+            dict["system.traits.dr"] = { value: officialResists, custom: customResists };
         }
     };
 
     async parseInput(actorData, inputText) {
-        const damageVersion = game.system.data.version.localeCompare("0.13.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const damageVersion = game.system.version.localeCompare("0.13.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
 
         if (actorData == null || !inputText) {
             return {success: false};
         }
 
-        if (!actorData.data) {
-            actorData.data = {};
+        if (!actorData.system) {
+            actorData.system = {};
         }
 
         let characterData = {
@@ -278,9 +278,9 @@ export class SBVTTESParser {
         }
 
         // NPCs by default have no SP or RP
-        characterData.actorData["data.attributes.sp.max"] = 0;
-        characterData.actorData["data.attributes.rp.max"] = 0;
-        characterData.actorData['data.traits.size'] = "medium";
+        characterData.actorData["system.attributes.sp.max"] = 0;
+        characterData.actorData["system.attributes.rp.max"] = 0;
+        characterData.actorData['system.traits.size'] = "medium";
 
         let errors = [];
 
@@ -374,7 +374,7 @@ export class SBVTTESParser {
                     }
                 }
 
-                let itemData = matchingItem != null ? matchingItem : {"name": abilityName, data: {}};
+                let itemData = matchingItem != null ? matchingItem : {"name": abilityName, system: {}};
                 if (itemData["_id"]) {
                     itemData["sourceId"] = itemData["_id"];
                     delete itemData["_id"];
@@ -385,19 +385,19 @@ export class SBVTTESParser {
                 }
 
                 if (ability.description && ability.description.current) {
-                    if (itemData.data.description && itemData.data.description.value) {
-                        itemData["data.description.value"] = itemData.data.description.value + "<br />Parsed data:<br />" + ability.description.current;
+                    if (itemData.description && itemData.description.value) {
+                        itemData["system.description.value"] = itemData.description.value + "<br />Parsed data:<br />" + ability.description.current;
                     } else {
-                        itemData["data.description.value"] = ability.description.current;
+                        itemData["system.description.value"] = ability.description.current;
                     }
                 }
 
                 if (ability.dc_base && ability.dc_base.current) {
-                    itemData["data.save.dc"] = ability.dc_base.current;
+                    itemData["system.save.dc"] = ability.dc_base.current;
                 }
 
                 if (ability.type && ability.type.current === "SP") {
-                    itemData["data.preparation"] = { prepared: true, mode: "innate" };
+                    itemData["system.preparation"] = { prepared: true, mode: "innate" };
                 }
 
                 characterData.items.push(itemData);
@@ -428,7 +428,7 @@ export class SBVTTESParser {
                     }
                 }
 
-                let itemData = matchingItem != null ? matchingItem : {"name": attackName, data: {}};
+                let itemData = matchingItem != null ? matchingItem : {"name": attackName, system: {}};
                 if (itemData["_id"]) {
                     itemData["sourceId"] = itemData["_id"];
                     delete itemData["_id"];
@@ -437,15 +437,15 @@ export class SBVTTESParser {
                 if (!itemData.type) {
                     itemData["type"] = "weapon";
                 }
-                if (!itemData.data.actionType) {
-                    itemData["data.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
+                if (!itemData.actionType) {
+                    itemData["system.actionType"] = bIsMeleeAttack ? "mwak" : "rwak";
                 }
-                if (!itemData.data.weaponType) {
-                    itemData["data.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
+                if (!itemData.weaponType) {
+                    itemData["system.weaponType"] = bIsMeleeAttack ? "basicM" : "smallA";
                 }
 
-                itemData["data.ability"] = "";
-                itemData["data.attackBonus"] = attack.total.current;
+                itemData["system.ability"] = "";
+                itemData["system.attackBonus"] = attack.total.current;
 
                 let damageType = "s";
                 if (attack.type) {
@@ -491,7 +491,7 @@ export class SBVTTESParser {
                         operator: "and"
                     };
 
-                    itemData = mergeObject(itemData, {data: {damage: {parts: [damagePart]}}});
+                    itemData = mergeObject(itemData, {system: {damage: {parts: [damagePart]}}});
                 } else {
                     if (damageType in SBConfig.weaponDamageTypes) {
                         damageType = SBConfig.weaponDamageTypes[damageType];
@@ -499,19 +499,19 @@ export class SBVTTESParser {
                         damageType = SBConfig.weaponDamageTypes["s"];
                     }
 
-                    if (itemData.data.damage?.parts) {
-                        let firstPart = itemData.data.damage.parts.len > 0 ? itemData.data.damage.parts[0] : [0, damageType];
-                        itemData["data.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
+                    if (itemData.system.damage?.parts) {
+                        let firstPart = itemData.system.damage.parts.len > 0 ? itemData.system.damage.parts[0] : [0, damageType];
+                        itemData["system.damage"] = {parts: [[attack.damage_total.current, firstPart[1]]]};
                     } else if (attack.damage_total) {
-                        itemData["data.damage"] = {parts: [[attack.damage_total.current, damageType]]};
+                        itemData["system.damage"] = {parts: [[attack.damage_total.current, damageType]]};
                     }
                 }
 
                 if (attack.description && attack.description.current) {
-                    if (itemData.data.description && itemData.data.description.value) {
-                        itemData["data.description.value"] = itemData.data.description.value + "<br />Parsed data:<br />" + attack.description.current;
+                    if (itemData.system.description && itemData.system.description.value) {
+                        itemData["system.description.value"] = itemData.system.description.value + "<br />Parsed data:<br />" + attack.description.current;
                     } else {
-                        itemData["data.description.value"] = attack.description.current;
+                        itemData["system.description.value"] = attack.description.current;
                     }
                 }
 
@@ -558,27 +558,27 @@ export class SBVTTESParser {
                 }
 
                 if (spell.description && spell.description.current) {
-                    if (itemData.data.description && itemData.data.description.value) {
-                        itemData["data.description.value"] = itemData.data.description.value + "<br />Parsed data:<br />" + spell.description.current;
+                    if (itemData.system.description && itemData.system.description.value) {
+                        itemData["system.description.value"] = itemData.system.description.value + "<br />Parsed data:<br />" + spell.description.current;
                     } else {
-                        itemData["data.description.value"] = spell.description.current;
+                        itemData["system.description.value"] = spell.description.current;
                     }
                 }
 
                 if (spell.dc_base && spell.dc_base.current) {
-                    itemData["data.save.dc"] = spell.dc_base.current;
+                    itemData["system.save.dc"] = spell.dc_base.current;
                 }
 
-                itemData["data.preparation"] = { prepared: true };
+                itemData["system.preparation"] = { prepared: true };
 
                 let attackBonus = "";
-                if (itemData?.data?.actionType === "msak") {
-                    attackBonus = characterData.actorData["data.attributes.spellcasting.melee"] || "";
-                } else if (itemData?.data?.actionType === "rsak") {
-                    attackBonus = characterData.actorData["data.attributes.spellcasting.ranged"] || "";
+                if (itemData?.system?.actionType === "msak") {
+                    attackBonus = characterData.actorData["system.attributes.spellcasting.melee"] || "";
+                } else if (itemData?.system?.actionType === "rsak") {
+                    attackBonus = characterData.actorData["system.attributes.spellcasting.ranged"] || "";
                 }
                 if (attackBonus) {
-                    itemData["data.attackBonus"] = attackBonus;
+                    itemData["system.attackBonus"] = attackBonus;
                 }
 
                 characterData.items.push(itemData);
@@ -620,17 +620,17 @@ export class SBVTTESParser {
             }
             bonusDesc += "</section>";
             
-            let oldDesc = characterData.actorData["data.details.biography.value"];
+            let oldDesc = characterData.actorData["system.details.biography.value"];
             if (oldDesc) {
-                characterData.actorData["data.details.biography.value"] = oldDesc + "<br />" + bonusDesc;
+                characterData.actorData["system.details.biography.value"] = oldDesc + "<br />" + bonusDesc;
             } else {
-                characterData.actorData["data.details.biography.value"] = bonusDesc;
+                characterData.actorData["system.details.biography.value"] = bonusDesc;
             }
         }
 
-        let oldDesc = characterData.actorData["data.details.biography.value"];
+        let oldDesc = characterData.actorData["system.details.biography.value"];
         if (oldDesc) {
-            characterData.actorData["data.details.biography.value"] = oldDesc + "<br />";
+            characterData.actorData["system.details.biography.value"] = oldDesc + "<br />";
         }
 
         return {success: true, characterData: characterData, errors: errors};

@@ -184,12 +184,12 @@ export class SBUtils {
             }
 
             const document = await compendium.getDocument(entry._id);
-            entryWeWant = document.data;
+            entryWeWant = document;
             break;
         }
 
-        if (entryWeWant?.document?.data) {
-            return duplicate(entryWeWant.document.data);
+        if (entryWeWant) {
+            return duplicate(entryWeWant);
             //SBUtils.log("Item " + JSON.stringify(entryWeWant));
         } else {
             //SBUtils.warn("Item " + rawString + " not found.");
@@ -220,6 +220,7 @@ export class SBUtils {
     static async fuzzyFindSpellAsync(statBlockSpellName) {
         statBlockSpellName = statBlockSpellName.replace("/ ", "/");
         statBlockSpellName = statBlockSpellName.replace(" /", "/");
+        console.log(statBlockSpellName)
         return this.fuzzyFindCompendiumAsync("Spells", statBlockSpellName);
     }
 
