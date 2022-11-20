@@ -1,3 +1,7 @@
+0.5.5:
+- General updates:
+--- Updated to support FoundryVTT v10.
+
 0.5.4:
 - General updates:
 --- Added support for the DR/ER modifiers and data structure changes for Starfinder v0.18.
