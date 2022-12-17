@@ -9,8 +9,8 @@
     "styles": [],
     "packs": [],
     "url": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser",
-    "manifest": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/raw/master/module.json",
-    "download": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/archive/master/sfrpg-statblock-parser-master.zip",
+    "manifest": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/raw/0.5/0.5.4/module.json",
+    "download": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/archive/0.5/0.5.4/sfrpg-statblock-parser-0.5-0.5.4.zip",
     "minimumCoreVersion": "0.8.5",
     "compatibleCoreVersion": "9"
 }
