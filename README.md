@@ -1,6 +1,6 @@
-# Starfinder Statblock Parser
+# Pathfinder 2E Statblock Parser
 
-A simple FoundryVTT module that allows GMs to parse the statblocks of Starfinder NPCs so they can quickly create NPCs.
+A simple FoundryVTT module that allows GMs to parse the statblocks of Pathfinder NPCs so they can quickly create NPCs. It is based on the amazing Starfinder Parser by Deepflame at https://gitlab.com/TimToxopeus/sfrpg-statblock-parser, and with code by darrenan in his PF2CreatureParser Extension for Fantasy Grounds.
 
 ## Use
 
@@ -10,24 +10,27 @@ The main focus of this module is to support Paizo-style statblocks, this means y
 
 An example Paizo-style statblock:
 ~~~
-Simple Mook CR 1/2
-LE Medium humanoid (human)
-Init +4; Perception +10
-DEFENSE HP 13
-EAC 10; KAC 12
-Fort +2; Ref +4; Will +0
-OFFENSE
-Speed 30 ft.
-Melee club +3 (1d6+2 B)
-Ranged azimuth laser pistol +6 (1d4+1 F; critical burn 1d4)
-STATISTICS
-Str +2; Dex +3; Con +1; Int –1; Wis +0; Cha –1
-Skills Athletics +4, Bluff +5, Intimidate +9, Stealth +5
-Languages Common
-Gear flight suit stationwear, azimuth laser pistol with
-battery (20 charges), club, credstick (150 credits)
+EXAMPLE BEING
+CREATURE 0
+RARE CE TINY HUMAN
+Perception +1
+Languages Common, Necril
+Skills Acrobatics +1, Stealth +2
+Str -2, Dex +1, Con +3, Int -2, Wis +1, Cha +2
+AC 12; Fort +1, Ref +2, Will +3
+HP 25, negative healing; Immunities death effects, disease, paralyzed, poison, unconscious; Weaknesses fire 1, cold 2
+Speed 5 feet, fly 10 feet
+Melee [one-action] finger poke +1 (finesse, agile), Damage 1d6 negative
+Melee [two-actions] finger stab +2 (finesse, agile), Damage 1d6 fire
+Ranged [three-actions] finger throw +3 (finesse, sweep), Damage 1d6 good
+Divine Innate Spells DC 42, attack +32; 9th divine wrath, prismatic sphere; 4th confusion (at will), dimension door (at will);
+Example Ability [two-actions] (concentrate, divine, polymorph, transmutation)
+The Example Being can take the appearance of any other creature.
+
+Another Example Ability [three-actions] (concentrate, divine, polymorph, transmutation)
+This ability makes the Example Being nigh invulnerable.
+
 ~~~
 
-## Issues
+Also important to note is that official PDFs usually use a long dash hyphen for the stats (like STR –2), while the parser expects a regular minus (STR -2).
 
-If you have any issues or concerns, please don't hesitate to open an issue on the tracker https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/issues or reach out to me on the Foundry discord server: Deepflame#0875.
