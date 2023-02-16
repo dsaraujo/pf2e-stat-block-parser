@@ -1,8 +1,6 @@
-import { SBPCGenParser } from "./pcgenparser.js";
 import { SBStatblockParser } from "./statblockparser.js";
 import { SBTextInputDialog } from "./text-input.js";
 import { SBUtils } from "./utils.js";
-import { SBVTTESParser } from "./vttesparser.js";
 import { SBParsing, initParsers } from "./parsers.js";
 
 class SBProgram {
@@ -58,20 +56,7 @@ class SBProgram {
             let errors = [];
             let bHasMultiAttacks = false;
 
-            let selectedParser = null;
-            switch (dataFormat) {
-                default:
-                    selectedParser = new SBStatblockParser();
-                    break;
-
-                case "vttes":
-                    selectedParser = new SBVTTESParser();
-                    break;
-
-                case "pcgen":
-                    selectedParser = new SBPCGenParser();
-                    break;
-            }
+            let selectedParser = new SBStatblockParser();
           
             // Start parsing
             SBUtils.log("Starting parsing input for format: " + dataFormat);
