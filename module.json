@@ -1,16 +1,16 @@
 {
-    "name": "sfrpg-statblock-parser",
-    "title": "Starfinder Statblock Parser",
-    "description": "A module to convert Starfinder NPC statblocks into Actors",
-    "version": "0.5.5",
-    "author": "Deepflame",
-    "system": ["sfrpg"],
+    "name": "pf2e-stat-block-parser",
+    "title": "Pathfinder 2E Statblock Parser",
+    "description": "A module to convert Pathfinder 2E NPC statblocks into Actors",
+    "version": "0.0.1",
+    "author": "dsaraujo",
+    "system": ["pf2e"],
     "esmodules": ["./module/main.js", "./module/text-input.js"],
     "styles": [],
     "packs": [],
-    "url": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser",
-    "manifest": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/raw/master/module.json",
-    "download": "https://gitlab.com/TimToxopeus/sfrpg-statblock-parser/-/archive/master/sfrpg-statblock-parser-master.zip",
-    "minimumCoreVersion": "0.8.5",
-    "compatibleCoreVersion": "9"
+    "url": "https://github.com/dsaraujo/pf2e-stat-block-parser",
+    "manifest": "https://github.com/dsaraujo/pf2e-stat-block-parser/-/raw/master/module.json",
+    "download": "https://github.com/dsaraujo/pf2e-stat-block-parser/-/archive/master/sfrpg-statblock-parser-master.zip",
+    "minimumCoreVersion": "0.0.1",
+    "compatibleCoreVersion": "10"
 }
