@@ -40,39 +40,33 @@ SBConfig.weaponDamageTypeNew = {
 };
 
 SBConfig.skillMapping = {
+     | Arcana | Athletics | Crafting | Deception | Diplomacy | Intimidation | Lore | Medicine | Nature | Occultism | Performance | Religion | Society | Stealth | Survival | Thievery
     "acrobatics": "acr",
     "athletics": "ath",
-    "bluff": "blu",
-    "computers": "com",
-    "culture": "cul",
+    "crafting": "cra",
+    "deception": "dec",    
     "diplomacy": "dip",
-    "disguise": "dis",
-    "disguise self": "dis",
-    "engineering": "eng",
     "intimidate": "int",
-    "life science": "lsc",
+    "lore": "lor",
     "medicine": "med",
-    "mysticism": "mys",
+    "nature": "nat",
+    "occultism": "occ",
     "perception": "per",
-    "physical science": "phs",
-    "piloting": "pil",
-    "profession": "pro",
-    "sense motive": "sen",
-    "sleight of hand": "sle",
+    "performance": "prf",
+    "religion": "rel",
+    "society": "soc",
     "stealth": "ste",
-    "survival": "sur"
+    "survival": "sur",
+    "thievery": "thi"
 };
 
 SBConfig.sizeMapping = {
-    "fine": 1,
-    "diminutive": 1,
     "tiny": 1,
     "small": 1,
     "medium": 1,
     "large": 2,
     "huge": 3,
     "gargantuan": 4,
-    "colossal": 6
 };
 
 export class SBUtils {
@@ -130,11 +124,11 @@ export class SBUtils {
     }
 
     static log(message) {
-        console.log("SFSBP | " + message);
+        console.log("PF2ESBP | " + message);
     }
 
     static warn(message) {
-        console.warn("SFSBP | " + message);
+        console.warn("PF2ESBP | " + message);
     }
 
     /** Will try to find an entry in the specified compendium that matches all the terms, will return the first entry that does. */
