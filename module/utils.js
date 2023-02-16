@@ -40,7 +40,6 @@ SBConfig.weaponDamageTypeNew = {
 };
 
 SBConfig.skillMapping = {
-     | Arcana | Athletics | Crafting | Deception | Diplomacy | Intimidation | Lore | Medicine | Nature | Occultism | Performance | Religion | Society | Stealth | Survival | Thievery
     "acrobatics": "acr",
     "athletics": "ath",
     "crafting": "cra",
