@@ -1076,11 +1076,7 @@ export function initParsers() {
             "kac": npc2Version ? new SBSingleValueParser(["system.attributes.kac.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.kac.value"]),
             "fort": npc2Version ? new SBSingleValueParser(["system.attributes.fort.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.fort.bonus"]),
             "ref": npc2Version ? new SBSingleValueParser(["system.attributes.reflex.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.reflex.bonus"]),
-            "will": npc2Version ? new SBSingleValueParser(["system.attributes.will.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.will.bonus"]),
-            "sr": new SBSingleValueParser(["system.traits.sr"], false),
-            "dr": new SBSplitValueParser(["system.traits.damageReduction.value", "system.traits.damageReduction.negatedBy"], "/", false),
-            "resistances": new SBTraitParser("system.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())),
-            "resist": new SBTraitParser("system.traits.dr", Object.keys(CONFIG["SFRPG"].energyDamageTypes).map(x => x.toLowerCase())), // Hero Lab support
+            "will": npc2Version ? new SBSingleValueParser(["system.attributes.will.base"], true, SBParsing.parseInteger) : new SBSingleValueParser(["system.attributes.will.bonus"]),            
             "weaknesses": new SBWeaknessesParser(),
             "immunities": new SBImmunitiesParser(),
             "defensive abilities": new SBAbilityParser()
@@ -1106,12 +1102,11 @@ export function initParsers() {
             "wis": npc2Version ? new SBSingleValueParser(["system.abilities.wis.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["system.abilities.wis.mod"], false, SBParsing.parseInteger),
             "cha": npc2Version ? new SBSingleValueParser(["system.abilities.cha.base"], false, SBParsing.parseInteger) : new SBSingleValueParser(["system.abilities.cha.mod"], false, SBParsing.parseInteger),
             "skills": new SBSkillsParser(),
-            "languages": new SBLanguagesParser("system.traits.languages", Object.keys(CONFIG["SFRPG"].languages).map(x => x.toLowerCase())),
+            "languages": new SBLanguagesParser("system.traits.languages", Object.keys(CONFIG["PF2E"].languages).map(x => x.toLowerCase())),
             "other abilities": new SBAbilityParser(),
             "noncombat abilities": new SBAbilityParser(),
             "feats": new SBAbilityParser(),
-            "gear": new SBGearParser(),
-            "other gear": new SBGearParser(), // Hero Lab support
+            "gear": new SBGearParser(),            
             "* telepathy": new SBTelepathyParser()
         },
         "tactics": {

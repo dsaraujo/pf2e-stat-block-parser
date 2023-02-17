@@ -1,9 +1,16 @@
 {
-    "name": "pf2e-stat-block-parser",
-    "title": "Pathfinder 2E Statblock Parser",
+    "id": "pf2e-stat-block-parser",
+    "title": "PF2E Statblock Parser",
     "description": "A module to convert Pathfinder 2E NPC statblocks into Actors",
     "version": "0.0.1",
-    "author": "dsaraujo",
+    "authors": [
+		{
+		  "name": "Daniel Araujo",
+		  "url": "https://www.rolando20.com.br",
+		  "email": "daniel.anand@gmail.com",
+		  "discord": "dsaraujo#0001"
+		}
+	],
     "system": ["pf2e"],
     "esmodules": ["./module/main.js", "./module/text-input.js"],
     "styles": [],
@@ -11,6 +18,18 @@
     "url": "https://github.com/dsaraujo/pf2e-stat-block-parser",
     "manifest": "https://github.com/dsaraujo/pf2e-stat-block-parser/-/raw/master/module.json",
     "download": "https://github.com/dsaraujo/pf2e-stat-block-parser/-/archive/master/sfrpg-statblock-parser-master.zip",
-    "minimumCoreVersion": "0.0.1",
-    "compatibleCoreVersion": "10"
+    "compatibility": {
+		"minimum": 10,
+		"verified": 10		
+	},
+	"relationships": {
+		"systems": [{
+		  "id": "pf2e",
+		  "type": "system",
+		  "manifest": "https://github.com/foundryvtt/pf2e",
+		  "compatibility": {
+			"verified": "4.7"
+		  }
+		}]		
+	}
 }

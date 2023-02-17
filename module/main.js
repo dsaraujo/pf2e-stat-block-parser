@@ -9,7 +9,7 @@ class SBProgram {
             return;
         }
 
-        let statblockParseButton = document.getElementById("SFSBP-button");
+        let statblockParseButton = document.getElementById("PF2ESBP-button");
         if (statblockParseButton != null) {
             return;
         }
@@ -20,28 +20,28 @@ class SBProgram {
             SBUtils.log("Creating Statblock Parse button.");
 
             statblockParseButton = document.createElement("button");
-            statblockParseButton.innerHTML = `<i id="SFSBP-button" class="fas fa-list"></i>Parse Statblock`;
-            statblockParseButton.onclick = ev => SBProgram.openSFSBP();
+            statblockParseButton.innerHTML = `<i id="PF2ESBP-button" class="fas fa-list"></i> Parse Statblock`;
+            statblockParseButton.onclick = ev => SBProgram.openPF2ESBP();
 
             const createEntityButton = actorFooter.getElementsByClassName("create-entity")[0];
             actorFooter.insertBefore(statblockParseButton, createEntityButton);
         }
     }
 
-    static async openSFSBP(folderId = null) {
+    static async openPF2ESBP(folderId = null) {
         SBUtils.log("Opening Statblock Parser. Target folder is: " + folderId);
 
-        const minimumVersion = "0.12.0";
+        const minimumVersion = "4.7";
         const hasMinimumVersion = game.system.version.localeCompare(minimumVersion, undefined, { numeric: true, sensitivity: 'base' }) >= 0;
         if (!hasMinimumVersion) {
-            const errorMessage = `Starfinder Statblock Parser requires at least Starfinder v${minimumVersion} to function. Please update your system!<br/><br/>Click to dismiss.`;
-            console.error(`Starfinder Statblock Parser requires at least Starfinder v${minimumVersion} to function. Please update your system!<br/><br/>Click to dismiss.`);
+            const errorMessage = `Pathfinder 2E Statblock Parser requires at least Pathfinder 2E v${minimumVersion} to function. Please update your system!<br/><br/>Click to dismiss.`;
+            console.error(`Pathfinder 2E Statblock Parser requires at least Pathfinder 2E v${minimumVersion} to function. Please update your system!<br/><br/>Click to dismiss.`);
             ui.notifications.error(errorMessage, {permanent: true});
             return;
         }
 
-        const hasNPC2Version = game.system.version.localeCompare("0.16.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
-        const hasDRERVersion = game.system.version.localeCompare("0.18.0", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const hasNPC2Version = game.system.version.localeCompare("4.7", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
+        const hasDRERVersion = game.system.version.localeCompare("4.7", undefined, { numeric: true, sensitivity: 'base' }) >= 0;
         const textResult = await SBTextInputDialog.textInputDialog({actor: this.actor, title: "Enter NPC stat block"});
         if (textResult.result) {
             // Create actor
@@ -94,10 +94,7 @@ class SBProgram {
             SBUtils.log("> Setting up token defaults.");
             const tokenSize = SBUtils.actorSizeToTokenSize(characterData.actorData?.system?.traits?.size || "medium");
             characterData.actorData = mergeObject(characterData.actorData, {
-                token: {
-                    bar2: {
-                        attribute: "attributes.rp"
-                    },
+                token: {                    
                     displayBars: CONST.TOKEN_DISPLAY_MODES.OWNER,
                     displayName: CONST.TOKEN_DISPLAY_MODES.OWNER,
                     width: tokenSize,
@@ -338,7 +335,7 @@ class SBProgram {
             });
             
             SBUtils.log("Actor created, opening sheet.");
-            const registeredSheet = Actors.registeredSheets.find(x => x.name === "ActorSheetSFRPGNPC");
+            const registeredSheet = Actors.registeredSheets.find(x => x.name === "NPCSheetPF2e");
             const sheet = new registeredSheet(actor);
             sheet.render(true);
 
@@ -488,12 +485,12 @@ Hooks.on("getActorDirectoryFolderContext", async(html, folderOptions) => {
           condition: game.user.isGM,
           callback: header => {
             const li = header.parent();
-            SBProgram.openSFSBP(li.data("folderId"));
+            SBProgram.openPF2ESBP(li.data("folderId"));
           }
         });
 });
 
 Hooks.on("ready", function() {
     initParsers();
-    SBUtils.log("SFRPG Statblock Parser initialized.");
+    SBUtils.log("PF2ERPG Statblock Parser initialized.");
 });

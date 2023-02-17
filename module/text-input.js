@@ -11,7 +11,7 @@ export class SBTextInputDialog extends Dialog {
 
     constructor(actor, dialogData={}, options={}) {
         super(dialogData, options);
-        this.options.classes = ["sfrpg", "dialog"];
+        this.options.classes = ["pf2e", "dialog"];
         this.actor = actor;
     }
 
@@ -52,7 +52,7 @@ export class SBTextInputDialog extends Dialog {
     static async textInputDialog({actor, title, originalText=""}={}) {
         SBTextInputDialog.dataFormat = "statblock";
         SBTextInputDialog.enteredText = originalText;
-        const html = await renderTemplate("modules/sfrpg-statblock-parser/templates/text-input.html", {
+        const html = await renderTemplate("modules/pf2e-stat-block-parser/templates/text-input.html", {
           originalText: originalText
         });
         return new Promise(resolve => {
